@@ -1,0 +1,13 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\accounts",
+    "\\BIApp",
+    "\\market_analysis",
+    "\\templates",
+    "\\templates\\accounts",
+    "\\templates\\market_analysis"
+  ],
+  "SelectedNode": "\\market_analysis\\models.py",
+  "PreviewInSolutionExplorer": false
+}

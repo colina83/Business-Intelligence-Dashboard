@@ -1,67 +1,172 @@
 from django.contrib import admin
 from .models import (
-    Client, Location, Project, Opportunity, 
-    BidMetrics, Equipment, Milestone, CycleTime
+    Client, Project, BidTypeHistory, ProjectTechnology, Financial,
+    ProjectStatusHistory, ProjectContract, ChangeLog
 )
+
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
-    list_display = ['client_id', 'name']
-    search_fields = ['name']
+    list_display = ('client_id', 'name')
+    search_fields = ('name',)
 
-@admin.register(Location)
-class LocationAdmin(admin.ModelAdmin):
-    list_display = ['country_id', 'country_name', 'region_id', 'water_depth_min', 'water_depth_max']
-    search_fields = ['country_name', 'region_id']
-    list_filter = ['region_id']
+
+class FinancialInline(admin.StackedInline):
+    model = Financial
+    can_delete = False
+    max_num = 1
+    extra = 0
+    fk_name = 'project'
+    fields = (
+        # Inputs
+        'total_direct_cost', 'gm', 'duration_raw', 'duration_with_dt',
+        'depreciation', 'taxes', 'file_upload_TMA',
+        # Calculated (read-only)
+        'total_revenue', 'gp', 'total_overhead',
+        'ebitda_amount', 'ebitda_pct',
+        'ebit_amount', 'ebit_pct',
+        'net_amount', 'net_pct',
+        'ebit_day', 'net_day',
+    )
+    readonly_fields = (
+        'total_revenue', 'gp', 'total_overhead',
+        'ebitda_amount', 'ebitda_pct',
+        'ebit_amount', 'ebit_pct',
+        'net_amount', 'net_pct',
+        'ebit_day', 'net_day',
+    )
+
+
+class ProjectTechnologyInline(admin.TabularInline):
+    model = ProjectTechnology
+    extra = 0
+    fk_name = 'project'
+    fields = ('technology', 'survey_type', 'obn_technique', 'obn_system', 'streamer')
+
+
+class BidTypeHistoryInline(admin.TabularInline):
+    model = BidTypeHistory
+    fields = ('previous_bid_type', 'new_bid_type', 'changed_at', 'notes')
+    readonly_fields = ('previous_bid_type', 'new_bid_type', 'changed_at', 'notes')
+    can_delete = False
+    extra = 0
+    ordering = ('-changed_at',)
+    fk_name = 'project'
+
+
+class ProjectStatusHistoryInline(admin.TabularInline):
+    model = ProjectStatusHistory
+    fields = ('previous_status', 'new_status', 'changed_at', 'notes')
+    readonly_fields = ('previous_status', 'new_status', 'changed_at', 'notes')
+    can_delete = False
+    extra = 0
+    ordering = ('-changed_at',)
+    fk_name = 'project'
+
+
+class ChangeLogInline(admin.TabularInline):
+    model = ChangeLog
+    fields = ('change_type', 'field_name', 'previous_value', 'new_value', 'event_date', 'changed_at', 'changed_by', 'notes')
+    readonly_fields = ('change_type', 'field_name', 'previous_value', 'new_value', 'event_date', 'changed_at', 'changed_by', 'notes')
+    can_delete = False
+    extra = 0
+    ordering = ('-changed_at',)
+    fk_name = 'project'
+
+
+class ProjectContractInline(admin.StackedInline):
+    model = ProjectContract
+    can_delete = False
+    max_num = 1
+    extra = 0
+    fk_name = 'project'
+    fields = ('contract_date', 'actual_start', 'actual_end', 'actual_duration')
+    readonly_fields = ('actual_duration',)
+
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['project_id', 'name', 'country', 'region_id']
-    search_fields = ['name']
-    list_filter = ['country', 'region_id']
+    list_display = (
+        'project_id', 'internal_id', 'project_portal_id', 'name',
+        'client', 'country', 'region', 'bid_type', 'status',
+        'submission_date', 'award_date', 'lost_date',
+    )
+    search_fields = ('name', 'internal_id', 'project_portal_id', 'client__name')
+    list_filter = ('bid_type', 'status', 'region', 'country')
+    readonly_fields = ('internal_id', 'submission_date', 'award_date', 'lost_date')
 
-class BidMetricsInline(admin.StackedInline):
-    model = BidMetrics
-    can_delete = False
+    def get_inline_instances(self, request, obj=None):
+        """
+        Show ProjectContractInline only when the project status is 'Won'.
+        Always show Financial, ProjectTechnology, BidTypeHistory, StatusHistory and ChangeLog inlines.
+        """
+        inlines = [FinancialInline, ProjectTechnologyInline, BidTypeHistoryInline, ProjectStatusHistoryInline, ChangeLogInline]
+        inline_instances = []
+        for inline_class in inlines:
+            inline = inline_class(self.model, self.admin_site)
+            inline_instances.append(inline)
 
-class EquipmentInline(admin.TabularInline):
-    model = Equipment
-    extra = 1
+        # include contract inline only when editing an existing Won project
+        if obj and getattr(obj, 'status', None) == 'Won':
+            inline_instances.append(ProjectContractInline(self.model, self.admin_site))
 
-class MilestoneInline(admin.StackedInline):
-    model = Milestone
-    can_delete = False
+        return inline_instances
 
-class CycleTimeInline(admin.StackedInline):
-    model = CycleTime
-    can_delete = False
 
-@admin.register(Opportunity)
-class OpportunityAdmin(admin.ModelAdmin):
-    list_display = ['unique_op_id', 'client', 'project', 'bid_status', 'bid_type', 'country']
-    search_fields = ['unique_op_id', 'client__name', 'project__name']
-    list_filter = ['bid_status', 'bid_type', 'country']
-    inlines = [BidMetricsInline, EquipmentInline, MilestoneInline, CycleTimeInline]
+@admin.register(Financial)
+class FinancialAdmin(admin.ModelAdmin):
+    list_display = ('project', 'total_direct_cost', 'total_revenue', 'gp', 'ebitda_amount', 'net_amount')
+    search_fields = ('project__name', 'project__internal_id')
+    readonly_fields = (
+        'total_revenue', 'gp', 'total_overhead',
+        'ebitda_amount', 'ebitda_pct',
+        'ebit_amount', 'ebit_pct',
+        'net_amount', 'net_pct',
+        'ebit_day', 'net_day',
+    )
+    fieldsets = (
+        ('Inputs', {
+            'fields': ('project', 'total_direct_cost', 'gm', 'duration_raw', 'duration_with_dt', 'depreciation', 'taxes', 'file_upload_TMA')
+        }),
+        ('Calculated', {
+            'fields': ('total_revenue', 'gp', 'total_overhead', 'ebitda_amount', 'ebitda_pct', 'ebit_amount', 'ebit_pct', 'net_amount', 'net_pct', 'ebit_day', 'net_day'),
+        }),
+    )
 
-@admin.register(BidMetrics)
-class BidMetricsAdmin(admin.ModelAdmin):
-    list_display = ['opportunity', 'revenue', 'ebit', 'gp', 'gm', 'duration']
-    search_fields = ['opportunity__unique_op_id']
 
-@admin.register(Equipment)
-class EquipmentAdmin(admin.ModelAdmin):
-    list_display = ['id', 'opportunity', 'node_type', 'node_qty', 'vessel_name']
-    search_fields = ['opportunity__unique_op_id', 'node_type', 'vessel_name']
-    list_filter = ['node_type']
+@admin.register(ProjectTechnology)
+class ProjectTechnologyAdmin(admin.ModelAdmin):
+    list_display = ('project', 'technology', 'survey_type', 'obn_system', 'streamer')
+    search_fields = ('project__name', 'technology')
+    list_filter = ('technology', 'survey_type')
 
-@admin.register(Milestone)
-class MilestoneAdmin(admin.ModelAdmin):
-    list_display = ['opportunity', 'date_received', 'date_deadline', 'date_award', 'actual_start', 'actual_end']
-    search_fields = ['opportunity__unique_op_id']
-    list_filter = ['date_received', 'date_award']
 
-@admin.register(CycleTime)
-class CycleTimeAdmin(admin.ModelAdmin):
-    list_display = ['opportunity', 'rec_to_submission', 'submission_to_award', 'award_to_start', 'total_cycle']
-    search_fields = ['opportunity__unique_op_id']
+@admin.register(BidTypeHistory)
+class BidTypeHistoryAdmin(admin.ModelAdmin):
+    list_display = ('project', 'previous_bid_type', 'new_bid_type', 'changed_at')
+    readonly_fields = ('previous_bid_type', 'new_bid_type', 'changed_at', 'notes')
+    search_fields = ('project__name',)
+    list_filter = ('new_bid_type',)
+
+
+@admin.register(ProjectStatusHistory)
+class ProjectStatusHistoryAdmin(admin.ModelAdmin):
+    list_display = ('project', 'previous_status', 'new_status', 'changed_at')
+    readonly_fields = ('previous_status', 'new_status', 'changed_at', 'notes')
+    search_fields = ('project__name',)
+    list_filter = ('new_status',)
+
+
+@admin.register(ChangeLog)
+class ChangeLogAdmin(admin.ModelAdmin):
+    list_display = ('project', 'change_type', 'field_name', 'previous_value', 'new_value', 'event_date', 'changed_at', 'changed_by')
+    readonly_fields = ('project', 'change_type', 'field_name', 'previous_value', 'new_value', 'event_date', 'changed_at', 'changed_by', 'notes')
+    search_fields = ('project__name', 'previous_value', 'new_value')
+    list_filter = ('change_type',)
+
+
+@admin.register(ProjectContract)
+class ProjectContractAdmin(admin.ModelAdmin):
+    list_display = ('project', 'contract_date', 'actual_start', 'actual_end', 'actual_duration')
+    search_fields = ('project__name', 'project__internal_id')
+    readonly_fields = ('actual_duration',)

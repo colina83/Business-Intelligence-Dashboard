@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block title %}Dashboard - Market Analysis{% endblock %}
 
@@ -13,23 +13,23 @@
 </div>
 
 <div class="row g-4 mb-5">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card text-white bg-primary card-hover h-100 shadow">
             <div class="card-body d-flex align-items-center">
                 <div class="flex-grow-1">
                     <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">
-                        <i class="bi bi-briefcase me-1"></i>Total Opportunities
+                        <i class="bi bi-folder me-1"></i>Total Projects
                     </h6>
-                    <h2 class="card-title display-4 fw-bold mb-0">{{ opportunities_count }}</h2>
+                    <h2 class="card-title display-4 fw-bold mb-0">{{ projects_count }}</h2>
                 </div>
                 <div class="ms-3">
-                    <i class="bi bi-briefcase-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <i class="bi bi-folder-fill" style="font-size: 3rem; opacity: 0.3;"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card text-white bg-success card-hover h-100 shadow">
             <div class="card-body d-flex align-items-center">
                 <div class="flex-grow-1">
@@ -45,89 +45,116 @@
         </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card text-white bg-info card-hover h-100 shadow">
             <div class="card-body d-flex align-items-center">
                 <div class="flex-grow-1">
                     <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">
-                        <i class="bi bi-folder me-1"></i>Total Projects
+                        <i class="bi bi-cpu me-1"></i>Technologies
                     </h6>
-                    <h2 class="card-title display-4 fw-bold mb-0">{{ projects_count }}</h2>
+                    <h2 class="card-title display-4 fw-bold mb-0">{{ technologies_count }}</h2>
                 </div>
                 <div class="ms-3">
-                    <i class="bi bi-folder-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <i class="bi bi-cpu-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-secondary card-hover h-100 shadow">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">
+                        <i class="bi bi-wallet2 me-1"></i>Financials
+                    </h6>
+                    <h2 class="card-title display-4 fw-bold mb-0">{{ financials_count }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="bi bi-wallet-fill" style="font-size: 3rem; opacity: 0.3;"></i>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card shadow-lg border-0">
-    <div class="card-header bg-dark text-white py-3">
-        <h4 class="mb-0">
-            <i class="bi bi-clock-history me-2"></i>Recent Opportunities
-        </h4>
-    </div>
-    <div class="card-body p-0">
-        {% if recent_opportunities %}
-            <div class="table-responsive">
-                <table class="table table-hover table-striped mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="px-4 py-3">
-                                <i class="bi bi-hash me-1"></i>ID
-                            </th>
-                            <th class="px-4 py-3">
-                                <i class="bi bi-people me-1"></i>Client
-                            </th>
-                            <th class="px-4 py-3">
-                                <i class="bi bi-folder me-1"></i>Project
-                            </th>
-                            <th class="px-4 py-3">
-                                <i class="bi bi-flag me-1"></i>Status
-                            </th>
-                            <th class="px-4 py-3">
-                                <i class="bi bi-tag me-1"></i>Type
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for opp in recent_opportunities %}
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="card shadow h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Projects</h5>
+                <small class="text-muted">Showing latest {{ recent_projects|length }}</small>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td class="px-4 py-3 fw-semibold">{{ opp.unique_op_id }}</td>
-                                <td class="px-4 py-3">{{ opp.client.name }}</td>
-                                <td class="px-4 py-3">{{ opp.project.name }}</td>
-                                <td class="px-4 py-3">
-                                    <span class="badge 
-                                        {% if opp.bid_status == 'WON' %}bg-success
-                                        {% elif opp.bid_status == 'LOST' %}bg-danger
-                                        {% elif opp.bid_status == 'SUBMITTED' %}bg-info
-                                        {% elif opp.bid_status == 'PENDING' %}bg-warning
-                                        {% else %}bg-secondary{% endif %} fs-6">
-                                        <i class="bi bi-{% if opp.bid_status == 'WON' %}check-circle{% elif opp.bid_status == 'LOST' %}x-circle{% elif opp.bid_status == 'SUBMITTED' %}send{% elif opp.bid_status == 'PENDING' %}clock{% else %}dash-circle{% endif %} me-1"></i>
-                                        {{ opp.get_bid_status_display }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="badge bg-secondary fs-6">
-                                        {{ opp.get_bid_type_display }}
-                                    </span>
-                                </td>
+                                <th>Internal ID</th>
+                                <th>Name</th>
+                                <th>Client</th>
+                                <th>Received</th>
+                                <th>Bid Type</th>
+                                <th>Status</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for p in recent_projects %}
+                                <tr>
+                                    <td>{{ p.internal_id }}</td>
+                                    <td>{{ p.name }}</td>
+                                    <td>
+                                        {% if p.client %}
+                                            {{ p.client.name }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ p.date_received|date:"Y-m-d" }}</td>
+                                    <td>{{ p.get_bid_type_display }}</td>
+                                    <td>{{ p.get_status_display }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="6" class="text-center text-muted">No projects found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        {% else %}
-            <div class="text-center py-5">
-                <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
-                <h5 class="text-muted mt-3">No opportunities found</h5>
-                <p class="text-muted">
-                    Add some data through the 
-                    <a href="/admin/" class="text-decoration-none fw-bold">admin panel</a>
-                </p>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card shadow h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Bid Type Changes</h5>
+                <small class="text-muted">Total {{ bid_history_count }}</small>
             </div>
-        {% endif %}
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for h in recent_bid_history %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>{{ h.project.name }}</strong><br>
+                                    <small class="text-muted">
+                                        {{ h.previous_bid_type|default:"(none)" }} → {{ h.new_bid_type }}
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">{{ h.changed_at|date:"Y-m-d H:i" }}</small>
+                                </div>
+                            </div>
+                            {% if h.notes %}
+                                <div class="mt-2"><small>{{ h.notes }}</small></div>
+                            {% endif %}
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-center text-muted">No bid history yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
