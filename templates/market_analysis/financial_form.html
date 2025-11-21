@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %}Financials - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="bi bi-calculator me-2"></i>
+            {% if project.financials %}Edit Financials for{% else %}Add Financials for{% endif %} {{ project.name }}
+          </h5>
+          <small class="text-white-50">{{ project.internal_id }}</small>
+        </div>
+
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            <div class="row gx-2 gy-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label small">Total Direct Cost</label>
+                {{ form.total_direct_cost }}
+                {% for err in form.total_direct_cost.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label small">Gross Margin (%)</label>
+                {{ form.gm }}
+                {% for err in form.gm.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label small">Duration (with downtime)</label>
+                {{ form.duration_with_dt }}
+                {% for err in form.duration_with_dt.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label small">Depreciation</label>
+                {{ form.depreciation }}
+                {% for err in form.depreciation.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label small">Taxes</label>
+                {{ form.taxes }}
+                {% for err in form.taxes.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label small">Attachment</label>
+                {{ form.file_upload_TMA }}
+                {% for err in form.file_upload_TMA.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+            </div>
+
+            {% if computed %}
+            <hr class="my-3">
+            <h6 class="mb-2 text-muted">Accounting Summary (read-only)</h6>
+
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered mb-0" aria-describedby="accounting-summary">
+                <thead class="table-light">
+                  <tr>
+                    <th class="small">Metric</th>
+                    <th class="small text-end">Amount (USD)</th>
+                    <th class="small text-end">Percent of Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="small">Total Direct Cost</td>
+                    <td class="text-end text-monospace small">
+                      {% if computed.total_direct_cost is not None %}
+                        ${{ computed.total_direct_cost|floatformat:0|intcomma }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td class="text-end small">-</td>
+                  </tr>
+
+                  <tr>
+                    <td class="small">Depreciation</td>
+                    <td class="text-end text-monospace small">
+                      {% if computed.depreciation is not None %}
+                        ${{ computed.depreciation|floatformat:0|intcomma }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td class="text-end small">-</td>
+                  </tr>
+
+                  <tr class="table-light">
+                    <td class="small">Total Revenue</td>
+                    <td class="text-end text-monospace small">
+                      {% if computed.total_revenue is not None %}
+                        ${{ computed.total_revenue|floatformat:0|intcomma }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td class="text-end small">100%</td>
+                  </tr>
+
+                  <tr>
+                    <td class="small">Gross Profit (GP)</td>
+                    <td class="text-end text-monospace small">
+                      {% if computed.gp is not None %}
+                        ${{ computed.gp|floatformat:0|intcomma }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td class="text-end small">
+                      {% if computed.total_revenue and computed.gp %}
+                        {% widthratio computed.gp computed.total_revenue 100 as gp_pct %}
+                        {{ gp_pct|floatformat:2 }}%
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td class="small">Total Overhead</td>
+                    <td class="text-end text-monospace small">
+                      {% if computed.total_overhead is not None %}
+                        ${{ computed.total_overhead|floatformat:0|intcomma }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td class="text-end small">-</td>
+                  </tr>
+
+                  <tr class="table-secondary">
+                    <td class="small"><strong>EBITDA</strong></td>
+                    <td class="text-end text-monospace small"><strong>
+                      {% if computed.ebitda_amount is not None %}
+                        ${{ computed.ebitda_amount|floatformat:0|intcomma }}
+                      {% else %}-{% endif %}
+                    </strong></td>
+                    <td class="text-end small"><strong>
+                      {% if computed.ebitda_pct is not None %}
+                        {{ computed.ebitda_pct|floatformat:2 }}%
+                      {% else %}-{% endif %}
+                    </strong></td>
+                  </tr>
+
+                  <tr>
+                    <td class="small">EBIT $</td>
+                    <td class="text-end text-monospace small">
+                      {% if computed.ebit_amount is not None %}
+                        ${{ computed.ebit_amount|floatformat:0|intcomma }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td class="text-end small">
+                      {% if computed.ebit_pct is not None %}
+                        {{ computed.ebit_pct|floatformat:2 }}%
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                  </tr>
+
+                  <tr class="table-light">
+                    <td class="small">Net $</td>
+                    <td class="text-end text-monospace small">
+                      {% if computed.net_amount is not None %}
+                        ${{ computed.net_amount|floatformat:0|intcomma }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td class="text-end small">
+                      {% if computed.net_pct is not None %}
+                        {{ computed.net_pct|floatformat:2 }}%
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                  </tr>
+
+                  <tr class="table-warning fw-semibold">
+                    <td class="small">EBIT per day</td>
+                    <td class="text-end text-monospace small">
+                      {% if computed.ebit_day is not None %}
+                        ${{ computed.ebit_day|floatformat:0|intcomma }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td class="text-end small">-</td>
+                  </tr>
+
+                  <tr>
+                    <td class="small">Net per day</td>
+                    <td class="text-end text-monospace small">
+                      {% if computed.net_day is not None %}
+                        ${{ computed.net_day|floatformat:0|intcomma }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td class="text-end small">-</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {% endif %}
+
+            <hr class="my-3">
+
+            <div class="d-flex justify-content-between">
+              <a href="{% url 'market_analysis:dashboard' %}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+              <button type="submit" class="btn btn-primary btn-sm">Save Financials</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

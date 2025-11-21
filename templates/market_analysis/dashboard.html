@@ -4,157 +4,281 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="display-5 fw-bold">
-        <i class="bi bi-speedometer2 me-2"></i>Market Analysis Dashboard
-    </h1>
-    <a href="/admin/" class="btn btn-primary btn-lg">
-        <i class="bi bi-gear me-2"></i>Admin Panel
-    </a>
+    <div>
+        <h1 class="display-5 fw-bold">
+            <i class="bi bi-speedometer2 me-2"></i>Market Analysis Dashboard
+        </h1>
+        <div class="mt-3">
+            <a href="{% url 'market_analysis:project_add' %}" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-lg me-2"></i>Add Project
+            </a>
+        </div>
+    </div>
 </div>
 
-<div class="row g-4 mb-5">
+<div class="row g-4 mb-4">
     <div class="col-md-3">
         <div class="card text-white bg-primary card-hover h-100 shadow">
-            <div class="card-body d-flex align-items-center">
-                <div class="flex-grow-1">
-                    <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">
-                        <i class="bi bi-folder me-1"></i>Total Projects
-                    </h6>
-                    <h2 class="card-title display-4 fw-bold mb-0">{{ projects_count }}</h2>
-                </div>
-                <div class="ms-3">
-                    <i class="bi bi-folder-fill" style="font-size: 3rem; opacity: 0.3;"></i>
-                </div>
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">Total Projects</h6>
+                <h2 class="card-title display-6 fw-bold mb-0">{{ projects_count }}</h2>
             </div>
         </div>
     </div>
 
     <div class="col-md-3">
         <div class="card text-white bg-success card-hover h-100 shadow">
-            <div class="card-body d-flex align-items-center">
-                <div class="flex-grow-1">
-                    <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">
-                        <i class="bi bi-people me-1"></i>Total Clients
-                    </h6>
-                    <h2 class="card-title display-4 fw-bold mb-0">{{ clients_count }}</h2>
-                </div>
-                <div class="ms-3">
-                    <i class="bi bi-people-fill" style="font-size: 3rem; opacity: 0.3;"></i>
-                </div>
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">Total Clients</h6>
+                <h2 class="card-title display-6 fw-bold mb-0">{{ clients_count }}</h2>
             </div>
         </div>
     </div>
 
     <div class="col-md-3">
         <div class="card text-white bg-info card-hover h-100 shadow">
-            <div class="card-body d-flex align-items-center">
-                <div class="flex-grow-1">
-                    <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">
-                        <i class="bi bi-cpu me-1"></i>Technologies
-                    </h6>
-                    <h2 class="card-title display-4 fw-bold mb-0">{{ technologies_count }}</h2>
-                </div>
-                <div class="ms-3">
-                    <i class="bi bi-cpu-fill" style="font-size: 3rem; opacity: 0.3;"></i>
-                </div>
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">Technologies</h6>
+                <h2 class="card-title display-6 fw-bold mb-0">{{ technologies_count }}</h2>
             </div>
         </div>
     </div>
 
     <div class="col-md-3">
         <div class="card text-white bg-secondary card-hover h-100 shadow">
-            <div class="card-body d-flex align-items-center">
-                <div class="flex-grow-1">
-                    <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">
-                        <i class="bi bi-wallet2 me-1"></i>Financials
-                    </h6>
-                    <h2 class="card-title display-4 fw-bold mb-0">{{ financials_count }}</h2>
-                </div>
-                <div class="ms-3">
-                    <i class="bi bi-wallet-fill" style="font-size: 3rem; opacity: 0.3;"></i>
-                </div>
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">Financial Records</h6>
+                <h2 class="card-title display-6 fw-bold mb-0">{{ financials_count }}</h2>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4">
-    <div class="col-md-7">
-        <div class="card shadow h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent Projects</h5>
-                <small class="text-muted">Showing latest {{ recent_projects|length }}</small>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Internal ID</th>
-                                <th>Name</th>
-                                <th>Client</th>
-                                <th>Received</th>
-                                <th>Bid Type</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for p in recent_projects %}
-                                <tr>
-                                    <td>{{ p.internal_id }}</td>
-                                    <td>{{ p.name }}</td>
-                                    <td>
-                                        {% if p.client %}
-                                            {{ p.client.name }}
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ p.date_received|date:"Y-m-d" }}</td>
-                                    <td>{{ p.get_bid_type_display }}</td>
-                                    <td>{{ p.get_status_display }}</td>
-                                </tr>
-                            {% empty %}
-                                <tr><td colspan="6" class="text-center text-muted">No projects found.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Projects</h5>
+            <small class="text-muted">Showing latest projects</small>
         </div>
     </div>
 
-    <div class="col-md-5">
-        <div class="card shadow h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent Bid Type Changes</h5>
-                <small class="text-muted">Total {{ bid_history_count }}</small>
-            </div>
-            <div class="card-body p-0">
-                <ul class="list-group list-group-flush">
-                    {% for h in recent_bid_history %}
-                        <li class="list-group-item">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <strong>{{ h.project.name }}</strong><br>
-                                    <small class="text-muted">
-                                        {{ h.previous_bid_type|default:"(none)" }} → {{ h.new_bid_type }}
-                                    </small>
-                                </div>
-                                <div class="text-end">
-                                    <small class="text-muted">{{ h.changed_at|date:"Y-m-d H:i" }}</small>
-                                </div>
-                            </div>
-                            {% if h.notes %}
-                                <div class="mt-2"><small>{{ h.notes }}</small></div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Internal ID</th>
+                        <th>Project Name</th>
+                        <th>Client</th>
+                        <th>Bid Type</th>
+                        <th>Date Received</th>
+                        <th>Status</th>
+                        <th>Country</th>
+                        <th>Region</th>
+                        <th class="text-center">Financial</th>
+                        <th class="text-end">Changes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in projects %}
+                    <tr>
+                        <td class="text-nowrap">{{ p.internal_id }}</td>
+                        <td>{{ p.name }}</td>
+                        <td>{% if p.client %}{{ p.client.name }}{% else %}-{% endif %}</td>
+                        <td>{{ p.get_bid_type_display }}</td>
+                        <td class="text-nowrap">{% if p.date_received %}{{ p.date_received|date:"Y-m-d" }}{% else %}-{% endif %}</td>
+
+                        <!-- Status column: pill button that opens the modal for Won/Lost -->
+                        <td>
+                          {% if p.status == 'Won' %}
+                            <button type="button"
+                                    class="btn btn-sm btn-success status-pill"
+                                    data-project-id="{{ p.project_id }}"
+                                    data-status="Won"
+                                    data-start="{% if p.contract and p.contract.actual_start %}{{ p.contract.actual_start|date:'Y-m-d' }}{% endif %}"
+                                    data-end="{% if p.contract and p.contract.actual_end %}{{ p.contract.actual_end|date:'Y-m-d' }}{% endif %}">
+                              <i class="bi bi-check-circle me-1"></i>Won
+                            </button>
+                          {% elif p.status == 'Lost' %}
+                            <button type="button"
+                                    class="btn btn-sm btn-danger status-pill"
+                                    data-project-id="{{ p.project_id }}"
+                                    data-status="Lost"
+                                    data-start="{% if p.contract and p.contract.actual_start %}{{ p.contract.actual_start|date:'Y-m-d' }}{% endif %}"
+                                    data-end="{% if p.contract and p.contract.actual_end %}{{ p.contract.actual_end|date:'Y-m-d' }}{% endif %}">
+                              <i class="bi bi-x-circle me-1"></i>Lost
+                            </button>
+                          {% else %}
+                            {{ p.get_status_display }}
+                          {% endif %}
+                        </td>
+
+                        <td class="text-nowrap">{{ p.country }}</td>
+                        <td>{{ p.get_region_display }}</td>
+
+                        <!-- Financial column (centered) -->
+                        <td class="text-center">
+                            {% if not p.has_financial %}
+                                <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="btn btn-sm btn-outline-success" title="Add Financial">
+                                    <i class="bi bi-plus-circle"></i> Add
+                                </a>
+                            {% else %}
+                                <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="btn btn-sm btn-outline-secondary" title="View / Edit Financial">
+                                    <i class="bi bi-wallet-fill"></i> View
+                                </a>
                             {% endif %}
-                        </li>
+                        </td>
+
+                        <!-- Changes column (Edit) placed as the last/right-most column -->
+                        <td class="text-end">
+                            <a href="{% url 'market_analysis:project_edit' project_id=p.project_id %}" class="btn btn-sm btn-outline-primary" title="Edit Project">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
                     {% empty %}
-                        <li class="list-group-item text-center text-muted">No bid history yet.</li>
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-4">No projects found.</td>
+                    </tr>
                     {% endfor %}
-                </ul>
-            </div>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
+
+<!-- Contract modal (single modal reused) -->
+<div class="modal fade" id="contractModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="contractForm" method="post" action="{% url 'market_analysis:project_contract' project_id=0 %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-briefcase me-2"></i>Set Contract Dates</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" id="contractProjectId" name="project_id" value="">
+
+          <div class="mb-3">
+            <label class="form-label small">Actual Start</label>
+            <input type="date" class="form-control form-control-sm" id="actualStart" name="actual_start" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small">Actual End</label>
+            <input type="date" class="form-control form-control-sm" id="actualEnd" name="actual_end" />
+          </div>
+
+          <div class="mb-3" id="competitorField" style="display:none;">
+            <label class="form-label small">Competitor (if Lost)</label>
+            <select name="competitor" id="competitorSelect" class="form-select form-select-sm">
+              <option value="">Unknown / Not specified</option>
+              {% for code,label in competitor_choices %}
+                <option value="{{ code }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3 text-muted small">
+            Actual duration (days): <span id="computedDuration" class="fw-semibold">-</span>
+          </div>
+
+          <div class="mb-0 text-muted small">
+            Actual duration will be calculated automatically when you save. You can preview it above.
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const contractModalEl = document.getElementById('contractModal');
+    const contractForm = document.getElementById('contractForm');
+    const modal = new bootstrap.Modal(contractModalEl, {backdrop: 'static'});
+    const defaultAction = contractForm.getAttribute('action'); // contains project_id=0 placeholder
+
+    const actualStartInput = document.getElementById('actualStart');
+    const actualEndInput = document.getElementById('actualEnd');
+    const computedDurationEl = document.getElementById('computedDuration');
+
+    function parseDateISO(value) {
+        if (!value) return null;
+        // value expected "YYYY-MM-DD"
+        const parts = value.split('-');
+        if (parts.length !== 3) return null;
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        return new Date(Date.UTC(y, m, d));
+    }
+
+    function computeAndShowDuration() {
+        const s = actualStartInput.value;
+        const e = actualEndInput.value;
+        const start = parseDateISO(s);
+        const end = parseDateISO(e);
+        if (start && end) {
+            // compute difference in days using UTC to avoid DST issues
+            const diffMs = end - start;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            if (isNaN(diffDays) || diffDays < 0) {
+                computedDurationEl.textContent = '-';
+            } else {
+                computedDurationEl.textContent = diffDays;
+            }
+        } else {
+            computedDurationEl.textContent = '-';
+        }
+    }
+
+    // update preview when user types/selects dates
+    if (actualStartInput) actualStartInput.addEventListener('change', computeAndShowDuration);
+    if (actualEndInput) actualEndInput.addEventListener('change', computeAndShowDuration);
+
+    document.querySelectorAll('.status-pill').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const projectId = this.dataset.projectId;
+            const status = this.dataset.status;
+            const start = this.dataset.start || '';
+            const end = this.dataset.end || '';
+
+            // populate form fields
+            actualStartInput.value = start;
+            actualEndInput.value = end;
+            document.getElementById('contractProjectId').value = projectId;
+
+            // show competitor field only when status is Lost
+            const competitorField = document.getElementById('competitorField');
+            if (status === 'Lost') {
+                competitorField.style.display = '';
+            } else {
+                competitorField.style.display = 'none';
+                // clear selection
+                document.getElementById('competitorSelect').value = '';
+            }
+
+            // update form action to replace project_id=0 with real id
+            const newAction = defaultAction.replace('/0/', '/' + projectId + '/');
+            contractForm.setAttribute('action', newAction);
+
+            // compute duration preview for the values supplied
+            computeAndShowDuration();
+
+            modal.show();
+        });
+    });
+
+    // optional: compute duration on modal show (if using other triggers)
+    contractModalEl.addEventListener('shown.bs.modal', computeAndShowDuration);
+});
+</script>
 {% endblock %}

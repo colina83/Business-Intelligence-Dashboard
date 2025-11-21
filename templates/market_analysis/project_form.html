@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Add Project - Market Analysis{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white">
+      <h3 class="mb-0"><i class="bi bi-folder-plus me-2"></i>Add Project</h3>
+    </div>
+
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Bid Type</label>
+            {{ form.bid_type }}
+            {% if form.bid_type.errors %}<div class="text-danger small">{{ form.bid_type.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Client</label>
+            {{ form.client }}
+            {% if form.client.errors %}<div class="text-danger small">{{ form.client.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Region</label>
+            {{ form.region }}
+            {% if form.region.errors %}<div class="text-danger small">{{ form.region.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Project Name</label>
+            {{ form.name }}
+            {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Country</label>
+            {{ form.country }}
+            {% if form.country.errors %}<div class="text-danger small">{{ form.country.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Date Received</label>
+            {{ form.date_received }}
+            {% if form.date_received.errors %}<div class="text-danger small">{{ form.date_received.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Status</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-4" id="submission-date-col" style="display:none;">
+            <label class="form-label">Submission Date</label>
+            {{ form.submission_date }}
+            {% if form.submission_date.errors %}<div class="text-danger small">{{ form.submission_date.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="d-flex justify-content-between">
+          <a href="{% url 'market_analysis:dashboard' %}" class="btn btn-outline-secondary">
+            Cancel
+          </a>
+          <button type="submit" class="btn btn-primary btn-lg">
+            Create Project
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Technology modal (appears after successful project creation) -->
+{% if tech_formset and project %}
+<div class="modal fade" id="techModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{% url 'market_analysis:project_add_technology' project_id=project.project_id %}">
+        {% csrf_token %}
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title"><i class="bi bi-tools me-2"></i>Add Technologies for {{ project.name }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          {{ tech_formset.management_form }}
+          <div id="tech-forms">
+            {% for form in tech_formset.forms %}
+              <div class="tech-entry card mb-3 p-3" data-form-index="{{ forloop.counter0 }}">
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-4">
+                    <label class="form-label">Survey Type</label>
+                    {{ form.survey_type }}
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Technology</label>
+                    {{ form.technology }}
+                  </div>
+                  <div class="col-md-2 obn-field" style="display:none;">
+                    <label class="form-label">OBN Technique</label>
+                    {{ form.obn_technique }}
+                  </div>
+                  <div class="col-md-2 obn-field" style="display:none;">
+                    <label class="form-label">OBN System</label>
+                    {{ form.obn_system }}
+                  </div>
+                  <div class="col-md-3 streamer-field" style="display:none;">
+                    <label class="form-label">Streamer</label>
+                    {{ form.streamer }}
+                  </div>
+                  <div class="col-md-1 text-end">
+                    {% if tech_formset.can_delete %}
+                      <label class="form-label d-block">&nbsp;</label>
+                      {{ form.DELETE }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <!-- empty form template for JS cloning -->
+          <div id="empty-form-template" class="d-none">
+            {{ tech_formset.empty_form.as_p|safe }}
+          </div>
+
+          <div class="text-end">
+            <button type="button" id="add-tech-btn" class="btn btn-outline-primary">
+              <i class="bi bi-plus-lg"></i> Add another technology
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <a href="{% url 'market_analysis:dashboard' %}" class="btn btn-outline-secondary">Skip</a>
+          <button type="submit" class="btn btn-info text-white">Save Technologies</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Submission date logic (project status)
+    const statusEl = document.querySelector('[name="status"]');
+    const submissionCol = document.getElementById('submission-date-col');
+    const submissionInput = document.querySelector('[name="submission_date"]');
+
+    function refreshSubmissionVisibility() {
+        if (!statusEl) return;
+        const status = statusEl.value;
+        if (status === 'Ongoing') {
+            submissionCol.style.display = 'none';
+            if (submissionInput) submissionInput.value = '';
+            if (submissionInput) submissionInput.readOnly = false;
+        } else if (status === 'Submitted') {
+            submissionCol.style.display = 'block';
+            if (submissionInput) submissionInput.readOnly = false;
+        } else if (status === 'Won' || status === 'Lost') {
+            submissionCol.style.display = 'block';
+            if (submissionInput) submissionInput.readOnly = true;
+        } else {
+            submissionCol.style.display = 'none';
+            if (submissionInput) submissionInput.readOnly = false;
+        }
+    }
+
+    if (statusEl) {
+        statusEl.addEventListener('change', refreshSubmissionVisibility);
+        refreshSubmissionVisibility();
+    }
+
+    // Technology modal formset handling
+    {% if tech_formset and project %}
+    const techModal = new bootstrap.Modal(document.getElementById('techModal'), {backdrop: 'static'});
+    techModal.show();
+
+    const formContainer = document.getElementById('tech-forms');
+    const emptyTemplate = document.getElementById('empty-form-template').innerHTML;
+    const totalFormsInput = document.querySelector('#id_tech-TOTAL_FORMS');
+    const maxFormsInput = document.querySelector('#id_tech-MAX_NUM_FORMS');
+
+    function bindFormControls(formEl) {
+        const survey = formEl.querySelector('[name$="-survey_type"]');
+        const tech = formEl.querySelector('[name$="-technology"]');
+        const obnFields = formEl.querySelectorAll('.obn-field');
+        const streamerFields = formEl.querySelectorAll('.streamer-field');
+
+        function refreshPerForm() {
+            const surveyVal = survey ? survey.value : null;
+            // determine selected tech (select element value)
+            const techVal = tech ? tech.value : null;
+            const isHybrid = (surveyVal === 'HYBD');
+            // show/hide based on selected technology value(s)
+            if (techVal === 'OBN' || isHybrid) {
+                obnFields.forEach(n => n.style.display = '');
+            } else {
+                obnFields.forEach(n => n.style.display = 'none');
+            }
+            if (techVal === 'STR' || isHybrid) {
+                streamerFields.forEach(n => n.style.display = '');
+            } else {
+                streamerFields.forEach(n => n.style.display = 'none');
+            }
+        }
+
+        if (survey) survey.addEventListener('change', refreshPerForm);
+        if (tech) tech.addEventListener('change', refreshPerForm);
+        // initial refresh
+        refreshPerForm();
+    }
+
+    // attach to existing forms
+    const existingForms = Array.from(formContainer.querySelectorAll('.tech-entry'));
+    existingForms.forEach(f => bindFormControls(f));
+
+    // Add another functionality
+    document.getElementById('add-tech-btn').addEventListener('click', function () {
+        let total = parseInt(totalFormsInput.value, 10);
+        const newHtml = emptyTemplate.replace(/__prefix__/g, total);
+        // create wrapper div to match markup used above
+        const wrapper = document.createElement('div');
+        wrapper.className = 'tech-entry card mb-3 p-3';
+        wrapper.dataset.formIndex = total;
+        // convert empty_form.as_p into the same row layout expected
+        // We'll insert the raw HTML and then adapt look & feel via bindFormControls
+        wrapper.innerHTML = '<div class="row g-2 align-items-end">' + newHtml + '</div>';
+        formContainer.appendChild(wrapper);
+        // increment TOTAL_FORMS
+        totalFormsInput.value = total + 1;
+        // bind events for new form
+        bindFormControls(wrapper);
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}
