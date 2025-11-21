@@ -10,6 +10,34 @@ DECIMAL_2 = Decimal("0.01")
 OVERHEAD_DAYRATE_DEFAULT = Decimal("21000.00")
 
 
+def _serialize_value_for_json(val):
+    """Helper to serialize common types for JSON snapshots."""
+    if val is None:
+        return None
+    if isinstance(val, Decimal):
+        return str(val)
+    if hasattr(val, "isoformat"):  # dates/datetimes
+        return val.isoformat()
+    # CountryField may provide a country object with .code
+    if hasattr(val, "code"):
+        return getattr(val, "code", str(val))
+    if isinstance(val, models.Model):
+        return str(val)
+    return val
+
+
+def _build_snapshot_from_instance(inst):
+    """Return dict of field-name -> serializable value for a model instance."""
+    data = {}
+    for f in inst._meta.fields:
+        name = f.name
+        try:
+            data[name] = _serialize_value_for_json(getattr(inst, name))
+        except Exception:
+            data[name] = None
+    return data
+
+
 class Client(models.Model):
     client_id = models.AutoField(primary_key=True, db_column='ClientID')
     name = models.CharField(max_length=255, db_column='Name')
@@ -34,12 +62,13 @@ class Project(models.Model):
     ]
 
     REGIONS = [
-        ('NA', 'North America'),
-        ('APAC', 'Asia Pacific'),
-        ('SA', 'South America'),
-        ('AAME', 'Africa and Middle East'),
-        ('WAF', 'West Africa'),
-        ('NWE', 'North West Europe'),
+        ('NSA', 'NSA'),
+        ('AMME', 'AMME'),
+        ('Asia', 'Asia'),
+        ('Australasia', 'Australasia'),
+        ('Europe', 'Europe'),
+        ('Global', 'Global'),
+     
     ]
 
     STATUS = [
@@ -51,13 +80,22 @@ class Project(models.Model):
         ('No Bid', 'No Bid')
     ]
 
+    STATUS_CODES = {
+        'Ongoing': 'ONG',
+        'Submitted': 'SUB',
+        'Won': 'WON',
+        'Lost': 'LST',
+        'Cancelled': 'CXL',
+        'No Bid': 'NBD',
+    }
+
     project_id = models.AutoField(primary_key=True, db_column='ProjectID')
     internal_id = models.CharField(max_length=200, db_column='InternalID', blank=True)
     bid_type = models.CharField(max_length=10, choices=BID_TYPE, db_column='BidType', default='BQ')
     client = models.ForeignKey(Client, on_delete=models.CASCADE, db_column='ClientID', related_name='projects', null=True, blank=True)
     name = models.CharField(max_length=255, db_column='Name')
     country = CountryField(db_column='Country')
-    region = models.CharField(max_length=10, choices=REGIONS, db_column='Region', null=True, blank=True)
+    region = models.CharField(max_length=12, choices=REGIONS, db_column='Region', null=True, blank=True)
     date_received = models.DateField(null=True, blank=True, db_column='DateReceived')
 
     # New status/date fields
@@ -72,11 +110,12 @@ class Project(models.Model):
         """
         Detect status and bid_type transitions:
         - Set submission/award/lost dates on relevant transitions (before saving so they persist)
-        - After saving, create BidTypeHistory and ProjectStatusHistory entries when there was a change.
-        - Also create unified ChangeLog entries.
-        - If project moves to 'Won', auto-create a ProjectContract record if one does not exist.
+        - Create a ProjectSnapshot (JSON) of the previous state when bid_type or status changes.
+        - Update internal_id to reflect new status (does not create new Project rows).
+        - After saving, create BidTypeHistory, ProjectStatusHistory and ChangeLog entries.
         """
         # fetch previous values if object exists
+        prev = None
         prev_bid = None
         prev_status = None
         if self.pk:
@@ -85,6 +124,7 @@ class Project(models.Model):
                 prev_bid = prev.bid_type
                 prev_status = prev.status
             except Project.DoesNotExist:
+                prev = None
                 prev_bid = None
                 prev_status = None
 
@@ -105,6 +145,54 @@ class Project(models.Model):
         if prev_status == 'Submitted' and self.status == 'Lost':
             if not self.lost_date:
                 self.lost_date = today
+
+        # If bid_type or status will change, create a ProjectSnapshot (of previous state)
+        try:
+            if prev is not None:
+                if prev_bid is not None and prev_bid != self.bid_type:
+                    ProjectSnapshot.objects.create(
+                        project=self,
+                        change_type='BID',
+                        snapshot=_build_snapshot_from_instance(prev),
+                        snapshot_name=(prev.internal_id or prev.name),
+                    )
+                if prev_status is not None and prev_status != self.status:
+                    ProjectSnapshot.objects.create(
+                        project=self,
+                        change_type='STATUS',
+                        snapshot=_build_snapshot_from_instance(prev),
+                        snapshot_name=(prev.internal_id or prev.name),
+                    )
+        except Exception:
+            # don't break the save flow on snapshot errors
+            pass
+
+        # Update internal_id to include STATUS code on status change (build before saving)
+        if prev_status is not None and prev_status != self.status:
+            try:
+                # build the base internal_id from current fields (date_received, bid_type, client, name, country)
+                ym = self.date_received.strftime("%Y%m") if self.date_received else ""
+                bid = (self.bid_type or "").upper()
+                client_name = ""
+                if self.client:
+                    try:
+                        client_name = (self.client.name or "").replace(" ", "").upper()
+                    except Exception:
+                        client_name = ""
+                proj3 = (self.name or "")[:3].upper()
+                country_code = getattr(self.country, "code", None) or (str(self.country) if self.country else "")
+
+                def sanitize(s: str) -> str:
+                    return "".join(ch for ch in (s or "") if ch.isalnum())
+
+                parts = [sanitize(ym), sanitize(bid), sanitize(client_name), sanitize(proj3), sanitize(country_code)]
+                status_code = self.STATUS_CODES.get(self.status, "".join(ch for ch in (self.status or "").upper()[:3] if ch.isalnum()))
+                if status_code:
+                    parts.append(sanitize(status_code))
+                self.internal_id = "-".join(part for part in parts if part)
+            except Exception:
+                # on failure leave internal_id unchanged
+                pass
 
         super().save(*args, **kwargs)
 
@@ -279,18 +367,18 @@ class ProjectTechnology(models.Model):
 
     TECHNOLOGY = [
         ('STR', 'Streamer'),
-        ('OBN', 'Ocean Bottom Node'),
+        ('OBN', 'OBN'),
         ('OTHER', 'Other')
     ]
 
     OBN_TECHNIQUE = [
-        ('NOAR', 'Node on a Rope'),
-        ('ROV', 'Remotely Operated Vehicle Deployed Nodes'),
-        ('DN', 'Drop Nodes')
+        ('NOAR', 'NOAR'),
+        ('ROV', 'ROV'),
+        ('DN', 'DN')
     ]
 
     OBN_SYSTEM = [
-        ('ZXPLR', 'ZXPLORE'),
+        ('ZXPLR', 'ZXPLR'),
         ('Z700', 'Z700'),
         ('MASS', 'MASS'),
         ('GPR300', 'GPR300'),
@@ -350,6 +438,35 @@ class ProjectContract(models.Model):
             except Exception:
                 self.actual_duration = None
         super().save(*args, **kwargs)
+
+
+class ProjectSnapshot(models.Model):
+    """
+    Snapshot of Project state BEFORE a change. Kept related to the same Project.
+    """
+    CHANGE_TYPES = [
+        ('BID', 'Bid type change'),
+        ('STATUS', 'Status change'),
+        ('OTHER', 'Other'),
+    ]
+
+    id = models.AutoField(primary_key=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, db_column='ProjectID', related_name='snapshots')
+    change_type = models.CharField(max_length=16, choices=CHANGE_TYPES)
+    snapshot = models.JSONField()
+    snapshot_name = models.CharField(max_length=200, null=True, blank=True, help_text='Previous internal_id or name')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    notes = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'project_snapshots'
+        verbose_name = 'Project Snapshot'
+        verbose_name_plural = 'Project Snapshots'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Snapshot for {self.project.name} ({self.change_type}) at {self.created_at}"
 
 
 class ChangeLog(models.Model):
@@ -590,5 +707,41 @@ class Financial(models.Model):
         self.net_day = self._quantize_money(net_day)
 
         super().save(*args, **kwargs)
+
+
+class Competitor(models.Model):
+    """
+    Competitor that won a bid when a Project is marked as Lost.
+    Stored related to the same Project (not creating new Project rows).
+    Fixed list of competitor names (choices).
+    Allow blank/null if the winning competitor is unknown.
+    """
+    COMPETITOR_CHOICES = [
+        ('SAE', 'SAE'),
+        ('PXGEO', 'PXGEO'),
+        ('VIRIDIEN', 'Viridien'),
+        ('SLB', 'SLB'),
+        ('SHEARWATER', 'Shearwater'),
+        ('BGP', 'BGP'),
+        ('COSL', 'COSL'),
+    ]
+
+    id = models.AutoField(primary_key=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, db_column='ProjectID', related_name='competitors')
+    name = models.CharField(max_length=50, choices=COMPETITOR_CHOICES, db_column='Name', null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        db_table = 'competitors'
+        verbose_name = 'Competitor'
+        verbose_name_plural = 'Competitors'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        # show human readable label for choice or fallback to "Unknown"
+        label = self.get_name_display() if self.name else "Unknown"
+        return f"{label} ({self.project.internal_id or self.project.name})"
 
 
