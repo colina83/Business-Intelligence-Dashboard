@@ -9,5 +9,6 @@ urlpatterns = [
     path('projects/<int:project_id>/edit/', views.edit_project, name='project_edit'),
     path('projects/<int:project_id>/technology/add/', views.add_technology, name='project_add_technology'),
     path('projects/<int:project_id>/financial/', views.add_or_edit_financial, name='project_add_financial'),
-    path('projects/<int:project_id>/contract/', views.update_contract, name='project_contract'),  # new endpoint for modal
+    path('projects/<int:project_id>/contract/', views.update_contract, name='project_contract'),  # contract modal endpoint
+    path('projects/<int:project_id>/scope/', views.manage_scope, name='project_scope'),  # new scope view
 ]

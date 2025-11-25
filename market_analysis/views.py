@@ -1,43 +1,90 @@
+from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Exists, OuterRef, Prefetch
+from django.forms import ModelForm, NumberInput, Select
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .forms import ProjectForm, ProjectTechnologyFormSet, FinancialForm, ProjectEditForm
 from .models import (
     Project, Client, ProjectTechnology, Financial, BidTypeHistory,
-    ProjectContract, Competitor
+    ProjectContract, Competitor, ScopeOfWork, ProjectSnapshot,
+    ProjectStatusHistory, ChangeLog
 )
+
+
+class ScopeOfWorkForm(ModelForm):
+    class Meta:
+        model = ScopeOfWork
+        # keep fields in sync with the model
+        fields = (
+            'total_rx_locs', 'total_sx_locs', 'max_active_spread', 'crew_node_count',
+            'node_area', 'source_area', 'node_grid_IL', 'node_grid_XL',
+            'source_grid_IL', 'source_grid_XL', 'water_depth_min', 'water_depth_max',
+            'node_category'
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # default compact class for all fields
+        for name, field in self.fields.items():
+            field.widget.attrs.setdefault('class', 'form-control form-control-sm')
+
+        # make the IL/XL inputs small for node/source grids
+        small_inputs = ['node_grid_IL', 'node_grid_XL', 'source_grid_IL', 'source_grid_XL']
+        for fname in small_inputs:
+            if fname in self.fields:
+                self.fields[fname].widget.attrs.update({
+                    'style': 'width:110px; display: inline-block;',
+                    'inputmode': 'numeric',
+                    'placeholder': self.fields[fname].label or ''
+                })
 
 
 @login_required
 def dashboard(request):
     """
     Dashboard showing summary cards and a single Projects table.
-    Added select_related('contract') and prefetch competitors so the template can
-    render status pills and the contract modal.
-    Pass competitor choices for the modal select.
+    Prefetch competitors and annotate presence of Financial and ScopeOfWork.
+    Pass STATUS choices for client-side rendering of the status-select in modal.
     """
     projects_count = Project.objects.count()
     clients_count = Client.objects.count()
     technologies_count = ProjectTechnology.objects.count()
     financials_count = Financial.objects.count()
 
-    # Prefetch competitors; select_related contract for optional contract fields
-    projects = (
+    projects_qs = (
         Project.objects.select_related('client', 'contract')
         .prefetch_related(Prefetch('competitors'))
-        .annotate(has_financial=Exists(Financial.objects.filter(project=OuterRef('pk'))))
+        .annotate(
+            has_financial=Exists(Financial.objects.filter(project=OuterRef('pk'))),
+            has_scope=Exists(ScopeOfWork.objects.filter(project=OuterRef('pk')))
+        )
         .order_by('-date_received', '-project_id')
     )
+
+    # Pagination: 20 items per page
+    paginator = Paginator(projects_qs, 20)
+    page = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
 
     context = {
         'projects_count': projects_count,
         'clients_count': clients_count,
         'technologies_count': technologies_count,
         'financials_count': financials_count,
-        'projects': projects,
+        'projects': projects_qs,             # full queryset (kept for counts/exports if needed)
+        'page_obj': page_obj,                # current page
+        'paginator': paginator,
         'competitor_choices': getattr(Competitor, 'COMPETITOR_CHOICES', []),
+        'status_choices': Project.STATUS,  # list of (key, label)
     }
     return render(request, 'market_analysis/dashboard.html', context)
 
@@ -45,16 +92,13 @@ def dashboard(request):
 @login_required
 def create_project(request):
     """
-    Create project and open a modal allowing the user to add multiple technologies
-    for the created project. Modal carries an inline formset that can submit
-    many ProjectTechnology rows in a single POST.
+    Create project and (optionally) open the technology modal afterwards.
     """
     if request.method == 'POST':
         form = ProjectForm(request.POST)
         if form.is_valid():
             project = form.save()
             messages.success(request, 'Project created successfully. Add technology now.')
-            # Provide an empty inline formset instance bound to the created project
             tech_formset = ProjectTechnologyFormSet(instance=project, prefix='tech')
             return render(request, 'market_analysis/project_form.html', {
                 'form': ProjectForm(),
@@ -75,8 +119,7 @@ def create_project(request):
 @login_required
 def add_technology(request, project_id):
     """
-    Handle POST of the inline formset (multiple technologies) from modal or
-    standalone page. Each valid form in formset creates/updates a ProjectTechnology.
+    Handle POST of the inline formset (multiple technologies).
     """
     project = get_object_or_404(Project, pk=project_id)
 
@@ -105,11 +148,11 @@ def add_technology(request, project_id):
 @login_required
 def add_or_edit_financial(request, project_id):
     """
-    Create or edit Financial record for a project. Centered, compact Bootstrap form.
+    Create or edit Financial record for a project.
     """
     project = get_object_or_404(Project, pk=project_id)
     try:
-        financial = project.financials  # OneToOne relation: may raise DoesNotExist
+        financial = project.financials
     except Financial.DoesNotExist:
         financial = None
 
@@ -126,7 +169,6 @@ def add_or_edit_financial(request, project_id):
     else:
         form = FinancialForm(instance=financial)
 
-    # Pass computed values (if present) to template so they can be shown read-only
     computed = None
     if financial:
         computed = {
@@ -155,11 +197,9 @@ def add_or_edit_financial(request, project_id):
 @login_required
 def edit_project(request, project_id):
     """
-    Edit project (web form). Preserves snapshots/change logs and records the user
-    who made the changes. If status becomes 'Lost' allows entering competitor that won.
+    Edit project. Create snapshots and attach changed_by where possible.
     """
     project = get_object_or_404(Project, pk=project_id)
-    # fetch previous copy for comparison
     try:
         prev = Project.objects.get(pk=project.pk)
     except Project.DoesNotExist:
@@ -168,11 +208,9 @@ def edit_project(request, project_id):
     if request.method == 'POST':
         form = ProjectEditForm(request.POST, instance=project)
         if form.is_valid():
-            # detect changes
             new_bid = form.cleaned_data.get('bid_type')
             new_status = form.cleaned_data.get('status')
 
-            # create snapshots with created_by=request.user BEFORE save so snapshot stores previous values
             try:
                 if prev:
                     if prev.bid_type != new_bid:
@@ -192,13 +230,10 @@ def edit_project(request, project_id):
                             created_by=request.user
                         )
             except Exception:
-                # avoid blocking save on snapshot failure
                 pass
 
-            # save Project (model.save will set dates, create BidTypeHistory/ProjectStatusHistory and ChangeLog rows)
             project = form.save()
 
-            # attach changed_by to latest ChangeLog entries created by the save
             try:
                 if prev and prev.status != project.status:
                     cl = ChangeLog.objects.filter(project=project, change_type='STATUS', new_value=project.status, changed_by__isnull=True).order_by('-changed_at').first()
@@ -213,11 +248,9 @@ def edit_project(request, project_id):
             except Exception:
                 pass
 
-            # If project became Lost, optionally record competitor
             competitor_name = form.cleaned_data.get('competitor_name')
             if project.status == 'Lost' and competitor_name:
                 try:
-                    # create competitor record (if not duplicate)
                     Competitor.objects.create(
                         project=project,
                         name=competitor_name,
@@ -230,7 +263,6 @@ def edit_project(request, project_id):
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
-        # pre-fill competitor_name if a recent competitor exists
         initial = {}
         recent_comp = project.competitors.order_by('-created_at').first()
         if recent_comp:
@@ -246,21 +278,25 @@ def edit_project(request, project_id):
 @login_required
 def update_contract(request, project_id):
     """
-    Accept POST from dashboard modal to set ProjectContract.actual_start/actual_end
-    (and automatically compute actual_duration via ProjectContract.save()).
-    If project.status == 'Lost' a competitor choice may also be submitted and will
-    create a Competitor row (can be empty/unknown).
+    Accept POST from dashboard modal to:
+      - optionally change project.status (new_status)
+      - set submission/award/lost dates when provided
+      - update ProjectContract.actual_start/actual_end (and compute duration)
+      - optionally create Competitor when status becomes Lost (or is Lost)
     """
     project = get_object_or_404(Project, pk=project_id)
     contract, _ = ProjectContract.objects.get_or_create(project=project)
 
     if request.method == 'POST':
-        actual_start = request.POST.get('actual_start')  # expected YYYY-MM-DD or empty
+        # Dates from form (may be empty)
+        actual_start = request.POST.get('actual_start')
         actual_end = request.POST.get('actual_end')
-        competitor_choice = request.POST.get('competitor')  # '' or choice key
+        submission_date = request.POST.get('submission_date')
+        award_date = request.POST.get('award_date')
+        lost_date = request.POST.get('lost_date')
+        competitor_choice = request.POST.get('competitor')
+        new_status = request.POST.get('new_status')  # optional
 
-        # parse dates safely
-        from datetime import datetime
         def parse_date(s):
             if not s:
                 return None
@@ -269,18 +305,68 @@ def update_contract(request, project_id):
             except Exception:
                 return None
 
+        # If a new_status was chosen, set it (and set any explicit date fields provided)
+        if new_status:
+            # apply provided date fields before saving project to persist them
+            if new_status == 'Submitted' and submission_date:
+                project.submission_date = parse_date(submission_date)
+            if new_status == 'Won' and award_date:
+                project.award_date = parse_date(award_date)
+            if new_status == 'Lost' and lost_date:
+                project.lost_date = parse_date(lost_date)
+
+            # update status (this triggers Project.save logic to create histories/snapshots)
+            project.status = new_status
+            try:
+                project.save()
+            except Exception:
+                # don't crash; continue to update contract/competitor
+                pass
+
+        # Update contract dates (always allowed)
         contract.actual_start = parse_date(actual_start)
         contract.actual_end = parse_date(actual_end)
         contract.save()
 
-        # if lost, optionally create competitor record (allow blank/unknown)
-        if project.status == 'Lost':
-            if competitor_choice is not None:
-                try:
-                    # empty string will store name='' (allowed); include created_by for audit
-                    Competitor.objects.create(project=project, name=competitor_choice or None, created_by=request.user)
-                except Exception:
-                    pass
+        # If project is Lost (either newly set or already lost), optionally record competitor
+        if (new_status == 'Lost' or project.status == 'Lost') and competitor_choice is not None:
+            try:
+                Competitor.objects.create(project=project, name=competitor_choice or None, created_by=request.user)
+            except Exception:
+                pass
 
-        messages.success(request, 'Contract / competitor saved.')
+        messages.success(request, 'Saved status/contract/competitor changes.')
     return redirect('market_analysis:dashboard')
+
+
+@login_required
+def manage_scope(request, project_id):
+    """
+    View / add / edit ScopeOfWork for a project.
+    - If a ScopeOfWork exists for the project, show form pre-filled (edit).
+    - If none exists, present an empty form to create one.
+    After save redirect back to dashboard.
+    """
+    project = get_object_or_404(Project, pk=project_id)
+    scope = project.scopes_of_work.order_by('-created_at').first()
+
+    if request.method == 'POST':
+        form = ScopeOfWorkForm(request.POST, instance=scope)
+        if form.is_valid():
+            inst = form.save(commit=False)
+            inst.project = project
+            if scope is None:
+                inst.created_by = request.user
+            inst.save()
+            messages.success(request, 'Scope of Work saved.')
+            return redirect('market_analysis:dashboard')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = ScopeOfWorkForm(instance=scope)
+
+    return render(request, 'market_analysis/scope_form.html', {
+        'form': form,
+        'project': project,
+        'scope': scope,
+    })
