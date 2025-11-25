@@ -55,189 +55,216 @@
 </div>
 
 <div class="card shadow-sm">
-    <div class="card-header bg-light">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Projects</h5>
-            <small class="text-muted">Showing latest projects</small>
-        </div>
-    </div>
+  <div class="card-header bg-light">
+    <ul class="nav nav-tabs card-header-tabs" id="dashboardTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="projects-tab" data-bs-toggle="tab" data-bs-target="#projects-pane" type="button" role="tab" aria-controls="projects-pane" aria-selected="true">
+          Projects
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="cycle-tab" data-bs-toggle="tab" data-bs-target="#cycle-pane" type="button" role="tab" aria-controls="cycle-pane" aria-selected="false">
+          Cycle Time
+        </button>
+      </li>
+    </ul>
+  </div>
 
-    <div class="card-body p-0">
-        <style>
-          /* slightly smaller text for project table */
-          .projects-table { font-size: 0.85rem; }
-          /* scrollable area for long tables */
-          .projects-table-wrapper { max-height: 520px; overflow: auto; }
-        </style>
+  <div class="card-body p-0">
+    <style>
+      /* slightly smaller text for project table */
+      .projects-table { font-size: 0.85rem; }
+      /* scrollable area for long tables */
+      .projects-table-wrapper { max-height: 520px; overflow: auto; }
+      .metrics-table th, .metrics-table td { white-space: nowrap; }
+    </style>
 
+    <div class="tab-content">
+      <!-- Projects tab (original table, cycle column removed) -->
+      <div class="tab-pane fade show active" id="projects-pane" role="tabpanel" aria-labelledby="projects-tab">
         <div class="projects-table-wrapper">
           <table class="table table-striped mb-0 align-middle table-sm projects-table">
-                 <thead class="table-light">
-                    <tr>
-                        <th>Internal ID</th>
-                        <th>Project Name</th>
-                        <th>Client</th>
-                        <th>Bid Type</th>
-                        <th>Date Received</th>
-                        <th>Country</th>
-                        <th>Region</th>
-                        <th>Status</th>
-                        <th class="text-center">SoW</th>
-                        <th class="text-center">P&amp;L</th>
-                        <th class="text-end">Edit</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in page_obj.object_list %}
-                    <tr>
-                        <td class="text-nowrap">{{ p.internal_id }}</td>
-                        <td>{{ p.name }}</td>
-                        <td>{% if p.client %}{{ p.client.name }}{% else %}-{% endif %}</td>
-                        <td>{{ p.get_bid_type_display }}</td>
-                        <td class="text-nowrap">{% if p.date_received %}{{ p.date_received|date:"Y-m-d" }}{% else %}-{% endif %}</td>
+            <thead class="table-light">
+              <tr>
+                <th>Internal ID</th>
+                <th>Project Name</th>
+                <th>Client</th>
+                <th>Bid Type</th>
+                <th>Date Received</th>
+                <th>Country</th>
+                <th>Region</th>
+                <th>Status</th>
+                <th class="text-center">SoW</th>
+                <th class="text-center">P&amp;L</th>
+                <th class="text-end">Edit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in page_obj.object_list %}
+              <tr>
+                <td class="text-nowrap">{{ p.internal_id }}</td>
+                <td>{{ p.name }}</td>
+                <td>{% if p.client %}{{ p.client.name }}{% else %}-{% endif %}</td>
+                <td>{{ p.get_bid_type_display }}</td>
+                <td class="text-nowrap">{% if p.date_received %}{{ p.date_received|date:"Y-m-d" }}{% else %}-{% endif %}</td>
+                <td class="text-nowrap">{{ p.country }}</td>
+                <td>{{ p.get_region_display }}</td>
 
-                        <td class="text-nowrap">{{ p.country }}</td>
-                        <td>{{ p.get_region_display }}</td>
+                <td>
+                  {% if p.status == 'Won' %}
+                    <button type="button" class="btn btn-sm btn-success status-pill"
+                            data-project-id="{{ p.project_id }}" data-status="Won"
+                            data-start="{% if p.contract and p.contract.actual_start %}{{ p.contract.actual_start|date:'Y-m-d' }}{% endif %}"
+                            data-end="{% if p.contract and p.contract.actual_end %}{{ p.contract.actual_end|date:'Y-m-d' }}{% endif %}"
+                            data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}"
+                            data-contract="{% if p.contract and p.contract.contract_date %}{{ p.contract.contract_date|date:'Y-m-d' }}{% endif %}"
+                            data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
+                            data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}">
+                      <i class="bi bi-check-circle me-1"></i>Won
+                    </button>
 
-                        <!-- Status column: Ongoing (blue), Submitted (orange), Won (green), Lost (red) -->
-                        <td>
-                          {% if p.status == 'Won' %}
-                            <button type="button"
-                                    class="btn btn-sm btn-success status-pill"
-                                    data-project-id="{{ p.project_id }}"
-                                    data-status="Won"
-                                    data-start="{% if p.contract and p.contract.actual_start %}{{ p.contract.actual_start|date:'Y-m-d' }}{% endif %}"
-                                    data-end="{% if p.contract and p.contract.actual_end %}{{ p.contract.actual_end|date:'Y-m-d' }}{% endif %}"
-                                    data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}"
-                                    data-contract="{% if p.contract and p.contract.contract_date %}{{ p.contract.contract_date|date:'Y-m-d' }}{% endif %}"
-                                    data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
-                                    data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}">
-                              <i class="bi bi-check-circle me-1"></i>Won
-                            </button>
+                  {% elif p.status == 'Lost' %}
+                    <button type="button" class="btn btn-sm btn-danger status-pill"
+                            data-project-id="{{ p.project_id }}" data-status="Lost"
+                            data-start="{% if p.contract and p.contract.actual_start %}{{ p.contract.actual_start|date:'Y-m-d' }}{% endif %}"
+                            data-end="{% if p.contract and p.contract.actual_end %}{{ p.contract.actual_end|date:'Y-m-d' }}{% endif %}"
+                            data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}"
+                            data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
+                            data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}">
+                      <i class="bi bi-x-circle me-1"></i>Lost
+                    </button>
 
-                          {% elif p.status == 'Lost' %}
-                            <button type="button"
-                                    class="btn btn-sm btn-danger status-pill"
-                                    data-project-id="{{ p.project_id }}"
-                                    data-status="Lost"
-                                    data-start="{% if p.contract and p.contract.actual_start %}{{ p.contract.actual_start|date:'Y-m-d' }}{% endif %}"
-                                    data-end="{% if p.contract and p.contract.actual_end %}{{ p.contract.actual_end|date:'Y-m-d' }}{% endif %}"
-                                    data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}"
-                                    data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
-                                    data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}">
-                              <i class="bi bi-x-circle me-1"></i>Lost
-                            </button>
+                  {% elif p.status == 'Submitted' %}
+                    <button type="button" class="btn btn-sm btn-warning status-pill"
+                            data-project-id="{{ p.project_id }}" data-status="Submitted"
+                            data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
+                            data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}"
+                            data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}">
+                      <i class="bi bi-hourglass-split me-1"></i>Submitted
+                    </button>
 
-                          {% elif p.status == 'Submitted' %}
-                            <button type="button"
-                                    class="btn btn-sm btn-warning status-pill"
-                                    data-project-id="{{ p.project_id }}"
-                                    data-status="Submitted"
-                                    data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
-                                    data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}"
-                                    data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}">
-                              <i class="bi bi-hourglass-split me-1"></i>Submitted
-                            </button>
+                  {% elif p.status == 'Ongoing' %}
+                    <button type="button" class="btn btn-sm btn-primary status-pill"
+                            data-project-id="{{ p.project_id }}" data-status="Ongoing"
+                            data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}">
+                      <i class="bi bi-play-circle me-1"></i>Ongoing
+                    </button>
+                  {% else %}
+                    {{ p.get_status_display }}
+                  {% endif %}
+                </td>
 
-                          {% elif p.status == 'Ongoing' %}
-                            <button type="button"
-                                    class="btn btn-sm btn-primary status-pill"
-                                    data-project-id="{{ p.project_id }}"
-                                    data-status="Ongoing"
-                                    data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}">
-                              <i class="bi bi-play-circle me-1"></i>Ongoing
-                            </button>
+                <td>
+                  {% if p.has_scope %}
+                    <a href="{% url 'market_analysis:project_scope' project_id=p.project_id %}" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-eye me-1"></i>View
+                    </a>
+                  {% else %}
+                    <a href="{% url 'market_analysis:project_scope' project_id=p.project_id %}" class="btn btn-sm btn-outline-success">
+                      <i class="bi bi-plus-circle me-1"></i>Add
+                    </a>
+                  {% endif %}
+                </td>
 
-                          {% else %}
-                            {{ p.get_status_display }}
-                          {% endif %}
-                        </td>
+                <td class="text-center">
+                  {% if not p.has_financial %}
+                    <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="btn btn-sm btn-outline-success" title="Add P&L">
+                      <i class="bi bi-plus-circle"></i> Add
+                    </a>
+                  {% else %}
+                    <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="btn btn-sm btn-outline-secondary" title="View / Edit P&L">
+                      <i class="bi bi-wallet-fill"></i> View
+                    </a>
+                  {% endif %}
+                </td>
 
-                        <!-- Scope of Work column -->
-                        <td>
-                          {% if p.has_scope %}
-                            <a href="{% url 'market_analysis:project_scope' project_id=p.project_id %}" class="btn btn-sm btn-outline-primary">
-                              <i class="bi bi-eye me-1"></i>View
-                            </a>
-                          {% else %}
-                            <a href="{% url 'market_analysis:project_scope' project_id=p.project_id %}" class="btn btn-sm btn-outline-success">
-                              <i class="bi bi-plus-circle me-1"></i>Add
-                            </a>
-                          {% endif %}
-                        </td>
-
-                        <!-- P&L (financial) column -->
-                        <td class="text-center">
-                            {% if not p.has_financial %}
-                                <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="btn btn-sm btn-outline-success" title="Add P&L">
-                                    <i class="bi bi-plus-circle"></i> Add
-                                </a>
-                            {% else %}
-                                <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="btn btn-sm btn-outline-secondary" title="View / Edit P&L">
-                                    <i class="bi bi-wallet-fill"></i> View
-                                </a>
-                            {% endif %}
-                        </td>
-
-                        <!-- Edit -->
-                        <td class="text-end">
-                            <a href="{% url 'market_analysis:project_edit' project_id=p.project_id %}" class="btn btn-sm btn-outline-primary" title="Edit Project">
-                                <i class="bi bi-pencil-square"></i> Edit
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="11" class="text-center text-muted py-4">No projects found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+                <td class="text-end">
+                  <a href="{% url 'market_analysis:project_edit' project_id=p.project_id %}" class="btn btn-sm btn-outline-primary" title="Edit Project">
+                    <i class="bi bi-pencil-square"></i> Edit
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="11" class="text-center text-muted py-4">No projects found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
           </table>
         </div>
-     </div>
- </div>
+      </div>
 
-<!-- Pagination controls -->
-{% if page_obj.paginator.num_pages > 1 %}
-  <nav class="d-flex justify-content-center my-3" aria-label="Projects pagination">
-    <ul class="pagination pagination-sm mb-0">
-      {% if page_obj.has_previous %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">&laquo;</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-      {% endif %}
+      <!-- Cycle Time tab (new table: one metric per column) -->
+      <div class="tab-pane fade" id="cycle-pane" role="tabpanel" aria-labelledby="cycle-tab">
+        <div class="projects-table-wrapper">
+          <table class="table table-striped mb-0 align-middle table-sm projects-table metrics-table">
+            <thead class="table-light">
+              <tr>
+                <th>Internal ID</th>
+                <th>Project Name</th>
+                <th>Client</th>
+                <th class="text-end">Rec → Sub (days)</th>
+                <th class="text-end">Sub → Award (days)</th>
+                <th class="text-end">Award → Contract (days)</th>
+                <th class="text-end">Contract → Start (days)</th>
+                <th class="text-end">Rec → Start (days)</th>
+                <th class="text-end">Award → Start (days)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in won_projects %}
+              <tr>
+                <td class="text-nowrap">{{ p.internal_id }}</td>
+                <td>{{ p.name }}</td>
+                <td>{% if p.client %}{{ p.client.name }}{% else %}-{% endif %}</td>
+                <td class="text-end">{{ p.cycle_rec_to_sub }}</td>
+                <td class="text-end">{{ p.cycle_sub_to_award }}</td>
+                <td class="text-end">{{ p.cycle_award_to_contract }}</td>
+                <td class="text-end">{{ p.cycle_contract_to_start }}</td>
+                <td class="text-end">{{ p.cycle_rec_to_start }}</td>
+                <td class="text-end">{{ p.cycle_award_to_start }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="9" class="text-center text-muted py-4">No projects found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-      {# show a small window of pages around current #}
-      {% for num in page_obj.paginator.page_range %}
-        {% if page_obj.paginator.num_pages > 10 %}
-          {% if num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:-3 and num <= page_obj.number|add:3 %}
-            <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-              <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-            </li>
-          {% elif num == 2 and page_obj.number > 5 %}
-            <li class="page-item disabled"><span class="page-link">…</span></li>
-          {% elif num == page_obj.paginator.num_pages|add:-1 and page_obj.number < page_obj.paginator.num_pages|add:-4 %}
-            <li class="page-item disabled"><span class="page-link">…</span></li>
+    <!-- shared pagination controls (works for both tabs) -->
+    {% if page_obj.paginator.num_pages > 1 %}
+      <nav class="d-flex justify-content-center my-3" aria-label="Projects pagination">
+        <ul class="pagination pagination-sm mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">&laquo;</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
           {% endif %}
-        {% else %}
-          <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-          </li>
-        {% endif %}
-      {% endfor %}
 
-      {% if page_obj.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">&raquo;</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-      {% endif %}
-    </ul>
-  </nav>
-{% endif %}
+          {% for item in page_range_display %}
+            {% if item == '...' %}
+              <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% else %}
+              <li class="page-item {% if item == page_obj.number %}active{% endif %}">
+                <a class="page-link" href="?page={{ item }}">{{ item }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">&raquo;</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  </div>
+</div>
 
 <!-- provide a JS mapping of status labels so client script never has to read DOM options -->
 <script>

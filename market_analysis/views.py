@@ -75,16 +75,93 @@ def dashboard(request):
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
 
+    # Build compact page range for pagination controls (handles large page counts)
+    total = paginator.num_pages
+    current = page_obj.number
+    if total <= 10:
+        page_range_display = list(range(1, total + 1))
+    else:
+        start = max(1, current - 3)
+        end = min(total, current + 3)
+        pages = [1]
+        if start > 2:
+            pages.append('...')
+        for i in range(start, end + 1):
+            pages.append(i)
+        if end < total - 1:
+            pages.append('...')
+        pages.append(total)
+        # remove duplicates while preserving order (safe-guard)
+        seen = set()
+        page_range_display = []
+        for p in pages:
+            if p not in seen:
+                page_range_display.append(p)
+                seen.add(p)
+
+    # Compute cycle time metrics (days) for projects on the current page.
+    # Metrics apply only to projects whose current status is "Won".
+    def _days_between(later, earlier):
+        try:
+            if not later or not earlier:
+                return 0
+            # accept datetime or date; convert datetimes to dates
+            if hasattr(later, 'date'):
+                later = later.date()
+            if hasattr(earlier, 'date'):
+                earlier = earlier.date()
+            return max(0, (later - earlier).days)
+        except Exception:
+            return 0
+
+    for p in page_obj.object_list:
+        # fetch relevant dates (contract may be None)
+        date_received = getattr(p, 'date_received', None)
+        submission_date = getattr(p, 'submission_date', None)
+        award_date = getattr(p, 'award_date', None)
+        contract = getattr(p, 'contract', None)
+        contract_date = getattr(contract, 'contract_date', None) if contract else None
+        start_date = getattr(contract, 'actual_start', None) if contract else None
+
+        # compute metrics (zero when dates missing)
+        p.cycle_rec_to_sub = _days_between(submission_date, date_received)
+        p.cycle_sub_to_award = _days_between(award_date, submission_date)
+        p.cycle_award_to_contract = _days_between(contract_date, award_date)
+        p.cycle_contract_to_start = _days_between(start_date, contract_date)
+        p.cycle_rec_to_start = _days_between(start_date, date_received)
+        p.cycle_award_to_start = _days_between(start_date, award_date)
+
+    # Prepare Cycle Time table: only for awarded projects (status == 'Won')
+    won_qs = projects_qs.filter(status='Won')
+    # Evaluate and compute metrics on the won projects list
+    won_projects = list(won_qs)
+    for p in won_projects:
+        date_received = getattr(p, 'date_received', None)
+        submission_date = getattr(p, 'submission_date', None)
+        award_date = getattr(p, 'award_date', None)
+        contract = getattr(p, 'contract', None)
+        contract_date = getattr(contract, 'contract_date', None) if contract else None
+        start_date = getattr(contract, 'actual_start', None) if contract else None
+
+        p.cycle_rec_to_sub = _days_between(submission_date, date_received)
+        p.cycle_sub_to_award = _days_between(award_date, submission_date)
+        p.cycle_award_to_contract = _days_between(contract_date, award_date)
+        p.cycle_contract_to_start = _days_between(start_date, contract_date)
+        p.cycle_rec_to_start = _days_between(start_date, date_received)
+        p.cycle_award_to_start = _days_between(start_date, award_date)
+
     context = {
         'projects_count': projects_count,
         'clients_count': clients_count,
         'technologies_count': technologies_count,
         'financials_count': financials_count,
-        'projects': projects_qs,             # full queryset (kept for counts/exports if needed)
-        'page_obj': page_obj,                # current page
+        'projects': projects_qs,
+        'page_obj': page_obj,
         'paginator': paginator,
+        'page_range_display': page_range_display,
         'competitor_choices': getattr(Competitor, 'COMPETITOR_CHOICES', []),
         'status_choices': Project.STATUS,  # list of (key, label)
+        'won_projects': won_projects,
     }
     return render(request, 'market_analysis/dashboard.html', context)
 
@@ -281,7 +358,7 @@ def update_contract(request, project_id):
     Accept POST from dashboard modal to:
       - optionally change project.status (new_status)
       - set submission/award/lost dates when provided
-      - update ProjectContract.actual_start/actual_end (and compute duration)
+      - update ProjectContract.contract_date/actual_start/actual_end (and compute duration)
       - optionally create Competitor when status becomes Lost (or is Lost)
     """
     project = get_object_or_404(Project, pk=project_id)
@@ -294,6 +371,7 @@ def update_contract(request, project_id):
         submission_date = request.POST.get('submission_date')
         award_date = request.POST.get('award_date')
         lost_date = request.POST.get('lost_date')
+        contract_date = request.POST.get('contract_date')
         competitor_choice = request.POST.get('competitor')
         new_status = request.POST.get('new_status')  # optional
 
@@ -305,28 +383,34 @@ def update_contract(request, project_id):
             except Exception:
                 return None
 
-        # If a new_status was chosen, set it (and set any explicit date fields provided)
+        # Persist any explicit project-level dates unconditionally (allows editing award_date for existing Won projects)
+        if submission_date:
+            project.submission_date = parse_date(submission_date)
+        if award_date:
+            project.award_date = parse_date(award_date)
+        if lost_date:
+            project.lost_date = parse_date(lost_date)
+
+        # If a new_status was chosen, set it (status change logic will run in Project.save)
         if new_status:
-            # apply provided date fields before saving project to persist them
-            if new_status == 'Submitted' and submission_date:
-                project.submission_date = parse_date(submission_date)
-            if new_status == 'Won' and award_date:
-                project.award_date = parse_date(award_date)
-            if new_status == 'Lost' and lost_date:
-                project.lost_date = parse_date(lost_date)
-
-            # update status (this triggers Project.save logic to create histories/snapshots)
             project.status = new_status
-            try:
-                project.save()
-            except Exception:
-                # don't crash; continue to update contract/competitor
-                pass
 
-        # Update contract dates (always allowed)
+        # Save project first so any Project.save hooks run (snapshots, status history, etc.)
+        try:
+            project.save()
+        except Exception:
+            # swallow - we still want to persist contract if possible
+            pass
+
+        # Update contract fields (always allowed). contract_date only set if provided.
         contract.actual_start = parse_date(actual_start)
         contract.actual_end = parse_date(actual_end)
-        contract.save()
+        if contract_date:
+            contract.contract_date = parse_date(contract_date)
+        try:
+            contract.save()
+        except Exception:
+            messages.warning(request, 'Could not save contract details; check server logs.')
 
         # If project is Lost (either newly set or already lost), optionally record competitor
         if (new_status == 'Lost' or project.status == 'Lost') and competitor_choice is not None:
@@ -336,6 +420,7 @@ def update_contract(request, project_id):
                 pass
 
         messages.success(request, 'Saved status/contract/competitor changes.')
+
     return redirect('market_analysis:dashboard')
 
 
