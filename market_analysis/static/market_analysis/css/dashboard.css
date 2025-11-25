@@ -1,0 +1,17 @@
+/* Dashboard-specific styles */
+
+/* slightly smaller text for project table */
+.projects-table {
+    font-size: 0.85rem;
+}
+
+/* scrollable area for long tables */
+.projects-table-wrapper {
+    max-height: 520px;
+    overflow: auto;
+}
+
+.metrics-table th,
+.metrics-table td {
+    white-space: nowrap;
+}
