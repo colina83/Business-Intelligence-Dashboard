@@ -63,24 +63,32 @@
     </div>
 
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-striped mb-0 align-middle">
-                <thead class="table-light">
+        <style>
+          /* slightly smaller text for project table */
+          .projects-table { font-size: 0.85rem; }
+          /* scrollable area for long tables */
+          .projects-table-wrapper { max-height: 520px; overflow: auto; }
+        </style>
+
+        <div class="projects-table-wrapper">
+          <table class="table table-striped mb-0 align-middle table-sm projects-table">
+                 <thead class="table-light">
                     <tr>
                         <th>Internal ID</th>
                         <th>Project Name</th>
                         <th>Client</th>
                         <th>Bid Type</th>
                         <th>Date Received</th>
-                        <th>Status</th>
                         <th>Country</th>
                         <th>Region</th>
-                        <th class="text-center">Financial</th>
-                        <th class="text-end">Changes</th>
+                        <th>Status</th>
+                        <th class="text-center">SoW</th>
+                        <th class="text-center">P&amp;L</th>
+                        <th class="text-end">Edit</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for p in projects %}
+                    {% for p in page_obj.object_list %}
                     <tr>
                         <td class="text-nowrap">{{ p.internal_id }}</td>
                         <td>{{ p.name }}</td>
@@ -88,7 +96,10 @@
                         <td>{{ p.get_bid_type_display }}</td>
                         <td class="text-nowrap">{% if p.date_received %}{{ p.date_received|date:"Y-m-d" }}{% else %}-{% endif %}</td>
 
-                        <!-- Status column: pill button that opens the modal for Won/Lost -->
+                        <td class="text-nowrap">{{ p.country }}</td>
+                        <td>{{ p.get_region_display }}</td>
+
+                        <!-- Status column: Ongoing (blue), Submitted (orange), Won (green), Lost (red) -->
                         <td>
                           {% if p.status == 'Won' %}
                             <button type="button"
@@ -96,40 +107,79 @@
                                     data-project-id="{{ p.project_id }}"
                                     data-status="Won"
                                     data-start="{% if p.contract and p.contract.actual_start %}{{ p.contract.actual_start|date:'Y-m-d' }}{% endif %}"
-                                    data-end="{% if p.contract and p.contract.actual_end %}{{ p.contract.actual_end|date:'Y-m-d' }}{% endif %}">
+                                    data-end="{% if p.contract and p.contract.actual_end %}{{ p.contract.actual_end|date:'Y-m-d' }}{% endif %}"
+                                    data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}"
+                                    data-contract="{% if p.contract and p.contract.contract_date %}{{ p.contract.contract_date|date:'Y-m-d' }}{% endif %}"
+                                    data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
+                                    data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}">
                               <i class="bi bi-check-circle me-1"></i>Won
                             </button>
+
                           {% elif p.status == 'Lost' %}
                             <button type="button"
                                     class="btn btn-sm btn-danger status-pill"
                                     data-project-id="{{ p.project_id }}"
                                     data-status="Lost"
                                     data-start="{% if p.contract and p.contract.actual_start %}{{ p.contract.actual_start|date:'Y-m-d' }}{% endif %}"
-                                    data-end="{% if p.contract and p.contract.actual_end %}{{ p.contract.actual_end|date:'Y-m-d' }}{% endif %}">
+                                    data-end="{% if p.contract and p.contract.actual_end %}{{ p.contract.actual_end|date:'Y-m-d' }}{% endif %}"
+                                    data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}"
+                                    data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
+                                    data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}">
                               <i class="bi bi-x-circle me-1"></i>Lost
                             </button>
+
+                          {% elif p.status == 'Submitted' %}
+                            <button type="button"
+                                    class="btn btn-sm btn-warning status-pill"
+                                    data-project-id="{{ p.project_id }}"
+                                    data-status="Submitted"
+                                    data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
+                                    data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}"
+                                    data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}">
+                              <i class="bi bi-hourglass-split me-1"></i>Submitted
+                            </button>
+
+                          {% elif p.status == 'Ongoing' %}
+                            <button type="button"
+                                    class="btn btn-sm btn-primary status-pill"
+                                    data-project-id="{{ p.project_id }}"
+                                    data-status="Ongoing"
+                                    data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}">
+                              <i class="bi bi-play-circle me-1"></i>Ongoing
+                            </button>
+
                           {% else %}
                             {{ p.get_status_display }}
                           {% endif %}
                         </td>
 
-                        <td class="text-nowrap">{{ p.country }}</td>
-                        <td>{{ p.get_region_display }}</td>
+                        <!-- Scope of Work column -->
+                        <td>
+                          {% if p.has_scope %}
+                            <a href="{% url 'market_analysis:project_scope' project_id=p.project_id %}" class="btn btn-sm btn-outline-primary">
+                              <i class="bi bi-eye me-1"></i>View
+                            </a>
+                          {% else %}
+                            <a href="{% url 'market_analysis:project_scope' project_id=p.project_id %}" class="btn btn-sm btn-outline-success">
+                              <i class="bi bi-plus-circle me-1"></i>Add
+                            </a>
+                          {% endif %}
+                        </td>
 
-                        <!-- Financial column (centered) -->
+                        <!-- P&L (financial) column -->
                         <td class="text-center">
                             {% if not p.has_financial %}
-                                <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="btn btn-sm btn-outline-success" title="Add Financial">
+                                <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="btn btn-sm btn-outline-success" title="Add P&L">
                                     <i class="bi bi-plus-circle"></i> Add
                                 </a>
                             {% else %}
-                                <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="btn btn-sm btn-outline-secondary" title="View / Edit Financial">
+                                <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="btn btn-sm btn-outline-secondary" title="View / Edit P&L">
                                     <i class="bi bi-wallet-fill"></i> View
                                 </a>
                             {% endif %}
                         </td>
 
-                        <!-- Changes column (Edit) placed as the last/right-most column -->
+                        <!-- Edit -->
                         <td class="text-end">
                             <a href="{% url 'market_analysis:project_edit' project_id=p.project_id %}" class="btn btn-sm btn-outline-primary" title="Edit Project">
                                 <i class="bi bi-pencil-square"></i> Edit
@@ -138,39 +188,132 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="10" class="text-center text-muted py-4">No projects found.</td>
+                        <td colspan="11" class="text-center text-muted py-4">No projects found.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
-            </table>
+          </table>
         </div>
-    </div>
-</div>
+     </div>
+ </div>
 
-<!-- Contract modal (single modal reused) -->
+<!-- Pagination controls -->
+{% if page_obj.paginator.num_pages > 1 %}
+  <nav class="d-flex justify-content-center my-3" aria-label="Projects pagination">
+    <ul class="pagination pagination-sm mb-0">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">&laquo;</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+      {% endif %}
+
+      {# show a small window of pages around current #}
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.paginator.num_pages > 10 %}
+          {% if num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:-3 and num <= page_obj.number|add:3 %}
+            <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+              <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+          {% elif num == 2 and page_obj.number > 5 %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% elif num == page_obj.paginator.num_pages|add:-1 and page_obj.number < page_obj.paginator.num_pages|add:-4 %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% else %}
+          <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">&raquo;</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+{% endif %}
+
+<!-- provide a JS mapping of status labels so client script never has to read DOM options -->
+<script>
+  const STATUS_LABELS = {
+    {% for key,label in status_choices %}
+      "{{ key }}": "{{ label }}"{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  };
+</script>
+
+<!-- Enhanced status modal -->
 <div class="modal fade" id="contractModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <form id="contractForm" method="post" action="{% url 'market_analysis:project_contract' project_id=0 %}">
         {% csrf_token %}
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-briefcase me-2"></i>Set Contract Dates</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <h5 class="modal-title"><i class="bi bi-gear me-2"></i>Project Status & Contract</h5>
+          <button type="button" class="btn btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
         <div class="modal-body">
           <input type="hidden" id="contractProjectId" name="project_id" value="">
 
-          <div class="mb-3">
-            <label class="form-label small">Actual Start</label>
-            <input type="date" class="form-control form-control-sm" id="actualStart" name="actual_start" />
+          <!-- Status select (shown for Ongoing/Submitted) -->
+          <div class="mb-3" id="statusSelectRow" style="display:none;">
+            <label class="form-label small">Change Status</label>
+            <select id="newStatusSelect" name="new_status" class="form-select form-select-sm">
+              <option value="">Select status</option>
+              {% for key,label in status_choices %}
+                <option value="{{ key }}">{{ label }}</option>
+              {% endfor %}
+            </select>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label small">Actual End</label>
-            <input type="date" class="form-control form-control-sm" id="actualEnd" name="actual_end" />
+          <!-- Submission date (shown when choosing Submitted) -->
+          <div class="mb-3" id="submissionRow" style="display:none;">
+            <label class="form-label small">Submission Date</label>
+            <input type="date" id="submissionDate" name="submission_date" class="form-control form-control-sm" />
           </div>
 
+          <!-- Award date (shown when choosing Won or when current is Won) -->
+          <div class="mb-3" id="awardRow" style="display:none;">
+            <label class="form-label small">Award Date</label>
+            <input type="date" id="awardDate" name="award_date" class="form-control form-control-sm" />
+          </div>
+
+          <!-- Contract date (only for projects that are already Won) -->
+          <div class="mb-3" id="contractDateRow" style="display:none;">
+            <label class="form-label small">Contract Date</label>
+            <input type="date" id="contractDate" name="contract_date" class="form-control form-control-sm" />
+          </div>
+
+          <!-- Lost date (shown when choosing Lost or when current is Lost) -->
+          <div class="mb-3" id="lostRow" style="display:none;">
+            <label class="form-label small">Lost Date</label>
+            <input type="date" id="lostDate" name="lost_date" class="form-control form-control-sm" />
+          </div>
+
+          <!-- Contract actual start/end and computed duration:
+               Only shown for projects that are already Won (current status Won) -->
+          <div id="contractRows" style="display:none;">
+            <div class="mb-3">
+              <label class="form-label small">Actual Start</label>
+              <input type="date" class="form-control form-control-sm" id="actualStart" name="actual_start" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label small">Actual End</label>
+              <input type="date" class="form-control form-control-sm" id="actualEnd" name="actual_end" />
+            </div>
+            <div class="mb-3 text-muted small">
+              Actual duration (days): <span id="computedDuration" class="fw-semibold">-</span>
+            </div>
+          </div>
+
+          <!-- Competitor select (shown when Lost selected or current Lost) -->
           <div class="mb-3" id="competitorField" style="display:none;">
             <label class="form-label small">Competitor (if Lost)</label>
             <select name="competitor" id="competitorSelect" class="form-select form-select-sm">
@@ -179,14 +322,6 @@
                 <option value="{{ code }}">{{ label }}</option>
               {% endfor %}
             </select>
-          </div>
-
-          <div class="mb-3 text-muted small">
-            Actual duration (days): <span id="computedDuration" class="fw-semibold">-</span>
-          </div>
-
-          <div class="mb-0 text-muted small">
-            Actual duration will be calculated automatically when you save. You can preview it above.
           </div>
         </div>
 
@@ -210,9 +345,25 @@ document.addEventListener('DOMContentLoaded', function () {
     const actualEndInput = document.getElementById('actualEnd');
     const computedDurationEl = document.getElementById('computedDuration');
 
+    const statusSelectRow = document.getElementById('statusSelectRow');
+    const newStatusSelect = document.getElementById('newStatusSelect');
+    const submissionRow = document.getElementById('submissionRow');
+    const submissionDate = document.getElementById('submissionDate');
+    const awardRow = document.getElementById('awardRow');
+    const awardDate = document.getElementById('awardDate');
+    const contractDateRow = document.getElementById('contractDateRow');
+    const contractDate = document.getElementById('contractDate');
+    const lostRow = document.getElementById('lostRow');
+    const lostDate = document.getElementById('lostDate');
+    const competitorField = document.getElementById('competitorField');
+    const competitorSelect = document.getElementById('competitorSelect');
+    const contractRows = document.getElementById('contractRows');
+
+    // track current project status for modal session (so selecting Won does NOT show contractRows)
+    let modalCurrentStatus = null;
+
     function parseDateISO(value) {
         if (!value) return null;
-        // value expected "YYYY-MM-DD"
         const parts = value.split('-');
         if (parts.length !== 3) return null;
         const y = parseInt(parts[0], 10);
@@ -227,57 +378,132 @@ document.addEventListener('DOMContentLoaded', function () {
         const start = parseDateISO(s);
         const end = parseDateISO(e);
         if (start && end) {
-            // compute difference in days using UTC to avoid DST issues
             const diffMs = end - start;
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            if (isNaN(diffDays) || diffDays < 0) {
-                computedDurationEl.textContent = '-';
-            } else {
-                computedDurationEl.textContent = diffDays;
-            }
+            computedDurationEl.textContent = (isNaN(diffDays) || diffDays < 0) ? '-' : diffDays;
         } else {
             computedDurationEl.textContent = '-';
         }
     }
 
-    // update preview when user types/selects dates
     if (actualStartInput) actualStartInput.addEventListener('change', computeAndShowDuration);
     if (actualEndInput) actualEndInput.addEventListener('change', computeAndShowDuration);
 
+    function resetModalVisibility() {
+        statusSelectRow.style.display = 'none';
+        submissionRow.style.display = 'none';
+        awardRow.style.display = 'none';
+        contractDateRow.style.display = 'none';
+        lostRow.style.display = 'none';
+        competitorField.style.display = 'none';
+        contractRows.style.display = 'none';
+        submissionDate.value = '';
+        awardDate.value = '';
+        contractDate.value = '';
+        lostDate.value = '';
+        competitorSelect.value = '';
+        newStatusSelect.innerHTML = '<option value="">Select status</option>';
+        modalCurrentStatus = null;
+    }
+
+    function appendOption(select, value, label) {
+        const o = document.createElement('option');
+        o.value = value;
+        o.textContent = label;
+        select.appendChild(o);
+    }
+
+    function populateStatusOptions(currentStatus) {
+        // Use STATUS_LABELS mapping rendered server-side (guaranteed)
+        newStatusSelect.innerHTML = '<option value="">Select status</option>';
+
+        if (currentStatus === 'Ongoing') {
+            // only allow Submitted
+            if (STATUS_LABELS['Submitted']) appendOption(newStatusSelect, 'Submitted', STATUS_LABELS['Submitted']);
+            statusSelectRow.style.display = '';
+        } else if (currentStatus === 'Submitted') {
+            // allow Won or Lost
+            ['Won', 'Lost'].forEach(k => {
+                if (STATUS_LABELS[k]) appendOption(newStatusSelect, k, STATUS_LABELS[k]);
+            });
+            statusSelectRow.style.display = '';
+        } else {
+            // Won / Lost - no transitions via this select
+            statusSelectRow.style.display = 'none';
+        }
+    }
+
+    // react to status select change to show/hide context fields
+    newStatusSelect.addEventListener('change', function () {
+        const sel = this.value;
+        // submission date only for Submitted
+        submissionRow.style.display = sel === 'Submitted' ? '' : 'none';
+        // award date only when selecting Won
+        awardRow.style.display = sel === 'Won' ? '' : 'none';
+        // contract date only when project is already Won (modalCurrentStatus === 'Won')
+        contractDateRow.style.display = (modalCurrentStatus === 'Won') ? '' : 'none';
+        // lost date + competitor when selecting Lost
+        lostRow.style.display = sel === 'Lost' ? '' : 'none';
+        competitorField.style.display = sel === 'Lost' ? '' : 'none';
+        // contractRows are shown only when project is already Won (modalCurrentStatus === 'Won')
+        contractRows.style.display = (modalCurrentStatus === 'Won') ? '' : 'none';
+    });
+
+    // Open modal when status-pill clicked
     document.querySelectorAll('.status-pill').forEach(btn => {
         btn.addEventListener('click', function () {
+            resetModalVisibility();
+
             const projectId = this.dataset.projectId;
-            const status = this.dataset.status;
+            const currentStatus = this.dataset.status;
+            modalCurrentStatus = currentStatus; // remember current status for this modal session
+
+            const submission = this.dataset.submission || '';
+            const award = this.dataset.award || '';
+            const contract = this.dataset.contract || '';
+            const lost = this.dataset.lost || '';
             const start = this.dataset.start || '';
             const end = this.dataset.end || '';
 
-            // populate form fields
+            // populate contextual date fields
+            submissionDate.value = submission;
+            awardDate.value = award;
+            contractDate.value = contract;
+            lostDate.value = lost;
+
+            // populate contract actual dates (only displayed for current Won)
             actualStartInput.value = start;
             actualEndInput.value = end;
-            document.getElementById('contractProjectId').value = projectId;
 
-            // show competitor field only when status is Lost
-            const competitorField = document.getElementById('competitorField');
-            if (status === 'Lost') {
+            // prepare select options based on current status
+            populateStatusOptions(currentStatus);
+
+            // show relevant rows for current status
+            if (currentStatus === 'Won') {
+                // show award + contract rows; allow editing award/contract
+                awardRow.style.display = '';
+                contractDateRow.style.display = '';
+                contractRows.style.display = '';
+                statusSelectRow.style.display = 'none';
+            } else if (currentStatus === 'Lost') {
+                // show lost + competitor; do NOT show contract rows for Lost
+                lostRow.style.display = '';
                 competitorField.style.display = '';
+                statusSelectRow.style.display = 'none';
             } else {
-                competitorField.style.display = 'none';
-                // clear selection
-                document.getElementById('competitorSelect').value = '';
+                // Ongoing or Submitted: let populateStatusOptions control the select visibility
             }
 
-            // update form action to replace project_id=0 with real id
+            // update form action and project id hidden
             const newAction = defaultAction.replace('/0/', '/' + projectId + '/');
             contractForm.setAttribute('action', newAction);
+            document.getElementById('contractProjectId').value = projectId;
 
-            // compute duration preview for the values supplied
             computeAndShowDuration();
-
             modal.show();
         });
     });
 
-    // optional: compute duration on modal show (if using other triggers)
     contractModalEl.addEventListener('shown.bs.modal', computeAndShowDuration);
 });
 </script>
