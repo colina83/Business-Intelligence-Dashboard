@@ -5,6 +5,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 DECIMAL_2 = Decimal("0.01")
 OVERHEAD_DAYRATE_DEFAULT = Decimal("21000.00")
@@ -745,3 +746,41 @@ class Competitor(models.Model):
         return f"{label} ({self.project.internal_id or self.project.name})"
 
 
+class ScopeOfWork(models.Model):
+    """
+    Scope of Work entries for a Project.
+    Each row represents a distinct scope item.
+    Geophysical Parameters
+    """
+    NODE_CATEGORY = [ 
+        ("Shallow Water", "Shallow Water"),
+        ("Deep Water", "Deep Water")]
+
+    id = models.AutoField(primary_key=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, db_column='ProjectID', related_name='scopes_of_work')
+    total_rx_locs = models.IntegerField(null=True, blank=True, db_column='TotalRxLocs')
+    total_sx_locs = models.IntegerField(null=True, blank=True, db_column='TotalSxLocs')
+    max_active_spread = models.IntegerField(null=True, blank=True, db_column='MaxActiveSpread')
+    crew_node_count = models.IntegerField(null=True, blank=True, db_column='CrewNodeCount')
+    node_area = models.IntegerField(null=True, blank=True, db_column='NodeArea')
+    source_area = models.IntegerField(null=True, blank=True, db_column='SourceArea')
+    node_grid_IL = models.IntegerField(null=True, blank=True, db_column='NodeGridIL')
+    node_grid_XL = models.IntegerField(null=True, blank=True, db_column='NodeGridXL')
+    source_grid_IL = models.IntegerField(null=True, blank=True, db_column='SourceGridIL')
+    source_grid_XL = models.IntegerField(null=True, blank=True, db_column='SourceGridXL')
+    water_depth_min = models.IntegerField(null=True, blank=True, db_column='WaterDepth')
+    water_depth_max = models.IntegerField(null=True, blank=True, db_column='WaterDepthMax')
+    node_category = models.CharField(max_length=20, choices=NODE_CATEGORY, null=True, blank=True, db_column='NodeCategory')
+
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        db_table = 'scope_of_work'
+        verbose_name = 'Scope of Work'
+        verbose_name_plural = 'Scopes of Work'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Scope of Work for {self.project.name} created at {self.created_at}"
