@@ -1,6 +1,11 @@
 ﻿{% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Dashboard - Market Analysis{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'market_analysis/css/dashboard.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -71,14 +76,6 @@
   </div>
 
   <div class="card-body p-0">
-    <style>
-      /* slightly smaller text for project table */
-      .projects-table { font-size: 0.85rem; }
-      /* scrollable area for long tables */
-      .projects-table-wrapper { max-height: 520px; overflow: auto; }
-      .metrics-table th, .metrics-table td { white-space: nowrap; }
-    </style>
-
     <div class="tab-content">
       <!-- Projects tab (original table, cycle column removed) -->
       <div class="tab-pane fade show active" id="projects-pane" role="tabpanel" aria-labelledby="projects-tab">
@@ -361,177 +358,8 @@
   </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const contractModalEl = document.getElementById('contractModal');
-    const contractForm = document.getElementById('contractForm');
-    const modal = new bootstrap.Modal(contractModalEl, {backdrop: 'static'});
-    const defaultAction = contractForm.getAttribute('action'); // contains project_id=0 placeholder
+{% endblock %}
 
-    const actualStartInput = document.getElementById('actualStart');
-    const actualEndInput = document.getElementById('actualEnd');
-    const computedDurationEl = document.getElementById('computedDuration');
-
-    const statusSelectRow = document.getElementById('statusSelectRow');
-    const newStatusSelect = document.getElementById('newStatusSelect');
-    const submissionRow = document.getElementById('submissionRow');
-    const submissionDate = document.getElementById('submissionDate');
-    const awardRow = document.getElementById('awardRow');
-    const awardDate = document.getElementById('awardDate');
-    const contractDateRow = document.getElementById('contractDateRow');
-    const contractDate = document.getElementById('contractDate');
-    const lostRow = document.getElementById('lostRow');
-    const lostDate = document.getElementById('lostDate');
-    const competitorField = document.getElementById('competitorField');
-    const competitorSelect = document.getElementById('competitorSelect');
-    const contractRows = document.getElementById('contractRows');
-
-    // track current project status for modal session (so selecting Won does NOT show contractRows)
-    let modalCurrentStatus = null;
-
-    function parseDateISO(value) {
-        if (!value) return null;
-        const parts = value.split('-');
-        if (parts.length !== 3) return null;
-        const y = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10) - 1;
-        const d = parseInt(parts[2], 10);
-        return new Date(Date.UTC(y, m, d));
-    }
-
-    function computeAndShowDuration() {
-        const s = actualStartInput.value;
-        const e = actualEndInput.value;
-        const start = parseDateISO(s);
-        const end = parseDateISO(e);
-        if (start && end) {
-            const diffMs = end - start;
-            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            computedDurationEl.textContent = (isNaN(diffDays) || diffDays < 0) ? '-' : diffDays;
-        } else {
-            computedDurationEl.textContent = '-';
-        }
-    }
-
-    if (actualStartInput) actualStartInput.addEventListener('change', computeAndShowDuration);
-    if (actualEndInput) actualEndInput.addEventListener('change', computeAndShowDuration);
-
-    function resetModalVisibility() {
-        statusSelectRow.style.display = 'none';
-        submissionRow.style.display = 'none';
-        awardRow.style.display = 'none';
-        contractDateRow.style.display = 'none';
-        lostRow.style.display = 'none';
-        competitorField.style.display = 'none';
-        contractRows.style.display = 'none';
-        submissionDate.value = '';
-        awardDate.value = '';
-        contractDate.value = '';
-        lostDate.value = '';
-        competitorSelect.value = '';
-        newStatusSelect.innerHTML = '<option value="">Select status</option>';
-        modalCurrentStatus = null;
-    }
-
-    function appendOption(select, value, label) {
-        const o = document.createElement('option');
-        o.value = value;
-        o.textContent = label;
-        select.appendChild(o);
-    }
-
-    function populateStatusOptions(currentStatus) {
-        // Use STATUS_LABELS mapping rendered server-side (guaranteed)
-        newStatusSelect.innerHTML = '<option value="">Select status</option>';
-
-        if (currentStatus === 'Ongoing') {
-            // only allow Submitted
-            if (STATUS_LABELS['Submitted']) appendOption(newStatusSelect, 'Submitted', STATUS_LABELS['Submitted']);
-            statusSelectRow.style.display = '';
-        } else if (currentStatus === 'Submitted') {
-            // allow Won or Lost
-            ['Won', 'Lost'].forEach(k => {
-                if (STATUS_LABELS[k]) appendOption(newStatusSelect, k, STATUS_LABELS[k]);
-            });
-            statusSelectRow.style.display = '';
-        } else {
-            // Won / Lost - no transitions via this select
-            statusSelectRow.style.display = 'none';
-        }
-    }
-
-    // react to status select change to show/hide context fields
-    newStatusSelect.addEventListener('change', function () {
-        const sel = this.value;
-        // submission date only for Submitted
-        submissionRow.style.display = sel === 'Submitted' ? '' : 'none';
-        // award date only when selecting Won
-        awardRow.style.display = sel === 'Won' ? '' : 'none';
-        // contract date only when project is already Won (modalCurrentStatus === 'Won')
-        contractDateRow.style.display = (modalCurrentStatus === 'Won') ? '' : 'none';
-        // lost date + competitor when selecting Lost
-        lostRow.style.display = sel === 'Lost' ? '' : 'none';
-        competitorField.style.display = sel === 'Lost' ? '' : 'none';
-        // contractRows are shown only when project is already Won (modalCurrentStatus === 'Won')
-        contractRows.style.display = (modalCurrentStatus === 'Won') ? '' : 'none';
-    });
-
-    // Open modal when status-pill clicked
-    document.querySelectorAll('.status-pill').forEach(btn => {
-        btn.addEventListener('click', function () {
-            resetModalVisibility();
-
-            const projectId = this.dataset.projectId;
-            const currentStatus = this.dataset.status;
-            modalCurrentStatus = currentStatus; // remember current status for this modal session
-
-            const submission = this.dataset.submission || '';
-            const award = this.dataset.award || '';
-            const contract = this.dataset.contract || '';
-            const lost = this.dataset.lost || '';
-            const start = this.dataset.start || '';
-            const end = this.dataset.end || '';
-
-            // populate contextual date fields
-            submissionDate.value = submission;
-            awardDate.value = award;
-            contractDate.value = contract;
-            lostDate.value = lost;
-
-            // populate contract actual dates (only displayed for current Won)
-            actualStartInput.value = start;
-            actualEndInput.value = end;
-
-            // prepare select options based on current status
-            populateStatusOptions(currentStatus);
-
-            // show relevant rows for current status
-            if (currentStatus === 'Won') {
-                // show award + contract rows; allow editing award/contract
-                awardRow.style.display = '';
-                contractDateRow.style.display = '';
-                contractRows.style.display = '';
-                statusSelectRow.style.display = 'none';
-            } else if (currentStatus === 'Lost') {
-                // show lost + competitor; do NOT show contract rows for Lost
-                lostRow.style.display = '';
-                competitorField.style.display = '';
-                statusSelectRow.style.display = 'none';
-            } else {
-                // Ongoing or Submitted: let populateStatusOptions control the select visibility
-            }
-
-            // update form action and project id hidden
-            const newAction = defaultAction.replace('/0/', '/' + projectId + '/');
-            contractForm.setAttribute('action', newAction);
-            document.getElementById('contractProjectId').value = projectId;
-
-            computeAndShowDuration();
-            modal.show();
-        });
-    });
-
-    contractModalEl.addEventListener('shown.bs.modal', computeAndShowDuration);
-});
-</script>
+{% block extra_js %}
+<script src="{% static 'market_analysis/js/dashboard.js' %}"></script>
 {% endblock %}
