@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Scope of Work - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card shadow-sm mx-auto" style="max-width:900px;">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <h5 class="mb-0">{% if scope %}Edit Scope of Work{% else %}Add Scope of Work{% endif %}</h5>
+      <small class="text-muted">
+        {% if project.internal_id %}
+          {{ project.internal_id }}
+        {% else %}
+          {{ project.name }}
+        {% endif %}
+      </small>
+    </div>
+
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Row 1: Node Area | Source Area -->
+        <div class="row g-3 mb-2">
+          <div class="col-md-6">
+            <label class="form-label small">Node Area (Km2)</label>
+            {{ form.node_area }}
+            {% if form.node_area.help_text %}<div class="form-text small">{{ form.node_area.help_text }}</div>{% endif %}
+            {% for err in form.node_area.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Source Area (Km2)</label>
+            {{ form.source_area }}
+            {% if form.source_area.help_text %}<div class="form-text small">{{ form.source_area.help_text }}</div>{% endif %}
+            {% for err in form.source_area.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <!-- Row 2: Water Depth Min | Water Depth Max -->
+        <div class="row g-3 mb-2">
+          <div class="col-md-6">
+            <label class="form-label small">Water Depth Min</label>
+            {{ form.water_depth_min }}
+            {% if form.water_depth_min.help_text %}<div class="form-text small">{{ form.water_depth_min.help_text }}</div>{% endif %}
+            {% for err in form.water_depth_min.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Water Depth Max</label>
+            {{ form.water_depth_max }}
+            {% if form.water_depth_max.help_text %}<div class="form-text small">{{ form.water_depth_max.help_text }}</div>{% endif %}
+            {% for err in form.water_depth_max.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <!-- Row 3: Max Active Spread | Crew Node Count -->
+        <div class="row g-3 mb-2">
+          <div class="col-md-6">
+            <label class="form-label small">Max Active Spread</label>
+            {{ form.max_active_spread }}
+            {% if form.max_active_spread.help_text %}<div class="form-text small">{{ form.max_active_spread.help_text }}</div>{% endif %}
+            {% for err in form.max_active_spread.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Crew Node Count</label>
+            {{ form.crew_node_count }}
+            {% if form.crew_node_count.help_text %}<div class="form-text small">{{ form.crew_node_count.help_text }}</div>{% endif %}
+            {% for err in form.crew_node_count.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <!-- Row 4: Total Rx Locations | Total Sx Locations -->
+        <div class="row g-3 mb-2">
+          <div class="col-md-6">
+            <label class="form-label small">Total Rx Locations</label>
+            {{ form.total_rx_locs }}
+            {% if form.total_rx_locs.help_text %}<div class="form-text small">{{ form.total_rx_locs.help_text }}</div>{% endif %}
+            {% for err in form.total_rx_locs.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Total Sx Locations</label>
+            {{ form.total_sx_locs }}
+            {% if form.total_sx_locs.help_text %}<div class="form-text small">{{ form.total_sx_locs.help_text }}</div>{% endif %}
+            {% for err in form.total_sx_locs.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <!-- Row 5: Node Grid label then IL x XL small inputs -->
+        <div class="row g-3 mb-2">
+          <div class="col-12">
+            <label class="form-label small d-block">Node Grid</label>
+            <div class="d-flex align-items-center gap-2">
+              {{ form.node_grid_IL }} 
+              <div class="mx-1 fw-semibold">x</div>
+              {{ form.node_grid_XL }}
+            </div>
+            <div>
+              {% for err in form.node_grid_IL.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              {% for err in form.node_grid_XL.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+            </div>
+            {% if form.node_grid_IL.help_text or form.node_grid_XL.help_text %}
+              <div class="form-text small">
+                {{ form.node_grid_IL.help_text }}{% if form.node_grid_IL.help_text and form.node_grid_XL.help_text %} / {% endif %}{{ form.node_grid_XL.help_text }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Row 6: Source Grid label then IL x XL small inputs -->
+        <div class="row g-3 mb-2">
+          <div class="col-12">
+            <label class="form-label small d-block">Source Grid</label>
+            <div class="d-flex align-items-center gap-2">
+              {{ form.source_grid_IL }} 
+              <div class="mx-1 fw-semibold">x</div>
+              {{ form.source_grid_XL }}
+            </div>
+            <div>
+              {% for err in form.source_grid_IL.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              {% for err in form.source_grid_XL.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+            </div>
+            {% if form.source_grid_IL.help_text or form.source_grid_XL.help_text %}
+              <div class="form-text small">
+                {{ form.source_grid_IL.help_text }}{% if form.source_grid_IL.help_text and form.source_grid_XL.help_text %} / {% endif %}{{ form.source_grid_XL.help_text }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Row 7: Node Category full width -->
+        <div class="row g-3 mb-2">
+          <div class="col-12">
+            <label class="form-label small">Node Category</label>
+            {{ form.node_category }}
+            {% if form.node_category.help_text %}<div class="form-text small">{{ form.node_category.help_text }}</div>{% endif %}
+            {% for err in form.node_category.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <hr class="my-3" />
+
+        <div class="d-flex justify-content-between">
+          <a href="{% url 'market_analysis:dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+          <div>
+            {% if scope %}
+              <a href="{% url 'market_analysis:project_scope' project_id=project.project_id %}" class="btn btn-outline-danger me-2" onclick="return confirm('Delete not implemented. Use admin if you need to remove a Scope of Work.')">Delete</a>
+            {% endif %}
+            <button type="submit" class="btn btn-primary">{% if scope %}Save{% else %}Create{% endif %}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
