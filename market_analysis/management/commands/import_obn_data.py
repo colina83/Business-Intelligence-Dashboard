@@ -42,6 +42,11 @@ BID_TYPE_MAP = {
     'DIR': 'DR',  # Direct Award
 }
 
+# Mapping CSV region values to model region values
+REGION_MAP = {
+    'WAF': 'AMME',  # Map West Africa to AMME region
+}
+
 # Valid OBN techniques (from ProjectTechnology.OBN_TECHNIQUE choices)
 VALID_OBN_TECHNIQUES = {'NOAR', 'ROV', 'DN'}
 
@@ -151,6 +156,9 @@ class Command(BaseCommand):
         bid_type = BID_TYPE_MAP.get(bid_type_csv)
         if not bid_type:
             raise ValueError(f'Unknown bid type: {bid_type_csv}')
+
+        # Map region if needed (e.g., WAF -> AMME)
+        region = REGION_MAP.get(region, region)
 
         # 1. Get or create client
         client, _ = Client.objects.get_or_create(name=client_name)

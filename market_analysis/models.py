@@ -69,7 +69,6 @@ class Project(models.Model):
         ('Australasia', 'Australasia'),
         ('Europe', 'Europe'),
         ('Global', 'Global'),
-        ('WAF', 'WAF'),
     ]
 
     STATUS = [
