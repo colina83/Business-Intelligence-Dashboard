@@ -19,16 +19,31 @@ Imported data:
 
 3. Project Technologies table:
    - Bid_Node_Type -> obn_system
+
+Usage:
+    python import_obn_pricing_data.py [csv_file]
+
+Arguments:
+    csv_file    Path to CSV file (default: OBN_Pricing_Bubble_Charts - FC Version - Copilot.csv)
+
+Environment variables:
+    DJANGO_SETTINGS_MODULE  Django settings module (default: BIApp.settings)
 """
 
+import argparse
 import os
 import sys
 import re
 import csv
 from decimal import Decimal, InvalidOperation
 
+# Configuration constants
+DEFAULT_CSV_FILENAME = 'OBN_Pricing_Bubble_Charts - FC Version - Copilot.csv'
+DEFAULT_DJANGO_SETTINGS = 'BIApp.settings'
+DEFAULT_SURVEY_TYPE = '3D Seismic'
+
 # Set up Django environment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BIApp.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', os.environ.get('DJANGO_SETTINGS_MODULE', DEFAULT_DJANGO_SETTINGS))
 
 import django
 django.setup()
@@ -263,7 +278,11 @@ def import_financial_data(project, row):
         financial.duration_raw = duration
         financial.duration_with_dt = duration
     
-    # Use update to bypass the auto-calculation in save()
+    # Use QuerySet.update() instead of model.save() to bypass the Financial model's
+    # auto-calculation logic in save(). The Financial.save() method automatically
+    # recalculates derived fields (total_revenue, gp, ebit, net, etc.) from inputs.
+    # Since we're importing pre-calculated values from the CSV, we want to preserve
+    # those values exactly as they are without recalculation.
     Financial.objects.filter(pk=financial.pk).update(
         total_revenue=financial.total_revenue,
         total_direct_cost=financial.total_direct_cost,
@@ -334,7 +353,7 @@ def import_project_technology(project, row):
         tech = ProjectTechnology.objects.create(
             project=project,
             technology='OBN',
-            survey_type='3D Seismic',  # Default value
+            survey_type=DEFAULT_SURVEY_TYPE,
             obn_system=obn_system
         )
         return tech, True
@@ -342,10 +361,27 @@ def import_project_technology(project, row):
 
 def main():
     """Main function to import OBN pricing data from CSV."""
-    csv_file = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        'OBN_Pricing_Bubble_Charts - FC Version - Copilot.csv'
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description='Import OBN pricing data from CSV into the database.',
+        epilog='The script will match CSV records to existing projects in the database using fuzzy matching.'
     )
+    parser.add_argument(
+        'csv_file',
+        nargs='?',
+        default=None,
+        help=f'Path to CSV file (default: {DEFAULT_CSV_FILENAME})'
+    )
+    args = parser.parse_args()
+    
+    # Determine CSV file path
+    if args.csv_file:
+        csv_file = args.csv_file
+    else:
+        csv_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            DEFAULT_CSV_FILENAME
+        )
     
     if not os.path.exists(csv_file):
         print(f"Error: CSV file not found: {csv_file}")
