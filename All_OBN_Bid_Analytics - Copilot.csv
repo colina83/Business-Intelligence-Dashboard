@@ -1,0 +1,39 @@
+﻿Bid_Type,Client,Project,Region,Country,Min_Water_Depth,Max_Water_Depth,Technology,OBN_Tecnique,Date_Received,Date_Submitted,Date_Award,Date_Contract,Actual_Date_Start,Actual_Date_End
+RFP,ENI,Agogo,AMME,Nigeria,,,OBN,,1-Dec-19,,,,15-Jun-21,27-Sep-21
+RFP,BHP,Trion,NSA,Mexico,,,OBN,,1-Jan-20,,,,3-Nov-20,15-Jan-21
+RFP,BP,Clair,Europe,UK,,,OBN,NOAR,1-Jan-20,,30-Jun-20,13-Sep-22,19-Apr-23,23-Jul-23
+RFP,Shell ,Whale,NSA,USA,,,OBN,,1-Aug-20,,,,1-Jan-21,3-May-21
+RFP,Shell ,Leopard,NSA,USA,,,OBN,,1-Aug-20,,,,4-Jun-21,1-Aug-21
+RFP,BP,Paleogene,NSA,USA,,,OBN,,1-Nov-20,,,,26-Feb-21,30-May-21
+RFP,SLB,Engagement 2,NSA,USA,,,OBN,,1-Dec-20,,,,1-Aug-21,7-Apr-22
+RFP,Var Energi,Balder,Europe,Norway,,,OBN,,1-Jan-21,,,,11-Jun-21,12-Aug-21
+RFP,AkerBP,Valhall,Europe,Norway,,,OBN,,1-Jan-21,,,,22-Mar-21,23-Apr-21
+RFP,TGS,NOAKA 2021,Europe,Norway,,,OBN,NOAR,1-Feb-21,,,,11-Aug-21,17-Oct-21
+RFP,ONGC,Panna Mutka,Asia,India,,,OBN,NOAR,1-Apr-21,,,,22-Nov-21,20-May-22
+RFP,Total,Culzean,Europe,UK,,,OBN,NOAR,1-Sep-21,,,,22-Jun-22,5-Aug-22
+RFP,BP,Atlantis,NSA,USA,,,OBN,,1-Sep-21,,,19-Jan-22,13-Apr-22,3-Jul-22
+RFP,BP,Mad Dog,NSA,USA,,,OBN,,1-Sep-21,,,19-Jan-22,4-Jul-22,28-Sep-22
+RFP,BP,Atoll,AMME,Egypt,,,OBN,ROV,1-Sep-21,,,1-Feb-22,25-Apr-22,26-Jul-22
+RFP,Shell,Mars Ursa,NSA,USA,,,OBN,ROV,1-Oct-21,,,,13-Feb-22,27-Jul-22
+RFP,Chevron,Agbami,WAF,Nigeria,1200,1800,OBN,ROV,12-Oct-21,12-Nov-21,1-Oct-23,,29-May-24,5-Aug-24
+RFP,TGS,NOAKA 2022,Europe,Norway,,,OBN,NOAR,1-Dec-21,,,,20-Jun-22,16-Sep-22
+MC,TGS,A2,NSA,USA,,,OBN,ROV,1-Jan-22,,14-Jul-22,22-Nov-22,29-Nov-22,8-May-23
+RFP,Shell,Gumusut Kakap,Asia,Malaysia,900,1200,OBN,ROV,28-Jan-22,7-Mar-22,15-Jul-22,17-Aug-22,22-Feb-23,28-Mar-23
+RFP,ExxonMobil,Guyana,NSA,Guyana,,,OBN,ROV,1-Apr-22,26-Apr-22,16-Jun-22,16-Aug-22,15-Oct-22,4-Dec-23
+DIR,AkerBP,"Valhall, Ivar Aasen",Europe,Norway,100,120,OBN,NOAR,1-Jul-22,,1-Nov-22,12-Nov-22,24-Jul-23,10-Sep-23
+DIR,Shell,Momentum,NSA,USA,,,OBN,ROV,1-Aug-22,,22-Aug-22,8-Feb-23,8-May-23,15-Sep-23
+RFP,Total,"Egina, Preowei",AMME,Nigeria,1050,1750,OBN,ROV,31-Aug-22,11-Oct-22,15-Sep-23,,6-Feb-24,28-May-24
+RFP,Chevron,Jack,NSA,USA,2000,2500,OBN,ROV,13-Oct-22,27-Nov-22,1-Feb-23,27-Jul-23,27-Aug-23,26-Feb-24
+DIR,Viridien,Inception,NSA,USA,2000,2300,OBN,ROV,17-Jan-23,,30-Nov-23,13-Dec-23,8-Jan-24,10-May-24
+RFP,NEO,Isolde,Europe,UK,75,95,OBN,NOAR,23-Jan-23,10-Feb-23,3-Apr-23,29-Jun-23,11-Sep-23,14-Oct-23
+RFP,Occidental,K2 Re-Tender,NSA,USA,1000,1500,OBN,ROV,22-Mar-23,1-May-23,21-Jul-23,24-Oct-23,1-Nov-23,29-Feb-24
+DIR,BP,Atlantis,NSA,USA,1300,2400,OBN,ROV,1-Jul-23,,1-Jan-24,,28-Jun-24,29-Sep-24
+DIR,BP,Thunderhorse,NSA,USA,1300,2350,OBN,ROV,1-Jul-23,,15-Sep-23,,28-Mar-24,28-Jun-24
+RFP,Equinor,Oseberg South,Europe,Norway,80,120,OBN,NOAR,14-Sep-23,12-Oct-23,17-Nov-23,19-Dec-23,29-Apr-24,22-Sep-24
+RFP,Shell (via BGP),Bonga,AMME,Nigeria,800,1600,OBN,ROV,11-Dec-23,15-Jan-24,,2-Jul-24,9-Aug-24,14-Nov-24
+DIR,Viridien,Laconia,NSA,USA,600,2300,OBN,ROV,1-Mar-24,27-Mar-24,3-May-24,28-Jun-24,1-Jul-24,
+RFP,Shell,GOM Program,NSA,USA,800,3000,OBN,ROV,11-Mar-24,30-Apr-24,10-Jul-24,27-Nov-24,15-Dec-24,31-Oct-25
+DIR,BP,GGG Paleogene,NSA,USA,900,1700,OBN,ROV,3-Jul-24,,,9-Aug-24,1-Oct-24,
+RFP,AkerBP,"Ivar Aasen, Valhall",Europe,Norway,100,120,OBN,NOAR,4-Sep-24,7-Oct-24,18-Nov-24,31-Jan-25,1-Apr-25,
+RFP,EOG,LRL Block,NSA,Trinidad,,,OBN,NOAR,25-Nov-24,13-Jan-25,19-Feb-25,2-Apr-25,30-May-25,20-Aug-25
+RFP,Chevron,St Malo,NSA,USA,,,OBN,ROV,23-May-25,3-Jul-25,14-Aug-25,15-Oct-25,16-Oct-25,
