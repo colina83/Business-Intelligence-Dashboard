@@ -42,6 +42,9 @@ BID_TYPE_MAP = {
     'DIR': 'DR',  # Direct Award
 }
 
+# Valid OBN techniques (from ProjectTechnology.OBN_TECHNIQUE choices)
+VALID_OBN_TECHNIQUES = {'NOAR', 'ROV', 'DN'}
+
 
 def parse_date(date_str):
     """Parse date from format like '1-Dec-19' or '12-Oct-21'."""
@@ -130,6 +133,7 @@ class Command(BaseCommand):
 
         min_water_depth = row.get('Min_Water_Depth', '').strip()
         max_water_depth = row.get('Max_Water_Depth', '').strip()
+        # Note: CSV column is misspelled as 'OBN_Tecnique' (not 'Technique')
         obn_technique = row.get('OBN_Tecnique', '').strip()
 
         # Validate required fields
@@ -169,7 +173,7 @@ class Command(BaseCommand):
             'technology': 'OBN',
             'survey_type': '3D Seismic',  # Default survey type
         }
-        if obn_technique and obn_technique in ['NOAR', 'ROV', 'DN']:
+        if obn_technique and obn_technique in VALID_OBN_TECHNIQUES:
             tech_kwargs['obn_technique'] = obn_technique
 
         ProjectTechnology.objects.create(**tech_kwargs)
@@ -191,30 +195,17 @@ class Command(BaseCommand):
             project.save()
             self.stdout.write(f'    Transitioned to Won (date: {date_award})')
 
-            # 6. Create/update ProjectContract for Won projects
+        # 6. Create/update ProjectContract if any contract-related dates exist
+        if date_award or date_contract or actual_date_start or actual_date_end:
             contract, _ = ProjectContract.objects.get_or_create(project=project)
-
             if date_contract:
                 contract.contract_date = date_contract
             if actual_date_start:
                 contract.actual_start = actual_date_start
             if actual_date_end:
                 contract.actual_end = actual_date_end
-
             contract.save()
             self.stdout.write(f'    Updated contract: contract_date={date_contract}, start={actual_date_start}, end={actual_date_end}')
-        else:
-            # Still add actual dates even if not Won (for projects that have execution dates but no award date)
-            if actual_date_start or actual_date_end:
-                contract, _ = ProjectContract.objects.get_or_create(project=project)
-                if actual_date_start:
-                    contract.actual_start = actual_date_start
-                if actual_date_end:
-                    contract.actual_end = actual_date_end
-                if date_contract:
-                    contract.contract_date = date_contract
-                contract.save()
-                self.stdout.write(f'    Added contract dates: start={actual_date_start}, end={actual_date_end}')
 
         # 7. Add water depth to Scope of Work if provided
         if min_water_depth or max_water_depth:
@@ -223,12 +214,16 @@ class Command(BaseCommand):
                 try:
                     scope_kwargs['water_depth_min'] = int(min_water_depth)
                 except ValueError:
-                    pass
+                    self.stderr.write(self.style.WARNING(
+                        f'    Warning: Could not parse min_water_depth "{min_water_depth}" as integer'
+                    ))
             if max_water_depth:
                 try:
                     scope_kwargs['water_depth_max'] = int(max_water_depth)
                 except ValueError:
-                    pass
+                    self.stderr.write(self.style.WARNING(
+                        f'    Warning: Could not parse max_water_depth "{max_water_depth}" as integer'
+                    ))
 
             if len(scope_kwargs) > 1:  # More than just project
                 ScopeOfWork.objects.create(**scope_kwargs)
