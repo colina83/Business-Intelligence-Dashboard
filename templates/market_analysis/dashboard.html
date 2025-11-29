@@ -77,7 +77,7 @@
 
   <div class="card-body p-0">
     <div class="tab-content">
-      <!-- Projects tab (original table, cycle column removed) -->
+      <!-- Projects tab -->
       <div class="tab-pane fade show active" id="projects-pane" role="tabpanel" aria-labelledby="projects-tab">
         <div class="projects-table-wrapper">
           <table class="table table-striped mb-0 align-middle table-sm projects-table">
@@ -97,7 +97,7 @@
               </tr>
             </thead>
             <tbody>
-              {% for p in page_obj.object_list %}
+              {% for p in page_obj_projects.object_list %}
               <tr>
                 <td class="text-nowrap">{{ p.internal_id }}</td>
                 <td>{{ p.name }}</td>
@@ -106,7 +106,6 @@
                 <td class="text-nowrap">{% if p.date_received %}{{ p.date_received|date:"Y-m-d" }}{% else %}-{% endif %}</td>
                 <td class="text-nowrap">{{ p.country }}</td>
                 <td>{{ p.get_region_display }}</td>
-
                 <td>
                   {% if p.status == 'Won' %}
                     <button type="button" class="btn btn-sm btn-success status-pill"
@@ -119,7 +118,6 @@
                             data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}">
                       <i class="bi bi-check-circle me-1"></i>Won
                     </button>
-
                   {% elif p.status == 'Lost' %}
                     <button type="button" class="btn btn-sm btn-danger status-pill"
                             data-project-id="{{ p.project_id }}" data-status="Lost"
@@ -130,7 +128,6 @@
                             data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}">
                       <i class="bi bi-x-circle me-1"></i>Lost
                     </button>
-
                   {% elif p.status == 'Submitted' %}
                     <button type="button" class="btn btn-sm btn-warning status-pill"
                             data-project-id="{{ p.project_id }}" data-status="Submitted"
@@ -139,7 +136,6 @@
                             data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}">
                       <i class="bi bi-hourglass-split me-1"></i>Submitted
                     </button>
-
                   {% elif p.status == 'Ongoing' %}
                     <button type="button" class="btn btn-sm btn-primary status-pill"
                             data-project-id="{{ p.project_id }}" data-status="Ongoing"
@@ -188,10 +184,37 @@
               {% endfor %}
             </tbody>
           </table>
+
+          <!-- Projects pagination (independent) -->
+          {% if paginator_projects.num_pages > 1 %}
+            <nav class="d-flex justify-content-center my-3" aria-label="Projects pagination">
+              <ul class="pagination pagination-sm mb-0">
+                {% if page_obj_projects.has_previous %}
+                  <li class="page-item"><a class="page-link" href="?projects_page={{ page_obj_projects.previous_page_number }}&tab=projects">&laquo;</a></li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+                {% for item in page_range_display_projects %}
+                  {% if item == '...' %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                  {% else %}
+                    <li class="page-item {% if item == page_obj_projects.number %}active{% endif %}">
+                      <a class="page-link" href="?projects_page={{ item }}&tab=projects">{{ item }}</a>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+                {% if page_obj_projects.has_next %}
+                  <li class="page-item"><a class="page-link" href="?projects_page={{ page_obj_projects.next_page_number }}&tab=projects">&raquo;</a></li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+              </ul>
+            </nav>
+          {% endif %}
         </div>
       </div>
 
-      <!-- Cycle Time tab (new table: one metric per column) -->
+      <!-- Cycle Time tab -->
       <div class="tab-pane fade" id="cycle-pane" role="tabpanel" aria-labelledby="cycle-tab">
         <div class="projects-table-wrapper">
           <table class="table table-striped mb-0 align-middle table-sm projects-table metrics-table">
@@ -209,7 +232,7 @@
               </tr>
             </thead>
             <tbody>
-              {% for p in won_projects %}
+              {% for p in page_obj_won.object_list %}
               <tr>
                 <td class="text-nowrap">{{ p.internal_id }}</td>
                 <td>{{ p.name }}</td>
@@ -228,6 +251,33 @@
               {% endfor %}
             </tbody>
           </table>
+
+          <!-- Cycle pagination (independent) -->
+          {% if paginator_won.num_pages > 1 %}
+            <nav class="d-flex justify-content-center my-3" aria-label="Cycle pagination">
+              <ul class="pagination pagination-sm mb-0">
+                {% if page_obj_won.has_previous %}
+                  <li class="page-item"><a class="page-link" href="?cycle_page={{ page_obj_won.previous_page_number }}&tab=cycle">&laquo;</a></li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+                {% for item in page_range_display_won %}
+                  {% if item == '...' %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                  {% else %}
+                    <li class="page-item {% if item == page_obj_won.number %}active{% endif %}">
+                      <a class="page-link" href="?cycle_page={{ item }}&tab=cycle">{{ item }}</a>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+                {% if page_obj_won.has_next %}
+                  <li class="page-item"><a class="page-link" href="?cycle_page={{ page_obj_won.next_page_number }}&tab=cycle">&raquo;</a></li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+              </ul>
+            </nav>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -362,4 +412,25 @@
 
 {% block extra_js %}
 <script src="{% static 'market_analysis/js/dashboard.js' %}"></script>
+<script>
+  // Activate the requested tab if query parameter "tab" is present.
+  (function () {
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+    const tab = getQueryParam('tab');
+    if (tab) {
+      const selector = tab === 'cycle' ? '#cycle-tab' : '#projects-tab';
+      const el = document.querySelector(selector);
+      if (el) {
+        const bsTab = new bootstrap.Tab(el);
+        bsTab.show();
+        // Scroll to top of card for clarity
+        const card = el.closest('.card');
+        if (card) card.scrollIntoView({behavior: 'smooth', block: 'start'});
+      }
+    }
+  })();
+</script>
 {% endblock %}

@@ -46,9 +46,9 @@ class ScopeOfWorkForm(ModelForm):
 @login_required
 def dashboard(request):
     """
-    Dashboard showing summary cards and a single Projects table.
-    Prefetch competitors and annotate presence of Financial and ScopeOfWork.
-    Pass STATUS choices for client-side rendering of the status-select in modal.
+    Dashboard showing summary cards and two independent tables:
+      - Projects (paginated via ?projects_page=)
+      - Cycle Time (only Won projects, paginated via ?cycle_page=)
     """
     projects_count = Project.objects.count()
     clients_count = Client.objects.count()
@@ -65,24 +65,36 @@ def dashboard(request):
         .order_by('-date_received', '-project_id')
     )
 
-    # Pagination: 20 items per page
-    paginator = Paginator(projects_qs, 20)
-    page = request.GET.get('page', 1)
-    try:
-        page_obj = paginator.page(page)
-    except PageNotAnInteger:
-        page_obj = paginator.page(1)
-    except EmptyPage:
-        page_obj = paginator.page(paginator.num_pages)
+    # Separate pagination parameters
+    projects_page = request.GET.get('projects_page', 1)
+    cycle_page = request.GET.get('cycle_page', 1)
 
-    # Build compact page range for pagination controls (handles large page counts)
-    total = paginator.num_pages
-    current = page_obj.number
-    if total <= 10:
-        page_range_display = list(range(1, total + 1))
-    else:
-        start = max(1, current - 3)
-        end = min(total, current + 3)
+    # Projects paginator
+    paginator_projects = Paginator(projects_qs, 20)
+    try:
+        page_obj_projects = paginator_projects.page(projects_page)
+    except PageNotAnInteger:
+        page_obj_projects = paginator_projects.page(1)
+    except EmptyPage:
+        page_obj_projects = paginator_projects.page(paginator_projects.num_pages)
+
+    # Won projects paginator (Cycle Time table)
+    won_qs = projects_qs.filter(status='Won').order_by('-award_date', '-project_id')
+    paginator_won = Paginator(won_qs, 20)
+    try:
+        page_obj_won = paginator_won.page(cycle_page)
+    except PageNotAnInteger:
+        page_obj_won = paginator_won.page(1)
+    except EmptyPage:
+        page_obj_won = paginator_won.page(paginator_won.num_pages)
+
+    # Build compact page range helper
+    def compact_page_range(paginator, current, window=3):
+        total = paginator.num_pages
+        if total <= 10:
+            return list(range(1, total + 1))
+        start = max(1, current - window)
+        end = min(total, current + window)
         pages = [1]
         if start > 2:
             pages.append('...')
@@ -91,21 +103,23 @@ def dashboard(request):
         if end < total - 1:
             pages.append('...')
         pages.append(total)
-        # remove duplicates while preserving order (safe-guard)
+        # remove duplicates while preserving order
         seen = set()
-        page_range_display = []
+        out = []
         for p in pages:
             if p not in seen:
-                page_range_display.append(p)
+                out.append(p)
                 seen.add(p)
+        return out
 
-    # Compute cycle time metrics (days) for projects on the current page.
-    # Metrics apply only to projects whose current status is "Won".
+    page_range_display_projects = compact_page_range(paginator_projects, page_obj_projects.number)
+    page_range_display_won = compact_page_range(paginator_won, page_obj_won.number)
+
+    # helper to compute days between dates (accepts date/datetime)
     def _days_between(later, earlier):
         try:
             if not later or not earlier:
                 return 0
-            # accept datetime or date; convert datetimes to dates
             if hasattr(later, 'date'):
                 later = later.date()
             if hasattr(earlier, 'date'):
@@ -114,28 +128,8 @@ def dashboard(request):
         except Exception:
             return 0
 
-    for p in page_obj.object_list:
-        # fetch relevant dates (contract may be None)
-        date_received = getattr(p, 'date_received', None)
-        submission_date = getattr(p, 'submission_date', None)
-        award_date = getattr(p, 'award_date', None)
-        contract = getattr(p, 'contract', None)
-        contract_date = getattr(contract, 'contract_date', None) if contract else None
-        start_date = getattr(contract, 'actual_start', None) if contract else None
-
-        # compute metrics (zero when dates missing)
-        p.cycle_rec_to_sub = _days_between(submission_date, date_received)
-        p.cycle_sub_to_award = _days_between(award_date, submission_date)
-        p.cycle_award_to_contract = _days_between(contract_date, award_date)
-        p.cycle_contract_to_start = _days_between(start_date, contract_date)
-        p.cycle_rec_to_start = _days_between(start_date, date_received)
-        p.cycle_award_to_start = _days_between(start_date, award_date)
-
-    # Prepare Cycle Time table: only for awarded projects (status == 'Won')
-    won_qs = projects_qs.filter(status='Won')
-    # Evaluate and compute metrics on the won projects list
-    won_projects = list(won_qs)
-    for p in won_projects:
+    # Compute cycle metrics only for the current won-page (efficient)
+    for p in page_obj_won.object_list:
         date_received = getattr(p, 'date_received', None)
         submission_date = getattr(p, 'submission_date', None)
         award_date = getattr(p, 'award_date', None)
@@ -156,12 +150,14 @@ def dashboard(request):
         'technologies_count': technologies_count,
         'financials_count': financials_count,
         'projects': projects_qs,
-        'page_obj': page_obj,
-        'paginator': paginator,
-        'page_range_display': page_range_display,
+        'page_obj_projects': page_obj_projects,
+        'paginator_projects': paginator_projects,
+        'page_range_display_projects': page_range_display_projects,
+        'page_obj_won': page_obj_won,
+        'paginator_won': paginator_won,
+        'page_range_display_won': page_range_display_won,
         'competitor_choices': getattr(Competitor, 'COMPETITOR_CHOICES', []),
         'status_choices': Project.STATUS,  # list of (key, label)
-        'won_projects': won_projects,
     }
     return render(request, 'market_analysis/dashboard.html', context)
 
