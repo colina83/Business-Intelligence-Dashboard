@@ -1,0 +1,47 @@
+﻿Bid_Status,Bid_Type,Client,Project,Region,Country,Water_Depth_Min,Water_Depth_Max,Survey_Type,Date_Received
+Lost,RFP,Total,Egina,WAF,Nigeria,,,,1-Mar-2019
+Lost,RFP,Petrobras,Carcara,SAM,Brazil,,,,1-Jul-2019
+Lost,RFP,Petrobras,Jubarte,SAM,Brazil,,,,1-Mar-2020
+Lost,RFP,Petrobras,Sapinhoa,SAM,Brazil,,,,1-May-2020
+Lost,RFP,CNOOC,Scott?,,,,,,1-Jun-2020
+Lost,RFP,Petrobras,Lula,SAM,Brazil,,,,1-Oct-2020
+Lost,RFP,AkerBP,Ivar Aasen,North Sea,Norway,,,,1-Jan-2021
+Lost,RFP,BP,Schiehallion,North Sea,UK,,,ROV,1-Apr-2021
+Lost,RFP,Petrobras,Itapu,SAM,Brazil,,,,1-Sep-2021
+Lost,RFP,Equinor,Krafla,North Sea,Norway,90,115,NOAR,15-Nov-2021
+Lost,RFP,Petrobras,Iara Baseline,SAM,Brazil,,,ROV,24-Feb-2022
+Lost,RFP,Petrobras,Aram,SAM,Brazil,,,ROV,1-Mar-2022
+Lost,RFP,Shell,NAM,North Sea,,,,NOAR,1-Apr-2022
+Lost,RFP,ONGC,Mumbai High,APAC,India,,,NOAR,1-Apr-2022
+Lost,RFP,SLB,E4,GOM,USA,,,ROV,1-Jul-2022
+Lost,RFP,SLB,E3,GOM,USA,,,ROV,1-Jul-2022
+Lost,RFP,Petrobras,Sepia Baseline,SAM,Brazil,,,ROV,12-Aug-2022
+Lost,RFP,Saudi Aramco,S89,Middle East,Saudi Arabia,,,NOAR,1-Oct-2022
+Lost,RFP,Equinor,"Gulfaks, Martin Linge",North Sea,Norway,,,NOAR,1-Nov-2022
+Lost,RFP,Petronas,M1,APAC,Malaysia,130,130,NOAR,11-Nov-2022
+Lost,RFP,Petrobras,Marlin,SAM,Brazil,400,2300,ROV,6-Jan-2023
+Lost,RFP,Shell,Stones (Kaikias),GOM,USA,1900,2900,ROV,16-Mar-2023
+Lost,RFP,Total,Suriname,SAM,Suriname,70,1200,ROV,27-Apr-2023
+Lost,RFP,Petrobras,Buzios,SAM,Brazil,1600,2200,ROV,6-Jun-2023
+Lost,RFP,ONGC,Mumbai High North,APAC,India,50,80,NOAR,28-Aug-2023
+Lost,RFP,ONGC,"KG Cluster 2, 3 Re-Tender",APAC,India,250,2900,ROV,29-Aug-2023
+Lost,RFP,Equinor,Tonjer Area on Johan Sverdrup,North Sea,Norway,115,120,NOAR,29-Sep-2023
+Lost,RFP,Total,"B32, B20/11",WAF,Angola,1500,2200,ROV,23-Oct-2023
+Lost,RFP,Murphy,KMS,GOM,USA,900,1300,ROV,10-Jan-2024
+Lost,RFP,CNR,Kossipo Re-Tender,WAF,Ivory Coast,1000,1500,ROV,5-Feb-2024
+Lost,RFQ,SLB,E7,GOM,USA,900,2700,ROV,20-Feb-2024
+Lost,RFQ,SLB,E6,GOM,USA,,,ROV,1-Mar-2024
+Lost,RFQ,SLB,E5,GOM,USA,,,ROV,1-Mar-2024
+Lost,RFP,Petrobras,"Whales Park, Roncador",SAM,Brazil,500,2000,ROV,7-Mar-2024
+Lost,RFP,Petrobras,"Tupi, Iracema",SAM,Brazil,2000,2250,ROV,11-Mar-2024
+Lost,RFP,Petrobras,Itapu,SAM,Brazil,1700,2200,ROV,26-Mar-2024
+Lost,RFP,ONGC,Bassein Re-Tender,APAC,India,35,80,NOAR,14-May-2024
+Lost,RFP,ExxonMobil,"Liza N2, Payara N1",SAM,Guyana,500,2300,ROV,19-Aug-2024
+Lost,RFP,Tullow,Jubilee,WAF,Ghana,500,2000,ROV,18-Sep-2024
+Lost,RFP,Equinor,Breidablikk,North Sea,Norway,,,NOAR,11-Oct-2024
+Lost,RFP,Petrobras,MERO PRM Shoot,SAM,Brazil,,,PRM,5-Nov-2024
+Lost,RFI,Viridien,North Sea,North Sea,UK or Norway,,,NOAR,13-Dec-2024
+Lost,RFP,Shell,Malikai,APAC,Malaysia,400,1200,ROV,15-Jan-2025
+Lost,RFP,Petrobras,Iara & Sepia Monitor,SAM,Brazil,1900,2300,ROV,28-Feb-2025
+Lost,RFP,Prio,Frade,SAM,Brazil,,,ROV,
+Lost,RFP,Petrobras,Albacora Marlim Voador,SAM,Brazil,80,1400,ROV,24-Jul-2025
