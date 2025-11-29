@@ -55,8 +55,14 @@ COUNTRY_MAP = {
     'Angola': 'AO',
 }
 
-# Valid OBN techniques (from ProjectTechnology.OBN_TECHNIQUE choices)
-VALID_OBN_TECHNIQUES = {'NOAR', 'ROV', 'DN'}
+# Valid OBN techniques derived from model choices
+VALID_OBN_TECHNIQUES = {choice[0] for choice in ProjectTechnology.OBN_TECHNIQUE}
+
+# Valid regions derived from model choices
+VALID_REGIONS = {choice[0] for choice in Project.REGIONS}
+
+# Valid bid types derived from model choices
+VALID_BID_TYPES = {choice[0] for choice in Project.BID_TYPE}
 
 
 def parse_date(date_str):
@@ -150,7 +156,7 @@ class Command(BaseCommand):
 
         # Map region according to the specification
         region = REGION_MAP.get(region_csv, region_csv)
-        if region not in ['NSA', 'AMME', 'Asia', 'Australasia', 'Europe', 'Global']:
+        if region not in VALID_REGIONS:
             # If region is still not valid, try to infer from original or skip
             self.stderr.write(self.style.WARNING(
                 f'    Warning: Unknown region "{region_csv}" for row {row_num}, setting to empty'
@@ -167,7 +173,7 @@ class Command(BaseCommand):
             return False
 
         # Validate bid type
-        if bid_type not in ['RFQ', 'RFP', 'RFI', 'MC', 'DR', 'BQ']:
+        if bid_type not in VALID_BID_TYPES:
             self.stderr.write(self.style.WARNING(
                 f'    Warning: Unknown bid type "{bid_type}" for row {row_num}, skipping row'
             ))
