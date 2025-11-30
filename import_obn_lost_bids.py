@@ -283,8 +283,26 @@ def find_matching_competitor(winner_name):
     return None
 
 
+# Global cache for clients to avoid repeated database queries
+_client_cache = None
+
+
+def get_cached_clients():
+    """Get cached list of all clients. Call refresh_client_cache() to update."""
+    global _client_cache
+    if _client_cache is None:
+        _client_cache = list(Client.objects.all())
+    return _client_cache
+
+
+def refresh_client_cache():
+    """Refresh the client cache after creating new clients."""
+    global _client_cache
+    _client_cache = list(Client.objects.all())
+
+
 def get_or_create_client(client_name):
-    """Get or create a Client record."""
+    """Get or create a Client record using cached client list."""
     if not client_name or client_name.strip() == '':
         return None
     
@@ -293,8 +311,8 @@ def get_or_create_client(client_name):
     # Remove leading asterisks
     client_name = re.sub(r'^[*\s]+', '', client_name)
     
-    # Try to find existing client with fuzzy matching
-    all_clients = list(Client.objects.all())
+    # Try to find existing client with fuzzy matching using cache
+    all_clients = get_cached_clients()
     best_match = None
     best_score = 0.0
     
@@ -308,11 +326,14 @@ def get_or_create_client(client_name):
     if best_score >= HIGH_CONFIDENCE_THRESHOLD and best_match:
         return best_match
     
-    # Otherwise create new client
+    # Otherwise create new client and refresh cache
     client, created = Client.objects.get_or_create(
         name=client_name
     )
+    if created:
+        refresh_client_cache()
     return client
+
 
 
 def get_country_from_region(region):
@@ -412,6 +433,18 @@ def update_project_to_lost(project, winner_name=None):
             print(f"    Note: Competitor '{winner_name}' not found in predefined list")
 
 
+def get_column_value(row, column_variations):
+    """
+    Get value from row using multiple possible column name variations.
+    Returns the first non-None value found, or None if all variations fail.
+    """
+    for col in column_variations:
+        value = row.get(col)
+        if value is not None and value.strip() not in ('', '-'):
+            return value
+    return None
+
+
 def import_financial_data(project, row):
     """
     Create or update Financial record for a project with P&L data.
@@ -421,11 +454,14 @@ def import_financial_data(project, row):
     # Parse duration for Bid Duration = Project Duration
     duration = parse_integer(row.get('Bid_Duration'))
     
+    # Get GP$ value using multiple possible column name variations
+    gp_value = get_column_value(row, [' GP$ ', 'GP$', 'GP $', 'GP'])
+    
     # Update financial record using QuerySet.update() to bypass auto-calculation
     update_fields = {
         'total_direct_cost': parse_currency(row.get('Total Direct Cost')),
         'total_revenue': parse_currency(row.get('Total Revenue')),
-        'gp': parse_currency(row.get(' GP$ ', row.get('GP$', row.get('GP $')))),
+        'gp': parse_currency(gp_value),
         'gm': parse_percentage(row.get('GM%')),
         'total_overhead': parse_currency(row.get('Total Overhead')),
         'depreciation': parse_currency(row.get('Total Depreciation')),
@@ -501,6 +537,9 @@ def import_scope_of_work(project, row):
 def process_row(row, all_projects, stats, ambiguous_records):
     """
     Process a single CSV row.
+    
+    Returns the newly created project if one was created, None otherwise.
+    This allows the caller to append to all_projects to avoid N+1 queries.
     """
     csv_client = row.get('Client', '').strip()
     csv_survey = row.get('Survey', '').strip()
@@ -508,7 +547,7 @@ def process_row(row, all_projects, stats, ambiguous_records):
     # Skip if no client or survey name
     if not csv_client or not csv_survey:
         stats['skipped'] += 1
-        return
+        return None
     
     # Clean leading asterisks from client name
     csv_client_clean = re.sub(r'^[*\s]+', '', csv_client)
@@ -540,7 +579,7 @@ def process_row(row, all_projects, stats, ambiguous_records):
             'reason': 'Medium confidence match - needs confirmation'
         })
         stats['ambiguous'] += 1
-        return
+        return None
     elif match_type == 'low':
         # Low confidence - report as ambiguous and create new
         ambiguous_records.append({
@@ -598,6 +637,9 @@ def process_row(row, all_projects, stats, ambiguous_records):
         else:
             stats['scope_updated'] += 1
             print(f"    -> Updated Scope of Work (Node Count: {scope.crew_node_count})")
+    
+    # Return newly created project for caching, None for existing matches
+    return project if is_new else None
 
 
 def main():
@@ -666,10 +708,11 @@ def main():
         
         print(f"\n[{i}/{len(rows)}] Processing: Client='{csv_client}', Survey='{csv_survey}'")
         
-        process_row(row, all_projects, stats, ambiguous_records)
+        new_project = process_row(row, all_projects, stats, ambiguous_records)
         
-        # Refresh all_projects if we created a new project
-        all_projects = list(Project.objects.select_related('client').all())
+        # Append newly created project to cache to avoid N+1 queries
+        if new_project is not None:
+            all_projects.append(new_project)
     
     # Print summary
     print("\n" + "=" * 70)
