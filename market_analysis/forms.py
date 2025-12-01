@@ -82,6 +82,7 @@ class FinancialForm(forms.ModelForm):
         fields = (
             'total_direct_cost',
             'gm',
+            'overhead_dayrate',
             'duration_with_dt',
             'depreciation',
             'taxes',
@@ -90,6 +91,7 @@ class FinancialForm(forms.ModelForm):
         widgets = {
             'total_direct_cost': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'min': '0'}),
             'gm': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'min': '0', 'max': '100'}),
+            'overhead_dayrate': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'min': '0'}),
             'duration_with_dt': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'min': '0'}),
             'depreciation': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'min': '0'}),
             'taxes': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'min': '0'}),
@@ -98,6 +100,7 @@ class FinancialForm(forms.ModelForm):
         labels = {
             'total_direct_cost': 'Total Direct Cost (USD)',
             'gm': 'Gross Margin (%)',
+            'overhead_dayrate': 'Overhead Dayrate (USD)',
             'duration_with_dt': 'Duration (days, incl. downtime)',
             'depreciation': 'Depreciation (USD)',
             'taxes': 'Taxes (USD)',
