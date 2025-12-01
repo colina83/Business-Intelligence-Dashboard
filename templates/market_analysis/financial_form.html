@@ -32,6 +32,12 @@
               </div>
 
               <div class="col-12 col-md-6">
+                <label class="form-label small">Overhead Dayrate (USD)</label>
+                {{ form.overhead_dayrate }}
+                {% for err in form.overhead_dayrate.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+              </div>
+
+              <div class="col-12 col-md-6">
                 <label class="form-label small">Duration (with downtime)</label>
                 {{ form.duration_with_dt }}
                 {% for err in form.duration_with_dt.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}

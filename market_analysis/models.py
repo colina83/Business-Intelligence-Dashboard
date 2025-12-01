@@ -513,8 +513,8 @@ class Financial(models.Model):
     total_direct_cost = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, db_column='Cost')
     # gm entered as percent (e.g. 20.00 == 20%)
     gm = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, db_column='GM', help_text='Gross Margin %')
-    # overhead dayrate is constant
-    overhead_dayrate = models.DecimalField(max_digits=15, decimal_places=2, null=False, blank=True, db_column='OVERHEAD_DAYRATE', default=OVERHEAD_DAYRATE_DEFAULT, editable=False)
+    # overhead dayrate
+    overhead_dayrate = models.DecimalField(max_digits=15, decimal_places=2, null=False, blank=True, db_column='OVERHEAD_DAYRATE', default=OVERHEAD_DAYRATE_DEFAULT)
 
     duration_raw = models.IntegerField(null=True, blank=True, db_column='Duration', help_text='Duration in days')
     # valid python attribute name, map to same DB column used previously
