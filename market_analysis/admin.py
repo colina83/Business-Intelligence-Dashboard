@@ -19,7 +19,7 @@ class FinancialInline(admin.StackedInline):
     fk_name = 'project'
     fields = (
         # Inputs
-        'total_direct_cost', 'gm', 'duration_raw', 'duration_with_dt',
+        'total_direct_cost', 'gm', 'overhead_dayrate', 'duration_raw', 'duration_with_dt',
         'depreciation', 'taxes', 'file_upload_TMA',
         # Calculated (read-only)
         'total_revenue', 'gp', 'total_overhead',
@@ -234,7 +234,7 @@ class FinancialAdmin(admin.ModelAdmin):
     )
     fieldsets = (
         ('Inputs', {
-            'fields': ('project', 'total_direct_cost', 'gm', 'duration_raw', 'duration_with_dt', 'depreciation', 'taxes', 'file_upload_TMA')
+            'fields': ('project', 'total_direct_cost', 'gm', 'overhead_dayrate', 'duration_raw', 'duration_with_dt', 'depreciation', 'taxes', 'file_upload_TMA')
         }),
         ('Calculated', {
             'fields': ('total_revenue', 'gp', 'total_overhead', 'ebitda_amount', 'ebitda_pct', 'ebit_amount', 'ebit_pct', 'net_amount', 'net_pct', 'ebit_day', 'net_day'),
