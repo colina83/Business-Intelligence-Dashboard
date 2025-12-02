@@ -225,7 +225,7 @@ class Project(models.Model):
                 except Exception:
                     pass
 
-        # Create unified ChangeLog entries (no changed_by here � set in views/admin when available)
+        # Create unified ChangeLog entries (no changed_by here — set in views/admin when available)
         try:
             # status change
             if prev_status != self.status:
