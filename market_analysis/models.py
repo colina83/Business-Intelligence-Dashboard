@@ -516,9 +516,9 @@ class Financial(models.Model):
     # overhead dayrate
     overhead_dayrate = models.DecimalField(max_digits=15, decimal_places=2, null=False, blank=True, db_column='OVERHEAD_DAYRATE', default=OVERHEAD_DAYRATE_DEFAULT)
 
-    duration_raw = models.IntegerField(null=True, blank=True, db_column='Duration', help_text='Duration in days')
+    duration_raw = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, db_column='Duration', help_text='Duration in days')
     # valid python attribute name, map to same DB column used previously
-    duration_with_dt = models.IntegerField(null=True, blank=True, db_column='Duration_w_dt', help_text='Duration with downtime in days')
+    duration_with_dt = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, db_column='Duration_w_dt', help_text='Duration with downtime in days')
 
     depreciation = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, db_column='Depreciation')
 

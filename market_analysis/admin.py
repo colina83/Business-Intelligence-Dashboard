@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db import transaction
 from .models import (
     Client, Project, BidTypeHistory, ProjectTechnology, Financial,
     ProjectStatusHistory, ProjectContract, ChangeLog, ProjectSnapshot, Competitor
@@ -103,6 +104,26 @@ class ProjectContractInline(admin.StackedInline):
     readonly_fields = ('actual_duration',)
 
 
+def remove_financials_for_projects(modeladmin, request, queryset):
+    """
+    Admin action: remove Financial record associated with selected Project(s).
+    - Deletes Financial objects linked to the selected projects inside a transaction.
+    - Uses a simple action flow (no additional confirmation page). Admin user must choose the action deliberately.
+    """
+    # gather Financial rows to delete
+    financials_qs = Financial.objects.filter(project__in=queryset)
+    count = financials_qs.count()
+    if count == 0:
+        modeladmin.message_user(request, "No Financial records found for selected project(s).")
+        return
+
+    with transaction.atomic():
+        financials_qs.delete()
+
+    modeladmin.message_user(request, f"Removed {count} Financial record(s) for the selected project(s).")
+remove_financials_for_projects.short_description = "Remove Financial record(s) for selected project(s)"
+
+
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     list_display = (
@@ -112,7 +133,11 @@ class ProjectAdmin(admin.ModelAdmin):
     )
     search_fields = ('name', 'internal_id', 'project_portal_id', 'client__name')
     list_filter = ('bid_type', 'status', 'region', 'country')
-    readonly_fields = ('internal_id', 'submission_date', 'award_date', 'lost_date')
+    # Allow editing submission_date in the admin by removing it from readonly_fields.
+    # Keep award_date and lost_date read-only to avoid accidental changes via admin list/detail.
+    readonly_fields = ('internal_id', 'award_date', 'lost_date')
+
+    actions = [remove_financials_for_projects]
 
     def get_inline_instances(self, request, obj=None):
         """
