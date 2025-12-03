@@ -619,7 +619,7 @@ class Financial(models.Model):
 
         # total_overhead = overhead_rate * duration_td
         total_overhead = None
-        if overhead_rate is not None and duration_td:
+        if overhead_rate is not None and duration_td is not None and duration_td != 0:
             try:
                 total_overhead = overhead_rate * duration_td
             except (InvalidOperation, TypeError):
@@ -676,7 +676,7 @@ class Financial(models.Model):
         # ebit_day and net_day (divide by duration_td)
         ebit_day = None
         net_day = None
-        if duration_td and duration_td > 0:
+        if duration_td is not None and duration_td > 0:
             if ebit_amount is not None:
                 try:
                     ebit_day = ebit_amount / duration_td
