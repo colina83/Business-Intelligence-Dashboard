@@ -2,17 +2,15 @@
 """
 Script to import Submitted-Progress data from CSV into the database.
 
-This script reads the CSV file 'Submitted-Progress .csv' and creates opportunity
-records for each field using the information in the CSV file.
+This script reads the CSV file 'Submitted-Progress .csv' and creates new
+opportunity records ONLY for records with status "Submitted-Complete" or 
+"In Progress". These are new opportunities that need to be created.
 
 CSV columns mapped:
-- Unique_Op_ID -> internal_id (if not already set)
-- Bid_Status -> status (mapped to Project.STATUS choices)
-- Last_Update -> used for tracking update date
-- Update_Comment -> notes/comments
-- Bid_Type -> bid_type (mapped to Project.BID_TYPE choices)
-- Client -> Client (FK lookup or create)
+- Client -> Client (lookup or create)
+- Bid_Type -> bid_type
 - Project -> name
+- Bid_Status -> status (only Submitted-Complete or In Progress)
 - Region -> region (mapped to Project.REGIONS choices)
 - Country -> country
 - Water_Depth_Min -> ScopeOfWork.water_depth_min
@@ -23,11 +21,12 @@ CSV columns mapped:
 - Node_Type -> ProjectTechnology.obn_system
 - Crew Node -> ScopeOfWork.crew_node_count
 
+NOTE: Unique_Op_ID is NOT imported (as per requirements).
+
 Processing rules:
-1. Use Client and Project name to find existing records using fuzzy logic
-2. If record exists: update fields with new data
-3. If record does not exist: create new record
-4. Leave blank dates if information is not available
+1. Only process records with Bid_Status = "Submitted-Complete" or "In Progress"
+2. Always create new records (records don't exist in the database)
+3. Leave blank dates if information is not available
 
 Usage:
     python import_submitted_progress.py [csv_file]
@@ -48,9 +47,8 @@ DEFAULT_CSV_FILENAME = 'Submitted-Progress .csv'
 DEFAULT_DJANGO_SETTINGS = 'BIApp.settings'
 DEFAULT_SURVEY_TYPE = '3D Seismic'
 
-# Fuzzy matching thresholds
-HIGH_CONFIDENCE_THRESHOLD = 0.85  # Auto-match without confirmation
-MEDIUM_CONFIDENCE_THRESHOLD = 0.5  # Needs confirmation
+# Status values to import (only these will be processed)
+IMPORT_STATUS_VALUES = ['Submitted-Complete', 'In Progress']
 
 # Set up Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', os.environ.get('DJANGO_SETTINGS_MODULE', DEFAULT_DJANGO_SETTINGS))
@@ -59,7 +57,7 @@ import django
 django.setup()
 
 from market_analysis.models import (
-    Client, Project, ScopeOfWork, ProjectTechnology, Competitor
+    Client, Project, ScopeOfWork, ProjectTechnology
 )
 
 
@@ -194,167 +192,15 @@ def parse_integer(value):
         return None
 
 
-def normalize_name(name):
-    """Normalize a name for comparison."""
-    if not name:
-        return ''
-    name = re.sub(r'^[*\s]+', '', name)
-    name = ' '.join(name.split())
-    name = name.lower().strip()
-    return name
-
-
-def calculate_similarity(s1, s2):
-    """
-    Calculate similarity between two strings.
-    Returns a score between 0 and 1, where 1 is an exact match.
-    """
-    s1_norm = normalize_name(s1)
-    s2_norm = normalize_name(s2)
-    
-    if not s1_norm or not s2_norm:
-        return 0.0
-    
-    if s1_norm == s2_norm:
-        return 1.0
-    
-    # Check if one contains the other
-    if s1_norm in s2_norm or s2_norm in s1_norm:
-        len_ratio = min(len(s1_norm), len(s2_norm)) / max(len(s1_norm), len(s2_norm))
-        return 0.7 + (0.2 * len_ratio)
-    
-    # Check for partial word matches
-    words1 = set(s1_norm.split())
-    words2 = set(s2_norm.split())
-    
-    if words1 and words2:
-        common = words1.intersection(words2)
-        total = words1.union(words2)
-        if common:
-            return 0.5 + (0.4 * len(common) / len(total))
-    
-    # Character-level similarity using n-grams
-    def get_ngrams(s, n=2):
-        return set(s[i:i+n] for i in range(len(s) - n + 1))
-    
-    ngrams1 = get_ngrams(s1_norm)
-    ngrams2 = get_ngrams(s2_norm)
-    
-    if ngrams1 and ngrams2:
-        intersection = len(ngrams1.intersection(ngrams2))
-        union = len(ngrams1.union(ngrams2))
-        return 0.3 * (intersection / union) if union > 0 else 0.0
-    
-    return 0.0
-
-
-def find_matching_project(csv_client, csv_project, all_projects):
-    """
-    Find a matching project in the database based on client and project name.
-    
-    Returns a tuple of (project, match_score, match_type).
-    """
-    best_match = None
-    best_score = 0.0
-    
-    for project in all_projects:
-        db_client_name = project.client.name if project.client else ''
-        db_project_name = project.name
-        
-        client_score = calculate_similarity(csv_client, db_client_name)
-        project_score = calculate_similarity(csv_project, db_project_name)
-        
-        # Combined score
-        combined_score = (client_score * 0.4 + project_score * 0.6)
-        
-        if client_score > 0.7 and project_score > 0.7:
-            combined_score = min(1.0, combined_score * 1.1)
-        
-        if combined_score > best_score:
-            best_score = combined_score
-            best_match = project
-    
-    # Determine match type
-    if best_score >= 0.95:
-        match_type = 'exact'
-    elif best_score >= HIGH_CONFIDENCE_THRESHOLD:
-        match_type = 'high'
-    elif best_score >= MEDIUM_CONFIDENCE_THRESHOLD:
-        match_type = 'medium'
-    else:
-        match_type = 'none'
-    
-    return best_match, best_score, match_type
-
-
-def find_matching_competitor(winner_name):
-    """Find a matching competitor from the predefined list."""
-    if not winner_name or winner_name.strip() == '':
-        return None
-    
-    winner_norm = normalize_name(winner_name)
-    
-    # Check for known competitors in the comment
-    competitor_keywords = {
-        'PXGEO': 'PXGEO',
-        'Shearwater': 'SHEARWATER',
-        'SAE': 'SAE',
-        'BGP': 'BGP',
-        'SLB': 'SLB',
-        'Viridien': 'VIRIDIEN',
-    }
-    
-    for keyword, choice in competitor_keywords.items():
-        if keyword.lower() in winner_norm:
-            return choice
-    
-    return None
-
-
-# Global cache for clients
-_client_cache = None
-
-
-def get_cached_clients():
-    """Get cached list of all clients."""
-    global _client_cache
-    if _client_cache is None:
-        _client_cache = list(Client.objects.all())
-    return _client_cache
-
-
-def refresh_client_cache():
-    """Refresh the client cache after creating new clients."""
-    global _client_cache
-    _client_cache = list(Client.objects.all())
-
-
 def get_or_create_client(client_name):
-    """Get or create a Client record."""
+    """Get or create a Client record by exact name match."""
     if not client_name or client_name.strip() == '':
         return None
     
     client_name = client_name.strip()
-    client_name = re.sub(r'^[*\s]+', '', client_name)
     
-    # Try to find existing client using cache
-    all_clients = get_cached_clients()
-    best_match = None
-    best_score = 0.0
-    
-    for client in all_clients:
-        score = calculate_similarity(client_name, client.name)
-        if score > best_score:
-            best_score = score
-            best_match = client
-    
-    if best_score >= HIGH_CONFIDENCE_THRESHOLD and best_match:
-        return best_match
-    
-    # Create new client
+    # Get or create client by exact name
     client, created = Client.objects.get_or_create(name=client_name)
-    if created:
-        refresh_client_cache()
     return client
 
 
@@ -482,80 +328,28 @@ def create_new_project(row):
     return project
 
 
-def update_project(project, row):
-    """Update an existing project with new data from CSV row.
-    
-    Uses QuerySet.update() to set status and dates directly, bypassing the
-    model's save() method which auto-populates dates when missing.
-    """
-    update_fields = {}
-    
-    # Update region if not set
-    region = get_region(row.get('Region', ''))
-    if region and not project.region:
-        update_fields['region'] = region
-    
-    # Update dates if not set and available in CSV
-    date_received = parse_date(row.get('Date_Received', ''))
-    if date_received and not project.date_received:
-        update_fields['date_received'] = date_received
-    
-    date_submitted = parse_date(row.get('Date_Submitted', ''))
-    if date_submitted and not project.submission_date:
-        update_fields['submission_date'] = date_submitted
-    
-    # Update status if provided and different
-    new_status = get_bid_status(row.get('Bid_Status', ''))
-    if new_status and new_status != project.status:
-        update_fields['status'] = new_status
-    
-    if update_fields:
-        # Use QuerySet.update() to bypass model save() auto-population
-        Project.objects.filter(pk=project.pk).update(**update_fields)
-        project.refresh_from_db()
-        return True
-    
-    return False
-
-
-def create_or_update_scope_of_work(project, row):
-    """Create or update ScopeOfWork record."""
+def create_scope_of_work(project, row):
+    """Create ScopeOfWork record for a new project."""
     water_depth_min = parse_integer(row.get('Water_Depth_Min', ''))
     water_depth_max = parse_integer(row.get('Water_Depth_Max', ''))
     crew_node_count = parse_integer(row.get('Crew Node', ''))
     
     # Check if there's any data to add
     if water_depth_min is None and water_depth_max is None and crew_node_count is None:
-        return None, False
+        return None
     
-    scope, created = ScopeOfWork.objects.get_or_create(
+    scope = ScopeOfWork.objects.create(
         project=project,
-        defaults={
-            'water_depth_min': water_depth_min,
-            'water_depth_max': water_depth_max,
-            'crew_node_count': crew_node_count,
-        }
+        water_depth_min=water_depth_min,
+        water_depth_max=water_depth_max,
+        crew_node_count=crew_node_count,
     )
     
-    if not created:
-        updated = False
-        if water_depth_min is not None and scope.water_depth_min is None:
-            scope.water_depth_min = water_depth_min
-            updated = True
-        if water_depth_max is not None and scope.water_depth_max is None:
-            scope.water_depth_max = water_depth_max
-            updated = True
-        if crew_node_count is not None and scope.crew_node_count is None:
-            scope.crew_node_count = crew_node_count
-            updated = True
-        if updated:
-            scope.save()
-    
-    return scope, created
+    return scope
 
 
-def create_or_update_technology(project, row):
-    """Create or update ProjectTechnology record."""
+def create_technology(project, row):
+    """Create ProjectTechnology record for a new project."""
     survey_type = row.get('Survey_Type', '').strip()
     node_type = row.get('Node_Type', '').strip()
     
@@ -564,137 +358,67 @@ def create_or_update_technology(project, row):
     
     # Check if there's any data to add
     if obn_technique is None and obn_system is None:
-        return None, False
+        return None
     
-    # Try to find existing technology record
-    existing_tech = ProjectTechnology.objects.filter(project=project).first()
-    
-    if existing_tech:
-        updated = False
-        if obn_technique and not existing_tech.obn_technique:
-            existing_tech.obn_technique = obn_technique
-            updated = True
-        if obn_system and not existing_tech.obn_system:
-            existing_tech.obn_system = obn_system
-            updated = True
-        if updated:
-            existing_tech.save()
-        return existing_tech, False
-    else:
-        tech = ProjectTechnology.objects.create(
-            project=project,
-            technology='OBN',
-            survey_type=DEFAULT_SURVEY_TYPE,
-            obn_technique=obn_technique,
-            obn_system=obn_system,
-        )
-        return tech, True
-
-
-def create_competitor_if_lost(project, row):
-    """Create competitor record if project is lost and winner info is available."""
-    if project.status != 'Lost':
-        return None, False
-    
-    update_comment = row.get('Update_Comment', '').strip()
-    if not update_comment:
-        return None, False
-    
-    competitor_choice = find_matching_competitor(update_comment)
-    if not competitor_choice:
-        return None, False
-    
-    competitor, created = Competitor.objects.get_or_create(
+    tech = ProjectTechnology.objects.create(
         project=project,
-        defaults={'name': competitor_choice, 'notes': update_comment}
+        technology='OBN',
+        survey_type=DEFAULT_SURVEY_TYPE,
+        obn_technique=obn_technique,
+        obn_system=obn_system,
     )
-    
-    return competitor, created
+    return tech
 
 
-def process_row(row, all_projects, stats):
+def process_row(row, stats):
     """
-    Process a single CSV row.
+    Process a single CSV row and create a new project.
     
-    Returns the newly created project if one was created, None otherwise.
+    Only processes rows with Bid_Status = "Submitted-Complete" or "In Progress".
+    Always creates a new record (records don't exist in the database).
+    
+    Returns the newly created project.
     """
     csv_client = row.get('Client', '').strip()
     csv_project = row.get('Project', '').strip()
+    csv_bid_type = row.get('Bid_Type', '').strip()
+    csv_status = row.get('Bid_Status', '').strip()
     
+    # Validate required fields
     if not csv_client or not csv_project:
+        stats['skipped'] += 1
+        print(f"  Skipped: Missing client or project name")
+        return None
+    
+    # Create new project
+    project = create_new_project(row)
+    if project is None:
         stats['skipped'] += 1
         return None
     
-    # Find matching project
-    match, score, match_type = find_matching_project(csv_client, csv_project, all_projects)
+    print(f"  Created: {csv_client} / {csv_project} (Bid Type: {csv_bid_type})")
+    stats['created'] += 1
     
-    if match_type in ('exact', 'high'):
-        # Update existing project
-        project = match
-        is_new = False
-        db_client_name = project.client.name if project.client else 'N/A'
-        print(f"  Match found: {db_client_name}/{project.name} (score: {score:.2f})")
-        
-        updated = update_project(project, row)
-        if updated:
-            stats['updated'] += 1
-            print(f"    -> Updated project fields")
-        else:
-            stats['matched'] += 1
-    elif match_type == 'medium':
-        # Medium confidence - create new to be safe
-        project = create_new_project(row)
-        if project is None:
-            stats['skipped'] += 1
-            return None
-        is_new = True
-        print(f"  Created new project: {project.name} (ambiguous match, score: {score:.2f})")
-        stats['created'] += 1
-    else:
-        # No match - create new project
-        project = create_new_project(row)
-        if project is None:
-            stats['skipped'] += 1
-            return None
-        is_new = True
-        print(f"  Created new project: {project.name}")
-        stats['created'] += 1
-    
-    # Create/update scope of work
-    scope, scope_created = create_or_update_scope_of_work(project, row)
+    # Create scope of work
+    scope = create_scope_of_work(project, row)
     if scope:
-        if scope_created:
-            stats['scope_created'] += 1
-            print(f"    -> Created Scope of Work")
-        else:
-            stats['scope_updated'] += 1
-            print(f"    -> Updated Scope of Work")
+        stats['scope_created'] += 1
+        print(f"    -> Created Scope of Work (Water depth: {scope.water_depth_min}-{scope.water_depth_max}m, Nodes: {scope.crew_node_count})")
     
-    # Create/update technology
-    tech, tech_created = create_or_update_technology(project, row)
+    # Create technology
+    tech = create_technology(project, row)
     if tech:
-        if tech_created:
-            stats['tech_created'] += 1
-            print(f"    -> Created Technology (technique: {tech.obn_technique}, system: {tech.obn_system})")
-        else:
-            stats['tech_updated'] += 1
-            print(f"    -> Updated Technology")
+        stats['tech_created'] += 1
+        print(f"    -> Created Technology (technique: {tech.obn_technique}, system: {tech.obn_system})")
     
-    # Create competitor if lost
-    competitor, comp_created = create_competitor_if_lost(project, row)
-    if competitor:
-        if comp_created:
-            stats['competitor_created'] += 1
-            print(f"    -> Created Competitor: {competitor.name}")
-    
-    return project if is_new else None
+    return project
 
 
 def main():
     """Main function to import Submitted-Progress data from CSV."""
     parser = argparse.ArgumentParser(
         description='Import Submitted-Progress data from CSV into the database.',
-        epilog='Creates opportunity records for each field using the CSV data.'
+        epilog='Creates new opportunity records for Submitted-Complete and In Progress status only.'
     )
     parser.add_argument(
         'csv_file',
@@ -719,16 +443,14 @@ def main():
     
     print(f"Reading CSV file: {csv_file}")
     print("=" * 70)
-    
-    # Load all existing projects for matching
-    all_projects = list(Project.objects.select_related('client').all())
-    print(f"Found {len(all_projects)} existing projects in database.")
+    print(f"Only importing records with Bid_Status: {IMPORT_STATUS_VALUES}")
+    print("=" * 70)
     
     # Read CSV file with error handling
     try:
         with open(csv_file, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
-            rows = list(reader)
+            all_rows = list(reader)
     except PermissionError:
         print(f"Error: Permission denied when reading: {csv_file}")
         sys.exit(1)
@@ -742,49 +464,40 @@ def main():
         print(f"Error: Unable to read file: {e}")
         sys.exit(1)
     
-    print(f"Found {len(rows)} rows in CSV file.\n")
+    # Filter rows to only include Submitted-Complete and In Progress
+    rows = [row for row in all_rows if row.get('Bid_Status', '').strip() in IMPORT_STATUS_VALUES]
+    
+    print(f"Found {len(all_rows)} total rows in CSV file.")
+    print(f"Filtered to {len(rows)} rows with status: {IMPORT_STATUS_VALUES}\n")
     
     # Statistics
     stats = {
         'total': len(rows),
-        'matched': 0,
-        'updated': 0,
         'created': 0,
         'skipped': 0,
         'scope_created': 0,
-        'scope_updated': 0,
         'tech_created': 0,
-        'tech_updated': 0,
-        'competitor_created': 0,
     }
     
-    # Process each row
+    # Process each filtered row
     for i, row in enumerate(rows, 1):
         csv_client = row.get('Client', '').strip()
         csv_project = row.get('Project', '').strip()
+        csv_status = row.get('Bid_Status', '').strip()
         
-        print(f"\n[{i}/{len(rows)}] Processing: Client='{csv_client}', Project='{csv_project}'")
+        print(f"\n[{i}/{len(rows)}] Processing: Client='{csv_client}', Project='{csv_project}', Status='{csv_status}'")
         
-        new_project = process_row(row, all_projects, stats)
-        
-        # Append newly created project to cache
-        if new_project is not None:
-            all_projects.append(new_project)
+        process_row(row, stats)
     
     # Print summary
     print("\n" + "=" * 70)
     print("IMPORT SUMMARY")
     print("=" * 70)
     print(f"Total rows processed:     {stats['total']}")
-    print(f"Matched (no update):      {stats['matched']}")
-    print(f"Updated existing:         {stats['updated']}")
-    print(f"Created new:              {stats['created']}")
+    print(f"Projects created:         {stats['created']}")
     print(f"Skipped:                  {stats['skipped']}")
     print(f"Scope of Work created:    {stats['scope_created']}")
-    print(f"Scope of Work updated:    {stats['scope_updated']}")
     print(f"Technology created:       {stats['tech_created']}")
-    print(f"Technology updated:       {stats['tech_updated']}")
-    print(f"Competitors created:      {stats['competitor_created']}")
     print("=" * 70)
 
 
