@@ -1,0 +1,129 @@
+﻿Unique_Op_ID,Index,Bid_Status,Last_Update,Update_Comment,Bid_Type,Client,Project,Region,Country,Water_Depth_Min,Water_Depth_Max,Survey_Type,Date_Received,Date_Submitted,Node_Type,Crew Node
+201903_RFP_TOTA_EGI_NIG_,,Lost,10-Oct-2024,Lost,RFP,Total,Egina,WAF,Nigeria,,,,1-Mar-2019,,,
+201907_RFP_PETR_CAR_BRA_,,Lost,10-Oct-2024,Lost,RFP,Petrobras,Carcara,SAM,Brazil,,,,1-Jul-2019,,,
+201912_RFP_ENI_AGO_NIG_,,Award,10-Oct-2024,Won,RFP,ENI,Agogo,WAF,Nigeria,,,,1-Dec-2019,,,
+202001_RFP_BHP_TRI_MEX_,,Award,10-Oct-2024,Won,RFP,BHP,Trion,GOM,Mexico,,,,1-Jan-2020,,,
+202001_RFP_BP_CLA_UK_NOAR,34,Award,10-Oct-2024,"Won, unconventional tender",RFP,BP,Clair,North Sea,UK,,,NOAR,1-Jan-2020,?,,
+202003_RFP_PETR_JUB_BRA_,,Lost,10-Oct-2024,Lost,RFP,Petrobras,Jubarte,SAM,Brazil,,,,1-Mar-2020,,,
+202005_RFP_PETR_SAP_BRA_,,Lost,10-Oct-2024,Lost,RFP,Petrobras,Sapinhoa,SAM,Brazil,,,,1-May-2020,,,
+202006_RFP_CNOO_SCO__,,Lost,10-Oct-2024,Lost,RFP,CNOOC,Scott?,,,,,,1-Jun-2020,,,
+202008_RFP_SHEL_WHA_USA_,,Award,10-Oct-2024,Won,RFP,Shell ,Whale,GOM,USA,,,,1-Aug-2020,,,
+202008_RFP_SHEL_LEO_USA_,,Award,10-Oct-2024,Won,RFP,Shell ,Leopard,GOM,USA,,,,1-Aug-2020,,,
+202010_RFP_PETR_LUL_BRA_,,Lost,10-Oct-2024,Lost,RFP,Petrobras,Lula,SAM,Brazil,,,,1-Oct-2020,,,
+202011_RFP_BP_PAL_USA_,,Award,10-Oct-2024,Won,RFP,BP,Paleogene,GOM,USA,,,,1-Nov-2020,,,
+202012_RFP_SLB_ENG_USA_,,Award,10-Oct-2024,Won,RFP,SLB,Engagement 2,GOM,USA,,,,1-Dec-2020,,,
+202101_RFP_VAR _BAL__,,Award,10-Oct-2024,Won,RFP,Var Energi,Balder,,,,,,1-Jan-2021,,,
+202101_RFP_AKER_VAL__,,Award,10-Oct-2024,Won,RFP,AkerBP,Valhall,,,,,,1-Jan-2021,,,
+202101_RFP_AKER_IVA_NOR_,,Lost,10-Oct-2024,Lost,RFP,AkerBP,Ivar Aasen,North Sea,Norway,,,,1-Jan-2021,,,
+202102_RFP_TGS_NOA_NOR_NOAR,50,Award,10-Oct-2024,Won,RFP,TGS,NOAKA 2021,North Sea,Norway,,,NOAR,1-Feb-2021,,,
+202104_RFP_ONGC_PAN_IND_NOAR,51,Award,10-Oct-2024,Won,RFP,ONGC,Panna Mutka,APAC,India,,,NOAR,1-Apr-2021,,,
+202104_RFP_BP_SCH_UK_ROV,53,Lost,10-Oct-2024,Lost to PXGEO,RFP,BP,Schiehallion,North Sea,UK,,,ROV,1-Apr-2021,,,
+202109_RFP_TOTA_CUL_UK_NOAR,52,Award,10-Oct-2024,Won,RFP,Total,Culzean,North Sea,UK,,,NOAR,1-Sep-2021,,Z700,
+202109_RFP_BP_ATL_USA_,,Award,10-Oct-2024,Won,RFP,BP,Atlantis,GOM,USA,,,,1-Sep-2021,,,
+202109_RFP_BP_MAD_USA_,,Award,10-Oct-2024,Won,RFP,BP,Mad Dog,GOM,USA,,,,1-Sep-2021,,,
+202109_RFP_BP_ATO_EGY_ROV,,Award,10-Oct-2024,Won,RFP,BP,Atoll,Middle East,Egypt,,,ROV,1-Sep-2021,,,
+202109_RFP_PETR_ITA_BRA_,,Lost,10-Oct-2024,Lost,RFP,Petrobras,Itapu,SAM,Brazil,,,,1-Sep-2021,,,
+202110_RFP_SHEL_MAR_USA_ROV,,Award,10-Oct-2024,Won,RFP,Shell,Mars Ursa,GOM,USA,,,ROV,1-Oct-2021,,,
+202110_RFP_CHEV_AGB_NIG_ROV,,Award,10-Oct-2024,Won,RFP,Chevron,Agbami,WAF,Nigeria,1200,1800,ROV,12-Oct-2021,12-Nov-2021,,
+202111_RFP_EQUI_KRA_NOR_NOAR,47,Lost,10-Oct-2024,Lost to Shearwater,RFP,Equinor,Krafla,North Sea,Norway,90,115,NOAR,15-Nov-2021,,Z700,14000
+202112_RFP_TGS_NOA_NOR_NOAR,48,Award,10-Oct-2024,Won,RFP,TGS,NOAKA 2022,North Sea,Norway,,,NOAR,1-Dec-2021,,,
+202201_MC_TGS_A2_USA_ROV,,Award,10-Oct-2024,"Won, unconventional tender",MC,TGS,A2,GOM,USA,,,ROV,1-Jan-2022,n/a,,
+202201_RFP_SHEL_GUM_MAL_ROV,46,Award,10-Oct-2024,Won,RFP,Shell,Gumusut Kakap,APAC,Malaysia,900,1200,ROV,28-Jan-2022,7-Mar-2022,MASS,500
+202202_RFP_PETR_IAR_BRA_ROV,44,Lost,10-Oct-2024,Lost to Shearwater,RFP,Petrobras,Iara Baseline,SAM,Brazil,,,ROV,24-Feb-2022,6-Apr-2022,ZXPLR,3500
+202203_RFP_PETR_ARA_BRA_ROV,45,Lost,10-Oct-2024,Lost to PXGEO,RFP,Petrobras,Aram,SAM,Brazil,,,ROV,1-Mar-2022,,,
+202204_RFP_SHEL_NAM__NOAR,42,Lost,10-Oct-2024,Lost to Shearwater,RFP,Shell,NAM,North Sea,,,,NOAR,1-Apr-2022,,,
+202204_RFP_ONGC_MUM_IND_NOAR,43,Lost,10-Oct-2024,Lost to SAE,RFP,ONGC,Mumbai High,APAC,India,,,NOAR,1-Apr-2022,,,
+202204_RFP_EXXO_GUY_GUY_ROV,41,Award,10-Oct-2024,Won,RFP,ExxonMobil,Guyana,SAM,Guyana,,,ROV,1-Apr-2022,26-Apr-2022,,
+202205_RFP_OCCI_K2_USA_ROV,39,No Sale,,No sale,RFP,Occidental,K2,GOM,USA,,,ROV,1-May-2022,,,
+202206_RFP_ONGC_KG _IND_ROV,40,No Sale,,No sale,RFP,ONGC,"KG Cluster 2, 3",APAC,India,,,ROV,1-Jun-2022,,,
+202207_RFP_SLB_E4_USA_ROV,,Lost,10-Oct-2024,Lost to Shearwater,RFP,SLB,E4,GOM,USA,,,ROV,1-Jul-2022,,,
+202207_RFP_SLB_E3_USA_ROV,,Lost,10-Oct-2024,Lost to Shearwater,RFP,SLB,E3,GOM,USA,,,ROV,1-Jul-2022,,,
+202207_RFP_NOC_AL __NOAR,38,,,,RFP,NOC,Al Shaheen,Middle East,,,,NOAR,1-Jul-2022,,,
+202207_DIR_AKER_VAL_NOR_NOAR,49,Award,10-Oct-2024,Direct Award,DIR,AkerBP,"Valhall, Ivar Aasen",North Sea,Norway,100,120,NOAR,1-Jul-2022,n/a,,
+202208_DIR_SHEL_MOM_USA_ROV,,Award,10-Oct-2024,"Won, unconventional tender (prev Sparta)",DIR,Shell,Momentum,GOM,USA,,,ROV,1-Aug-2022,n/a,,
+202208_RFP_PETR_SEP_BRA_ROV,37,Lost,3-Mar-2025,Lost to PXGEO,RFP,Petrobras,Sepia Baseline,SAM,Brazil,,,ROV,12-Aug-2022,20-Sep-2022,MASS,2750
+202208_RFP_TOTA_EGI_NIG_ROV,36,No Sale,,No sale,RFP,Total,"Egina, Preowei",WAF,Nigeria,1050,1750,ROV,31-Aug-2022,,"MASS, ZXPLR",
+202208_RFP_TOTA_EGI_NIG_ROV,,Award,10-Oct-2024,Won,RFP,Total,"Egina, Preowei",WAF,Nigeria,1050,1750,ROV,31-Aug-2022,11-Oct-2022,,
+202210_RFP_SAUD_S89_SAU_NOAR,33,Lost,,Lost to BGP,RFP,Saudi Aramco,S89,Middle East,Saudi Arabia,,,NOAR,1-Oct-2022,,,
+202210_RFP_CHEV_JAC_USA_ROV,32,Award,2-Oct-2024,Won,RFP,Chevron,Jack,GOM,USA,2000,2500,ROV,13-Oct-2022,27-Nov-2022,ZXPLR,2750
+202211_RFP_EQUI_GUL_NOR_NOAR,35,Lost,,Lost to Shearwater,RFP,Equinor,"Gulfaks, Martin Linge",North Sea,Norway,,,NOAR,1-Nov-2022,,,
+202211_RFP_ENI_CON_DRC_NOAR,30,No Sale,2-Oct-2024,No sale,RFP,ENI,Congo,WAF,DRC,5,110,NOAR,2-Nov-2022,8-Dec-2022,Z700,3500
+202211_RFP_PETR_M1_MAL_NOAR,31,Lost,2-Oct-2024,Lost to SAE,RFP,Petronas,M1,APAC,Malaysia,130,130,NOAR,11-Nov-2022,9-Dec-2022,Z700,4000
+202301_RFP_PETR_MAR_BRA_ROV,29,Lost,2-Oct-2024,Lost to PXGEO,RFP,Petrobras,Marlin,SAM,Brazil,400,2300,ROV,6-Jan-2023,16-Mar-2023,MASS,4000
+202301_DIR_VIRI_INC_USA_ROV,,Award,10-Oct-2024,Direct Award,DIR,Viridien,Inception,GOM,USA,2000,2300,ROV,17-Jan-2023,n/a,,
+202302_RFP_NEO_ISO_UK_NOAR,,Award,10-Oct-2024,Won,RFP,NEO,Isolde,North Sea,UK,75,95,NOAR,1-Feb-2023,10-Feb-2023,Z700,4000
+202303_RFP_CNR_KOS_IVO_ROV,28,No Sale,2-Oct-2024,No sale,RFP,CNR,Kossipo,WAF,Ivory Coast,1000,1500,ROV,10-Mar-2023,19-Apr-2023,MASS,800
+202303_RFP_SHEL_STO_USA_ROV,27,Lost,2-Oct-2024,Lost to PXGEO,RFP,Shell,Stones (Kaikias),GOM,USA,1900,2900,ROV,16-Mar-2023,6-Apr-2023,ZXPLR,1500
+202303_RFP_OCCI_K2 _USA_ROV,26,Award,2-Oct-2024,Won,RFP,Occidental,K2 Re-Tender,GOM,USA,1000,1500,ROV,22-Mar-2023,1-May-2023,MASS,1800
+202304_RFP_WOOD_ORI_USA_ROV,25,No Sale,2-Oct-2024,No sale,RFP,Woodside,Orion,GOM,USA,500,1700,ROV,25-Apr-2023,5-Jun-2023,ZXPLR,2500
+202304_RFP_TOTA_SUR_SUR_ROV,24,Lost,2-Oct-2024,Lost to PXGEO,RFP,Total,Suriname,SAM,Suriname,70,1200,ROV,27-Apr-2023,22-Jun-2023,MASS,4000
+202306_RFP_PETR_BUZ_BRA_ROV,23,Lost,2-Oct-2024,Lost to PXGEO,RFP,Petrobras,Buzios,SAM,Brazil,1600,2200,ROV,6-Jun-2023,31-Jul-2023,ZXPLR,2000
+202307_DIR_BP_ATL_USA_ROV,,Award,10-Oct-2024,Direct Award - LTA,DIR,BP,Atlantis,GOM,USA,1300,2400,ROV,1-Jul-2023,,,
+202307_DIR_BP_THU_USA_ROV,,Award,10-Oct-2024,Direct Award - LTA,DIR,BP,Thunderhorse,GOM,USA,1300,2350,ROV,1-Jul-2023,,,
+202308_RFP_ONGC_MUM_IND_NOAR,22,Lost,2-Oct-2024,Lost to SAE,RFP,ONGC,Mumbai High North,APAC,India,50,80,NOAR,28-Aug-2023,26-Sep-2023,Z700,8000
+202308_RFP_ONGC_KG _IND_ROV,21,Lost,2-Oct-2024,Lost to Shearwater,RFP,ONGC,"KG Cluster 2, 3 Re-Tender",APAC,India,250,2900,ROV,29-Aug-2023,24-Sep-2023,MASS,4300
+202309_RFP_EQUI_OSE_NOR_NOAR,20,Award,2-Oct-2024,Won,RFP,Equinor,Oseberg South,North Sea,Norway,80,120,NOAR,14-Sep-2023,12-Oct-2023,GPR,5000
+202309_RFP_EQUI_TON_NOR_NOAR,19,Lost,2-Oct-2024,Lost to InApril,RFP,Equinor,Tonjer Area on Johan Sverdrup,North Sea,Norway,115,120,NOAR,29-Sep-2023,24-Oct-2023,MASS,1500
+202310_RFP_ONGC_BAS_IND_NOAR,18,No Sale,2-Oct-2024,No sale,RFP,ONGC,Bassein,APAC,India,35,80,NOAR,18-Oct-2023,17-Nov-2023,Z700,10000
+202310_RFP_TOTA_B32_ANG_ROV,17,Lost,2-Oct-2024,Lost to Shearwater,RFP,Total,"B32, B20/11",WAF,Angola,1500,2200,ROV,23-Oct-2023,1-Dec-2023,MASS,3000
+202311_RFP_CNOO_GOL_UK_NOAR,16,No Sale,2-Oct-2024,No sale,RFP,CNOOC,Golden Eagle,North Sea,UK,90,110,NOAR,30-Nov-2023,10-Jan-2024,Z700,4000
+202312_RFP_SHEL_BON_NIG_ROV,15,Award,2-Oct-2024,"Won, awarded to partner BGP",RFP,Shell (via BGP),Bonga,WAF,Nigeria,800,1600,ROV,11-Dec-2023,15-Jan-2024,ZXPLR,1750
+202401_RFP_MURP_KMS_USA_ROV,14,Lost,2-Oct-2024,Lost to PXGEO,RFP,Murphy,KMS,GOM,USA,900,1300,ROV,10-Jan-2024,,MASS,2500
+202402_RFP_CNR_KOS_IVO_ROV,13,Lost,2-Oct-2024,Lost to Shearwater,RFP,CNR,Kossipo Re-Tender,WAF,Ivory Coast,1000,1500,ROV,5-Feb-2024,11-Mar-2024,ZXPLR,1000
+202402_RFQ_SLB_E7_USA_ROV,12,Lost,2-Oct-2024,Lost to PXGEO,RFQ,SLB,E7,GOM,USA,900,2700,ROV,20-Feb-2024,8-Mar-2024,MASS,4000
+202403_DIR_VIRI_LAC_USA_ROV,,Award,10-Oct-2024,Direct Award,DIR,Viridien,Laconia,GOM,USA,600,2300,ROV,1-Mar-2024,27-Mar-2024,,
+202403_RFQ_SLB_E6_USA_ROV,,Lost,10-Oct-2024,Lost to PXGEO,RFQ,SLB,E6,GOM,USA,,,ROV,1-Mar-2024,,,
+202403_RFQ_SLB_E5_USA_ROV,,Lost,10-Oct-2024,Lost to PXGEO,RFQ,SLB,E5,GOM,USA,,,ROV,1-Mar-2024,,,
+202403_RFP_PETR_WHA_BRA_ROV,10,Lost,2-Oct-2024,SAE L1 bidder,RFP,Petrobras,"Whales Park, Roncador",SAM,Brazil,500,2000,ROV,7-Mar-2024,2-May-2024,ZXPLR,3000
+202403_RFP_PETR_TUP_BRA_ROV,9,Lost,2-Oct-2024,PXGEO L1 bidder,RFP,Petrobras,"Tupi, Iracema",SAM,Brazil,2000,2250,ROV,11-Mar-2024,20-May-2024,ZXPLR,3000
+202403_RFP_SHEL_GOM_USA_ROV,11,Award,2-Oct-2024,Won,RFP,Shell,GOM Program,GOM,USA,800,3000,ROV,11-Mar-2024,30-Apr-2024,ZXPLR,4500
+202403_RFP_PETR_ITA_BRA_ROV,8,Lost,2-Oct-2024,SAE L1 bidder,RFP,Petrobras,Itapu,SAM,Brazil,1700,2200,ROV,26-Mar-2024,29-May-2024,ZXPLR,2000
+202405_RFP_ONGC_BAS_IND_NOAR,7,Lost,24-Sep-2024,SAE L1 bidder,RFP,ONGC,Bassein Re-Tender,APAC,India,35,80,NOAR,14-May-2024,18-Jun-2024,Z700,10000
+202407_DIR_BP_GGG_USA_ROV,,Award,18-Dec-2024,Direct Award - LTA,DIR,BP,GGG Paleogene,GOM,USA,900,1700,ROV,3-Jul-2024,n/a,ZXPLR,
+202407_BQ_WOOD_ANG_AUS_,,No Sale,19-Feb-2025,Quiet,BQ,Woodside,Angel Platform,APAC,Australia,,,,29-Jul-2024,5-Aug-2024,,
+202408_BQ_VIRI_CAM_CAM_NOAR,,No Sale,19-Feb-2025,Quiet,BQ,Viridien,Cameroon,WAF,Cameroon,,,NOAR,14-Aug-2024,,,
+202408_RFP_EXXO_LIZ_GUY_ROV,5,Lost,3-Mar-2025,"PXGEO L1 (backed out due to tax calculation error), SW L2 (supposedly cheaper than TGS by $500K)",RFP,ExxonMobil,"Liza N2, Payara N1",SAM,Guyana,500,2300,ROV,19-Aug-2024,6-Sep-2024,"ZXPLR, MASS",3500
+202409_RFP_AKER_IVA_NOR_NOAR,3,Award,18-Dec-2024,"Valhall awarded, Ivar Aasen postponed",RFP,AkerBP,"Ivar Aasen, Valhall",North Sea,Norway,100,120,NOAR,4-Sep-2024,7-Oct-2024,Z700,12000
+202409_RFP_EXXO_LTP_GUY_ROV,6,No Sale,19-Feb-2025,Submitted to client,RFP,ExxonMobil,LTP Long Term Program,SAM,Guyana,500,2300,ROV,10-Sep-2024,1-Oct-2024,"ZXPLR, MASS",Variable
+202409_BQ_AKER_IVA_NOR_NOAR,4,See RFP opp,19-Feb-2025,Submitted to client,BQ,AkerBP,"Ivar Aasen, Valhall",North Sea,Norway,100,120,NOAR,11-Sep-2024,23-Sep-2024,Z700,12000
+202409_RFP_TULL_JUB_GHA_ROV,2,Lost,22-Oct-2025,Lost to SHearwater,RFP,Tullow,Jubilee,WAF,Ghana,500,2000,ROV,18-Sep-2024,18-Oct-2024,MASS,1000
+202409_MC_TGS_AW1_USA_ROV,,Award,22-Oct-2025,Project a go,MC,TGS,AW1 Amendment West 1,GOM,USA,,,ROV,18-Sep-2024,6-Dec-2024,ZXPLR,
+202409_RFI_TOTA_BLO_ANG_ROV,1,No Sale,19-Feb-2025,"Submitted to client, eval Jan-25",RFI,Total,"Block 17 Dalia, Jasmin, Tulipa",WAF,Angola,,,ROV,23-Sep-2024,14-Oct-2024,,
+202409_MC_TGS_A4 _USA_ROV,,Award,19-Feb-2025,TGS to shoot,MC,TGS,A4 Amendment 4,GOM,USA,50,1000,ROV,23-Sep-2024,16-Dec-2024,ZXPLR,1000
+202410_RFP_EQUI_BRE_NOR_NOAR,,Lost,19-Feb-2025,Lost to SAE,RFP,Equinor,Breidablikk,North Sea,Norway,,,NOAR,11-Oct-2024,7-Nov-2024,Z700,
+202410_RFI_SHEL_JAC_NOR_NOAR,,No Sale,19-Feb-2025,Submitted to client,RFI,Shell,Jackdaw,North Sea,Norway,,,NOAR,11-Oct-2024,25-Oct-2024,,
+202410_MC_TGS_AW2_USA_ROV,,No Sale,22-Apr-2025,Converted MC with Viridien partner (LacPh3),MC,TGS,AW2 Amendment West 2,GOM,USA,,,ROV,21-Oct-2024,30-Oct-2024,ZXPLR,
+202410_BQ_TOTA_EGI_NIG_ROV-NOAR,,No Sale,19-Feb-2025,Prework TMAs complete,BQ,Total,"Egina, Ofon, Akpo, Etison, Venus",WAF,Nigeria,,,ROV-NOAR,28-Oct-2024,6-Nov-2024,,
+202410_MC_TGS_CAR_BRA_ROV,,No Sale,19-Feb-2025,Quiet,MC,TGS,Carcara,SAM,Brazil,,,ROV,30-Oct-2024,13-Nov-2024,,
+202411_BQ_ENI_ZOH_EGY_ROV,,No Sale,31-Mar-2025,No interest,BQ,ENI,Zohr,Middle East,Egypt,1000,1500,ROV,1-Nov-2024,11-Dec-2024,,
+202411_BQ_PRIO_FRA_BRA_,,No Sale,18-Dec-2024,Quiet,BQ,Prio,Frade,SAM,Brazil,,,,1-Nov-2024,13-Nov-2024,,
+202411_RFP_PETR_MER_BRA_PRM,,Lost,22-Apr-2025,Lost to SAE,RFP,Petrobras,MERO PRM Shoot,SAM,Brazil,,,PRM,5-Nov-2024,23-Dec-2024,n/a,n/a
+202411_BQ_REPS_CCS_MEX_CCS,,No Sale,18-Dec-2024,,BQ,Repsol,CCS,GOM,Mexico,,,CCS,6-Nov-2024,13-Nov-2024,,
+202411_MC_TGS_MAL_NOR_NOAR,,No Sale,22-Apr-2025,Pushed to 2026,MC,TGS,Maloy Slope,North Sea,Norway,,,NOAR,18-Nov-2024,1-Dec-2024,,
+202411_RFP_EOG_LRL_TRI_NOAR,,Award,24-Mar-2025,LOA in progress,RFP,EOG,LRL Block,SAM,Trinidad,,,NOAR,25-Nov-2024,13-Jan-2025,Z700,12500
+202412_MC_TGS_TRI_TRI_ROV,,No Sale,19-Feb-2025,TMA and #s submitted to MC,MC,TGS,Trinidad 3D,SAM,Trinidad,,,ROV,3-Dec-2024,12-Dec-2024,ZXPLR,
+202412_RFI_VIRI_NOR_UK _NOAR,,Lost,6-Mar-2025,Lost to PXGEO,RFI,Viridien,North Sea,North Sea,UK or Norway,,,NOAR,13-Dec-2024,,,
+202412_RFI_EQUI_PER_BRA_TS-NOAR,,No Sale,19-Dec-2024,Quiet,RFI,Equinor,Peregrino,SAM,Brazil,100,200,TS-NOAR,17-Dec-2024,,Z700,4500
+202501_RFP_SHEL_MAL_MAL_ROV,,Lost,24-Jun-2025,Shearwater L1 bidder (SAE L2),RFP,Shell,Malikai,APAC,Malaysia,400,1200,ROV,15-Jan-2025,20-Feb-2025,MASS,1000
+202502_BQ_PRIO_FRA_BRA_,,No Sale,19-Feb-2025,Quiet,BQ,Prio,Frade,SAM,Brazil,,,,6-Feb-2025,,,
+202502_RFQ_VIRI_LAC_USA_ROV,,Award,22-Apr-2025,Partnership agreement with Viridien (LacPh3  + AW2),RFQ,Viridien,Laconia Phase 3,GOM,USA,1200,2400,ROV,6-Feb-2025,28-Feb-2025,ZXPLR,4200
+202502_RFP_PETR_IAR_BRA_ROV,,Lost,22-Apr-2025,PXGEO L1,RFP,Petrobras,Iara & Sepia Monitor,SAM,Brazil,1900,2300,ROV,28-Feb-2025,17-Apr-2025,ZXPLR,3500
+202503_BQ_NEWM_LEV_ISR_ROV,,No Sale,3-Jun-2025,Quiet,BQ,NewMed,Leviathan,Middle East,Israel,,,ROV,10-Mar-2025,,MASS,
+202503_RFI_OCCI_HOR_USA_ROV,,No Sale,20-Aug-2025,Quiet,RFI,Occidental,Horn Mountain,GOM,USA,,,ROV,24-Mar-2025,,ZXPLR,
+202504_RFP_CONO_ELD_NOR_ROV,,Submitted-Complete,3-Jun-2025,Tender submitted,RFP,ConocoPhillips,Eldfisk/Ekofisk,North Sea,Norway,60,80,ROV,7-Apr-2025,30-May-2025,MASS,6000
+202504_MC_TGS_MAL_NOR_NOAR,,Submitted-Complete,22-Oct-2025,MC has what they need,MC,TGS,Maloy Slope,North Sea,Norway,,,NOAR,28-Apr-2025,,,
+202505_RFP_BP_CLA_UK_ROV-NOAR,,Award,22-Oct-2025,"Clair awared to TGS, Schie postponed to 2027",RFP,BP,Clair/Schiehallion,North Sea,UK,130,500,ROV-NOAR,13-May-2025,23-Jun-2025,Z700,8000
+202505_RFI_CHEV_LEV_ISR_ROV,,No Sale,30-Jul-2025,Almost 100% not happening,RFI,Chevron,Leviathan,Middle East,Israel,,,ROV,16-May-2025,29-May-2025,MASS,
+202505_RFP_CHEV_ST _USA_ROV,,Award,27-Aug-2025,"Potential award, pending transfer fee agreement",RFP,Chevron,St Malo,GOM,USA,2000,2300,ROV,23-May-2025,3-Jul-2025,ZXPLR,2000
+202505_RFP_CHEV_CAP_WOR_TS-NOAR-ROV,,Award,22-Oct-2025,Award to TGS,RFP,Chevron,Capacity Agreement,Worldwide,Worldwide,,,TS-NOAR-ROV,30-May-2025,,,
+202506_RFI_WOOD_NW _SEN_ROV,,No Sale,25-Jun-2025,Quiet,RFI,Woodside,NW Africa,WAF,Senegal,600,1800,ROV,24-Jun-2025,30-Jun-2025,"ZXPLR, MASS",3000
+202506_BQ_TRID_ELO_EQU_NOAR,,No Sale,20-Aug-2025,Quiet,BQ,Trident Energy,Elon 4D,WAF,Equitorial Guinea,,,NOAR,30-Jun-2025,3-Jul-2025,Z700,7500
+190001_RFP_EGAS_MED_EGY_,,No Sale,24-Jul-2025,Submitted,RFP,EGAS,Mediterranean,Middle East,Egypt,,,,,,,
+190001_RFP_PRIO_FRA_BRA_ROV,,Lost,22-Oct-2025,Rumored lost to PXGEO,RFP,Prio,Frade,SAM,Brazil,,,ROV,,19-Aug-2025,ZXPLR,
+190001_RFP_OCEA_HIG_AUS_NE-UHR,,Submitted-Complete,15-Sep-2025,,RFP,Ocean Winds,High Sea Wind Project,APAC,Australia,,,NE-UHR,,,,
+190001_BQ_MURP_VIE_VIE_,,No Sale,22-Oct-2025,Will be RFP'd in November 2025,BQ,Murphy,Vietnam,APAC,Vietnam,,,,,,,
+202507_RFP_PETR_ALB_BRA_ROV,,Lost,15-Sep-2025,Lost to SAE (L1) - TGS L2,RFP,Petrobras,Albacora Marlim Voador,SAM,Brazil,80,1400,ROV,24-Jul-2025,12-Sep-2025,ZXPLR,4000
+202507_BQ_QATA_PRO_QAT_NOAR,,Submitted-Complete,15-Sep-2025,Sent non-binding numbers,BQ,Qatar Energy,Project Quest,Middle East,Qatar,0,60,NOAR,31-Jul-2025,,Z700,16000
+202509_BQ_PETR_PEL_BRA_ROV,,In Progress,15-Sep-2025,Streamer market survey with OBN component,BQ,Petronas,Pelotas,SAM,Brazil,,,ROV,15-Sep-2025,,,
+202509_RFP_AKER_IVA_NOR_NOAR,,Submitted-Complete,23-Sep-2025,"Submitted, pending response from client",RFP,AkerBP,"Ivar Aasen, Solveig",North Sea,Norway,,,NOAR,18-Sep-2025,20-Oct-2025,Z700,10100
+202510_RFP_EQUI_GUL_NOR_NOAR,,In Progress,22-Oct-2025,RFP process in the works,RFP,Equinor,"Gullfaks, Martin Linge, Njord",North Sea,Norway,,,NOAR,15-Oct-2025,,Z700,3500-8200
