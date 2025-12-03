@@ -262,4 +262,71 @@ class ComprehensiveModelsTest(TestCase):
         self.assertTrue(ChangeLog.objects.filter(project=p, change_type="BID", previous_value="BQ", new_value="RFQ").exists())
         self.assertTrue(ChangeLog.objects.filter(project=p, change_type="STATUS", previous_value="Ongoing", new_value="Submitted").exists())
 
+    def test_financial_calculation_with_decimal_duration(self):
+        """
+        Test that financial calculations handle decimal durations correctly.
+        This addresses the issue where duration was being rounded to an integer,
+        affecting EBIT/day, NET/day, and Total Overhead calculations.
+        """
+        p = Project.objects.create(
+            name="DecimalDurationProject",
+            client=self.client,
+            date_received=timezone.now().date(),
+            country="US",
+            bid_type="BQ",
+        )
+
+        cost = Decimal("100000.00")
+        gm = Decimal("20.00")  # percent
+        # Use a decimal duration like 35.5 days
+        duration = Decimal("35.5")
+        depreciation = Decimal("5000.00")
+        taxes = Decimal("2000.00")
+
+        f = Financial.objects.create(
+            project=p,
+            total_direct_cost=cost,
+            gm=gm,
+            duration_with_dt=duration,
+            depreciation=depreciation,
+            taxes=taxes,
+        )
+        f.refresh_from_db()
+
+        # Calculate expected values using decimal duration (not rounded to int)
+        gm_frac = gm / Decimal("100")
+        total_revenue = (cost / (Decimal("1") - gm_frac)).quantize(DECIMAL_2)
+        gp = (total_revenue - cost).quantize(DECIMAL_2)
+        # total_overhead should use decimal duration, not int(35) = 35
+        total_overhead = (Decimal("21000.00") * duration).quantize(DECIMAL_2)
+        ebitda_amount = (gp - total_overhead).quantize(DECIMAL_2)
+        ebitda_pct = ((ebitda_amount / total_revenue) * Decimal("100")).quantize(DECIMAL_2)
+        ebit_amount = (ebitda_amount - depreciation).quantize(DECIMAL_2)
+        ebit_pct = ((ebit_amount / total_revenue) * Decimal("100")).quantize(DECIMAL_2)
+        net_amount = (ebit_amount - taxes).quantize(DECIMAL_2)
+        net_pct = ((net_amount / total_revenue) * Decimal("100")).quantize(DECIMAL_2)
+        # ebit_day and net_day should use decimal duration, not int(35) = 35
+        ebit_day = (ebit_amount / duration).quantize(DECIMAL_2)
+        net_day = (net_amount / duration).quantize(DECIMAL_2)
+
+        self.assertEqual(f.total_revenue, total_revenue)
+        self.assertEqual(f.gp, gp)
+        self.assertEqual(f.total_overhead, total_overhead)
+        self.assertEqual(f.ebitda_amount, ebitda_amount)
+        self.assertEqual(f.ebitda_pct, ebitda_pct)
+        self.assertEqual(f.ebit_amount, ebit_amount)
+        self.assertEqual(f.ebit_pct, ebit_pct)
+        self.assertEqual(f.net_amount, net_amount)
+        self.assertEqual(f.net_pct, net_pct)
+        self.assertEqual(f.ebit_day, ebit_day)
+        self.assertEqual(f.net_day, net_day)
+
+        # Verify that the calculations differ from using int(35) instead of 35.5
+        # This confirms the fix is working - if duration were rounded to 35,
+        # total_overhead would be 21000 * 35 = 735000 instead of 21000 * 35.5 = 745500
+        int_duration_overhead = (Decimal("21000.00") * Decimal("35")).quantize(DECIMAL_2)
+        self.assertNotEqual(f.total_overhead, int_duration_overhead)
+        # Similarly for ebit_day and net_day
+        int_duration_ebit_day = (ebit_amount / Decimal("35")).quantize(DECIMAL_2)
+        self.assertNotEqual(f.ebit_day, int_duration_ebit_day)
       

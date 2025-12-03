@@ -592,12 +592,7 @@ class Financial(models.Model):
         depreciation = self._to_decimal(self.depreciation)
         taxes = self._to_decimal(self.taxes)
 
-        duration_td = None
-        if self.duration_with_dt is not None:
-            try:
-                duration_td = int(self.duration_with_dt)
-            except (TypeError, ValueError):
-                duration_td = None
+        duration_td = self._to_decimal(self.duration_with_dt)
 
         # compute gm fraction
         gm_frac = None
@@ -624,9 +619,9 @@ class Financial(models.Model):
 
         # total_overhead = overhead_rate * duration_td
         total_overhead = None
-        if overhead_rate is not None and duration_td:
+        if overhead_rate is not None and duration_td is not None and duration_td != 0:
             try:
-                total_overhead = overhead_rate * Decimal(duration_td)
+                total_overhead = overhead_rate * duration_td
             except (InvalidOperation, TypeError):
                 total_overhead = None
 
@@ -681,15 +676,15 @@ class Financial(models.Model):
         # ebit_day and net_day (divide by duration_td)
         ebit_day = None
         net_day = None
-        if duration_td and duration_td > 0:
+        if duration_td is not None and duration_td > 0:
             if ebit_amount is not None:
                 try:
-                    ebit_day = ebit_amount / Decimal(duration_td)
+                    ebit_day = ebit_amount / duration_td
                 except (InvalidOperation, ZeroDivisionError):
                     ebit_day = None
             if net_amount is not None:
                 try:
-                    net_day = net_amount / Decimal(duration_td)
+                    net_day = net_amount / duration_td
                 except (InvalidOperation, ZeroDivisionError):
                     net_day = None
 
