@@ -96,10 +96,10 @@ COUNTRY_MAP = {
     'Cameroon': 'CM',
     'Israel': 'IL',
     'Senegal': 'SN',
-    'Equitorial Guinea': 'GQ',
+    'Equatorial Guinea': 'GQ',
     'Qatar': 'QA',
     'Vietnam': 'VN',
-    'Worldwide': 'US',  # Default for Worldwide
+    'Worldwide': '',  # Empty code for worldwide/global projects
 }
 
 # Bid status mapping from CSV to database choices
@@ -170,11 +170,17 @@ def parse_date(value):
 
 
 def parse_integer(value):
-    """Parse integer from string, handling comma separators and variable values."""
+    """Parse integer from string, handling comma separators and variable values.
+    
+    For range values like "3500-8200", takes the minimum value (first number).
+    This is consistent with how water depth ranges are typically interpreted
+    where the minimum depth is the more relevant operational constraint.
+    """
     if not value or value.strip() in ('', '-', 'Variable', 'n/a'):
         return None
     
-    # Handle ranges like "3500-8200" - take the first value
+    # Handle ranges like "3500-8200" - take the minimum (first) value
+    # The minimum is used as it represents the baseline operational constraint
     if '-' in value and not value.startswith('-'):
         parts = value.split('-')
         if len(parts) >= 2:
@@ -353,12 +359,18 @@ def get_or_create_client(client_name):
 
 
 def get_country_code(country_name):
-    """Get country code from country name."""
+    """Get country code from country name.
+    
+    Returns a 2-letter ISO country code. Uses 'US' as default fallback for
+    unknown countries or when country is 'Worldwide' (global scope).
+    """
     if not country_name or country_name.strip() == '':
         return 'US'  # Default
     
     country_name = country_name.strip()
-    return COUNTRY_MAP.get(country_name, 'US')
+    code = COUNTRY_MAP.get(country_name, 'US')
+    # Handle worldwide/empty codes by defaulting to US
+    return code if code else 'US'
 
 
 def get_region(region_value):
@@ -416,9 +428,14 @@ def get_obn_system(node_type):
 def create_new_project(row):
     """Create a new project record from CSV row.
     
-    Uses QuerySet.update() to set status and dates directly, bypassing the
-    model's save() method which auto-populates dates when missing.
-    This ensures dates are left blank if not available in the CSV.
+    Implementation Note: Uses a two-step process (create then update) because:
+    1. The Project model's save() method auto-populates submission_date, award_date,
+       and lost_date when the status transitions (see models.py lines 132-147).
+    2. The problem requirement specifies to "leave blank dates if not available",
+       so we must bypass this auto-population behavior.
+    3. We first create with 'Ongoing' status (which has no date auto-population),
+       then use QuerySet.update() to set the actual status and dates directly,
+       which bypasses the model's save() method entirely.
     """
     client = get_or_create_client(row.get('Client', '').strip())
     
@@ -436,7 +453,8 @@ def create_new_project(row):
     date_received = parse_date(row.get('Date_Received', ''))
     date_submitted = parse_date(row.get('Date_Submitted', ''))
     
-    # Create project with minimal initial state to get pk
+    # Step 1: Create project with 'Ongoing' status to get a pk
+    # We use 'Ongoing' because it doesn't trigger date auto-population
     project = Project.objects.create(
         name=project_name,
         client=client,
@@ -444,11 +462,11 @@ def create_new_project(row):
         region=region,
         country=country,
         date_received=date_received,
-        status='Ongoing',  # Initial status
+        status='Ongoing',
     )
     
-    # Use QuerySet.update() to set the final status and dates directly,
-    # bypassing the model's save() which auto-populates dates
+    # Step 2: Use QuerySet.update() to set the final status and dates,
+    # bypassing the model's save() which auto-populates missing dates
     update_fields = {'status': status}
     
     # Only set submission_date if we have it from CSV (leave blank otherwise)
@@ -706,10 +724,23 @@ def main():
     all_projects = list(Project.objects.select_related('client').all())
     print(f"Found {len(all_projects)} existing projects in database.")
     
-    # Read CSV file
-    with open(csv_file, 'r', encoding='utf-8-sig') as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
+    # Read CSV file with error handling
+    try:
+        with open(csv_file, 'r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+    except PermissionError:
+        print(f"Error: Permission denied when reading: {csv_file}")
+        sys.exit(1)
+    except UnicodeDecodeError as e:
+        print(f"Error: Unable to decode CSV file (encoding issue): {e}")
+        sys.exit(1)
+    except csv.Error as e:
+        print(f"Error: CSV parsing error: {e}")
+        sys.exit(1)
+    except OSError as e:
+        print(f"Error: Unable to read file: {e}")
+        sys.exit(1)
     
     print(f"Found {len(rows)} rows in CSV file.\n")
     
