@@ -97,7 +97,7 @@ COUNTRY_MAP = {
     'Equatorial Guinea': 'GQ',
     'Qatar': 'QA',
     'Vietnam': 'VN',
-    'Worldwide': '',  # Empty code for worldwide/global projects
+    'Worldwide': 'US',  # Default to US for worldwide/global projects
 }
 
 # Bid status mapping from CSV to database choices
@@ -214,9 +214,7 @@ def get_country_code(country_name):
         return 'US'  # Default
     
     country_name = country_name.strip()
-    code = COUNTRY_MAP.get(country_name, 'US')
-    # Handle worldwide/empty codes by defaulting to US
-    return code if code else 'US'
+    return COUNTRY_MAP.get(country_name, 'US')
 
 
 def get_region(region_value):
@@ -403,13 +401,19 @@ def process_row(row, stats):
     scope = create_scope_of_work(project, row)
     if scope:
         stats['scope_created'] += 1
-        print(f"    -> Created Scope of Work (Water depth: {scope.water_depth_min}-{scope.water_depth_max}m, Nodes: {scope.crew_node_count})")
+        # Format output with conditional display for None values
+        depth_min = scope.water_depth_min if scope.water_depth_min is not None else 'N/A'
+        depth_max = scope.water_depth_max if scope.water_depth_max is not None else 'N/A'
+        nodes = scope.crew_node_count if scope.crew_node_count is not None else 'N/A'
+        print(f"    -> Created Scope of Work (Water depth: {depth_min}-{depth_max}m, Nodes: {nodes})")
     
     # Create technology
     tech = create_technology(project, row)
     if tech:
         stats['tech_created'] += 1
-        print(f"    -> Created Technology (technique: {tech.obn_technique}, system: {tech.obn_system})")
+        technique = tech.obn_technique if tech.obn_technique else 'N/A'
+        system = tech.obn_system if tech.obn_system else 'N/A'
+        print(f"    -> Created Technology (technique: {technique}, system: {system})")
     
     return project
 
