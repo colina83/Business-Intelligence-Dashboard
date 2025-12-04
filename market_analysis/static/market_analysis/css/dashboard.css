@@ -235,7 +235,6 @@
 
 .table {
     font-size: 13px;
-    margin-bottom: 0 !important;
 }
 
 .table thead th {
@@ -258,11 +257,12 @@
     padding: 10px;
 }
 
-.table-striped > tbody > tr:nth-of-type(odd) > * {
+/* Bootstrap 5 table customization using CSS custom properties (recommended approach) */
+.gh-card .table-striped > tbody > tr:nth-of-type(odd) > * {
     --bs-table-bg-type: rgba(0, 0, 0, 0.02);
 }
 
-.table-hover > tbody > tr:hover > * {
+.gh-card .table-hover > tbody > tr:hover > * {
     --bs-table-bg-state: rgba(9, 105, 218, 0.1);
 }
 
