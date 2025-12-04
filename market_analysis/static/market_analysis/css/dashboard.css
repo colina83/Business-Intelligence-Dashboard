@@ -431,3 +431,60 @@ a:hover .gh-code {
     color: #656d76;
 }
 
+/* Action buttons: compact square icon buttons and centered */
+.gh-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: .4rem;
+}
+
+.gh-actions .gh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: .35rem;
+}
+
+/* Internal ID column: larger min-width and no-wrapping so full ID is visible on one line.
+   Table sits inside .table-responsive so horizontal scrolling will appear if viewport is narrow. */
+.col-internal-id {
+    min-width: 240px;
+    width: auto;
+    white-space: nowrap;
+}
+
+.col-internal-id .gh-code {
+    display: inline-block;
+    max-width: 100%;
+    overflow: visible;
+    white-space: nowrap;
+    font-size: 1rem; /* slightly larger for readability */
+}
+
+/* Small status label next to icon */
+.status-label {
+    font-size: 0.80rem;
+    line-height: 1;
+}
+
+/* Center status buttons inside their cell */
+.status-cell {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.status-cell .status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Keep action icons visually centered */
+.gh-actions .bi {
+    font-size: 1rem;
+}
+
