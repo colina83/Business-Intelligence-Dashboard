@@ -15,12 +15,8 @@
     <h1 class="gh-page-title">
         <i class="bi bi-speedometer2 me-2"></i>Market Analysis Dashboard
     </h1>
-    <div class="gh-page-actions">
-        <a href="{% url 'market_analysis:project_add' %}" class="gh-btn gh-btn-primary">
-            <i class="bi bi-plus-lg me-1"></i>Add Project
-        </a>
-    </div>
 </div>
+<hr class="gh-divider mb-4">
 
 <!-- ROW 1: Active Projects Table (Ongoing/Submitted) -->
 <div class="gh-card mb-4">
@@ -61,7 +57,7 @@
                             <strong>{{ p.name }}</strong>
                         </td>
                         <td>
-                            <span class="gh-label">{{ p.get_bid_type_display }}</span>
+                            <span class="gh-label" title="{{ p.get_bid_type_display }}">{{ p.bid_type }}</span>
                         </td>
                         <td class="text-nowrap">{{ p.country.name|default:p.country }}</td>
                         <td>{{ p.get_region_display|default:"-" }}</td>
@@ -193,53 +189,6 @@
                     <canvas id="ebitDayChart"></canvas>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- ROW 3: Latest Surveys Table -->
-<div class="gh-card">
-    <div class="gh-card-header">
-        <h3 class="gh-card-title">
-            <i class="bi bi-table me-2"></i>Latest Surveys
-        </h3>
-        <span class="gh-badge gh-badge-secondary">Won Projects</span>
-    </div>
-    <div class="gh-card-body p-0">
-        <div class="gh-table-wrapper">
-            <table class="gh-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Operator</th>
-                        <th>Status</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for survey in latest_surveys %}
-                    <tr>
-                        <td><strong>{{ survey.name }}</strong></td>
-                        <td>{% if survey.client %}{{ survey.client.name }}{% else %}-{% endif %}</td>
-                        <td>
-                            <span class="gh-status-badge gh-status-won">
-                                <i class="bi bi-check-circle me-1"></i>{{ survey.get_status_display }}
-                            </span>
-                        </td>
-                        <td class="text-nowrap">{% if survey.contract and survey.contract.actual_start %}{{ survey.contract.actual_start|date:"Y-m-d" }}{% else %}-{% endif %}</td>
-                        <td class="text-nowrap">{% if survey.contract and survey.contract.actual_end %}{{ survey.contract.actual_end|date:"Y-m-d" }}{% else %}-{% endif %}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center text-muted py-4">
-                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                            No surveys found.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
         </div>
     </div>
 </div>
