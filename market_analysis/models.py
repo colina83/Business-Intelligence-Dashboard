@@ -67,6 +67,21 @@ class Client(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def days_to_deadline(self):
+        """
+        Return number of days between `deadline_date` and `date_received`.
+        Positive means days remaining, negative means past deadline (overdue).
+        Returns None if either date is missing or on error.
+        """
+        if not self.deadline_date or not self.date_received:
+            return None
+        try:
+            delta = self.deadline_date - self.date_received
+            return int(delta.days)
+        except Exception:
+            return None
+
 
 class Project(models.Model):
     BID_TYPE = [

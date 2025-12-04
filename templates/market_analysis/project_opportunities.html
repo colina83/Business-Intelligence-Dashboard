@@ -418,7 +418,7 @@
                             {% if p.days_to_deadline is not None %}
                                 {% if p.days_to_deadline < 0 %}
                                     <span class="gh-badge gh-badge-danger">Overdue</span>
-                                {% elif p.days_to_deadline < 15 %}
+                                {% elif p.days_to_deadline < 10 %}
                                     <span class="gh-badge gh-badge-danger">{{ p.days_to_deadline }}</span>
                                 {% else %}
                                     <span class="gh-badge gh-badge-success">{{ p.days_to_deadline }}</span>
