@@ -92,7 +92,9 @@
                     <tr>
                         <!-- removed text-nowrap so value can wrap if needed and column auto-sizes -->
                         <td class="col-internal-id">
-                            <code class="gh-code" title="{{ p.internal_id|default:'' }}">{{ p.internal_id|default:"-" }}</code>
+                            <a href="{% url 'market_analysis:project_detail' project_id=p.project_id %}" class="text-decoration-none">
+                                <code class="gh-code" title="{{ p.internal_id|default:'' }}" style="cursor: pointer;">{{ p.internal_id|default:"-" }}</code>
+                            </a>
                         </td>
 
                         <td class="text-nowrap">{% if p.date_received %}{{ p.date_received|date:"Y-m-d" }}{% else %}-{% endif %}</td>

@@ -1,0 +1,699 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ project.name }} - Project Details{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'market_analysis/css/dashboard.css' %}">
+
+<style>
+/* Project Detail Page Styles */
+
+.project-header {
+    background: linear-gradient(135deg, #1a7f37 0%, #116329 100%);
+    color: #ffffff;
+    padding: 24px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.project-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.project-header .project-subtitle {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.project-header .status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-left: 12px;
+}
+
+.status-ongoing { background: rgba(255, 255, 255, 0.2); color: #ffffff; }
+.status-submitted { background: #fff8c5; color: #9a6700; }
+.status-won { background: #dafbe1; color: #1a7f37; }
+.status-lost { background: #ffebe9; color: #cf222e; }
+.status-cancelled { background: #eaeef2; color: #57606a; }
+.status-nobid { background: #eaeef2; color: #57606a; }
+
+/* Map Container */
+.map-container {
+    background: #ffffff;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.map-container img {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.map-placeholder {
+    background: linear-gradient(135deg, #f6f8fa 0%, #eaeef2 100%);
+    border: 2px dashed #d0d7de;
+    border-radius: 8px;
+    padding: 60px 24px;
+    text-align: center;
+    color: #656d76;
+}
+
+.map-placeholder i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    color: #8c959f;
+}
+
+.map-placeholder p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Detail Cards */
+.detail-card {
+    background: #ffffff;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.detail-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.detail-card-header {
+    background: #f6f8fa;
+    border-bottom: 1px solid #d0d7de;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.detail-card-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2328;
+}
+
+.detail-card-header i {
+    font-size: 16px;
+    color: #0969da;
+}
+
+.detail-card-body {
+    padding: 16px;
+    flex: 1;
+}
+
+/* Info List */
+.info-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.info-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eaeef2;
+    font-size: 13px;
+}
+
+.info-list li:last-child {
+    border-bottom: none;
+}
+
+.info-list .label {
+    color: #656d76;
+    font-weight: 500;
+}
+
+.info-list .value {
+    color: #1f2328;
+    font-weight: 500;
+    text-align: right;
+}
+
+.info-list .value.highlight {
+    color: #0969da;
+}
+
+.info-list .value.success {
+    color: #1a7f37;
+}
+
+.info-list .value.danger {
+    color: #cf222e;
+}
+
+.info-list .value.warning {
+    color: #9a6700;
+}
+
+/* Financial Table */
+.financial-table {
+    width: 100%;
+    font-size: 13px;
+}
+
+.financial-table tr td {
+    padding: 6px 0;
+}
+
+.financial-table tr td:first-child {
+    color: #656d76;
+}
+
+.financial-table tr td:last-child {
+    text-align: right;
+    font-weight: 500;
+    color: #1f2328;
+}
+
+.financial-table .divider {
+    border-top: 1px solid #d0d7de;
+}
+
+.financial-table .total {
+    font-weight: 600;
+    color: #0969da;
+}
+
+/* Comments Box */
+.comments-box {
+    background: #f6f8fa;
+    border-radius: 6px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #1f2328;
+    min-height: 100px;
+}
+
+.comments-box.empty {
+    color: #656d76;
+    font-style: italic;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 24px;
+    color: #656d76;
+}
+
+.empty-state i {
+    font-size: 32px;
+    margin-bottom: 8px;
+    color: #8c959f;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 13px;
+}
+
+/* Row spacing */
+.card-row {
+    margin-bottom: 24px;
+}
+
+/* Back button */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #656d76;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 16px;
+    transition: color 0.15s ease;
+}
+
+.back-link:hover {
+    color: #0969da;
+}
+
+/* Actions */
+.project-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.project-actions .btn {
+    font-size: 14px;
+    padding: 8px 16px;
+}
+
+/* Competitor highlight */
+.competitor-info {
+    background: #ffebe9;
+    border: 1px solid #ffcecb;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 12px;
+}
+
+.competitor-info .label {
+    font-size: 12px;
+    color: #cf222e;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.competitor-info .value {
+    font-size: 14px;
+    color: #1f2328;
+    font-weight: 500;
+}
+
+/* Technology badges */
+.tech-badge {
+    display: inline-block;
+    background: #ddf4ff;
+    color: #0969da;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 2px;
+}
+
+.tech-badge.primary {
+    background: #0969da;
+    color: #ffffff;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Back Link -->
+<a href="{% url 'market_analysis:project_opportunities' %}" class="back-link">
+    <i class="bi bi-arrow-left"></i>
+    Back to Project Opportunities
+</a>
+
+<!-- Project Header -->
+<div class="project-header">
+    <h1>
+        {{ project.name }}
+        {% if project.status == 'Ongoing' %}
+            <span class="status-badge status-ongoing"><i class="bi bi-play-circle me-1"></i>Ongoing</span>
+        {% elif project.status == 'Submitted' %}
+            <span class="status-badge status-submitted"><i class="bi bi-hourglass-split me-1"></i>Submitted</span>
+        {% elif project.status == 'Won' %}
+            <span class="status-badge status-won"><i class="bi bi-trophy me-1"></i>Won</span>
+        {% elif project.status == 'Lost' %}
+            <span class="status-badge status-lost"><i class="bi bi-x-circle me-1"></i>Lost</span>
+        {% elif project.status == 'Cancelled' %}
+            <span class="status-badge status-cancelled"><i class="bi bi-slash-circle me-1"></i>Cancelled</span>
+        {% elif project.status == 'No Bid' %}
+            <span class="status-badge status-nobid"><i class="bi bi-dash-circle me-1"></i>No Bid</span>
+        {% endif %}
+    </h1>
+    <p class="project-subtitle">
+        <i class="bi bi-building me-1"></i>
+        {% if project.client %}{{ project.client.name }}{% else %}No Client{% endif %}
+        <span class="mx-2">|</span>
+        <i class="bi bi-geo-alt me-1"></i>
+        {{ project.country.name|default:project.country }}
+        {% if project.region %}
+            <span class="mx-2">|</span>
+            <i class="bi bi-globe me-1"></i>
+            {{ project.get_region_display }}
+        {% endif %}
+        <span class="mx-2">|</span>
+        <i class="bi bi-tag me-1"></i>
+        Internal ID: <code style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">{{ project.internal_id|default:"-" }}</code>
+    </p>
+    
+    <div class="project-actions">
+        <a href="{% url 'market_analysis:project_edit' project_id=project.project_id %}" class="btn btn-light btn-sm">
+            <i class="bi bi-pencil-square me-1"></i>Edit Project
+        </a>
+        <a href="{% url 'market_analysis:project_scope' project_id=project.project_id %}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-file-earmark-text me-1"></i>{% if scope %}Edit Scope{% else %}Add Scope{% endif %}
+        </a>
+        <a href="{% url 'market_analysis:project_add_financial' project_id=project.project_id %}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-wallet me-1"></i>{% if financial %}Edit Financials{% else %}Add Financials{% endif %}
+        </a>
+    </div>
+</div>
+
+<!-- Map Image / Placeholder -->
+<div class="map-container">
+    {% if project.project_map %}
+        <img src="{{ project.project_map.url }}" alt="Project map image">
+    {% else %}
+        <div class="map-placeholder">
+            <i class="bi bi-map d-block"></i>
+            <p>No project map uploaded yet</p>
+            <a href="{% url 'market_analysis:project_edit' project_id=project.project_id %}" class="btn btn-outline-primary btn-sm mt-3">
+                <i class="bi bi-upload me-1"></i>Upload Map Image
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- ROW 1: Date Information & Technology -->
+<div class="row card-row">
+    <!-- Card 1: Date Information -->
+    <div class="col-md-6 mb-3 mb-md-0">
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <i class="bi bi-calendar3"></i>
+                <h3>Date Information</h3>
+            </div>
+            <div class="detail-card-body">
+                <ul class="info-list">
+                    <li>
+                        <span class="label">Bid Type</span>
+                        <span class="value">{{ project.get_bid_type_display|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Date Received</span>
+                        <span class="value">{% if project.date_received %}{{ project.date_received|date:"M d, Y" }}{% else %}-{% endif %}</span>
+                    </li>
+                    <li>
+                        <span class="label">Deadline Date</span>
+                        <span class="value">
+                            {% if project.deadline_date %}{{ project.deadline_date|date:"M d, Y" }}{% else %}-{% endif %}
+                        </span>
+                    </li>
+                    <li>
+                        <span class="label">Submission Date</span>
+                        <span class="value">{% if project.submission_date %}{{ project.submission_date|date:"M d, Y" }}{% else %}-{% endif %}</span>
+                    </li>
+                    <li>
+                        <span class="label">Award Date</span>
+                        <span class="value {% if project.award_date %}success{% endif %}">{% if project.award_date %}{{ project.award_date|date:"M d, Y" }}{% else %}-{% endif %}</span>
+                    </li>
+                    <li>
+                        <span class="label">Lost Date</span>
+                        <span class="value {% if project.lost_date %}danger{% endif %}">{% if project.lost_date %}{{ project.lost_date|date:"M d, Y" }}{% else %}-{% endif %}</span>
+                    </li>
+                    <li>
+                        <span class="label">Status</span>
+                        <span class="value {% if project.status == 'Won' %}success{% elif project.status == 'Lost' %}danger{% elif project.status == 'Submitted' %}warning{% else %}highlight{% endif %}">{{ project.get_status_display }}</span>
+                    </li>
+                </ul>
+                
+                {% if project.status == 'Lost' and competitor %}
+                <div class="competitor-info">
+                    <div class="label"><i class="bi bi-exclamation-triangle me-1"></i>Competitor Who Won</div>
+                    <div class="value">{{ competitor.get_name_display|default:"Unknown" }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card 2: Project Technology -->
+    <div class="col-md-6">
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <i class="bi bi-cpu"></i>
+                <h3>Project Technology</h3>
+            </div>
+            <div class="detail-card-body">
+                {% if technology %}
+                <ul class="info-list">
+                    <li>
+                        <span class="label">Technology</span>
+                        <span class="value"><span class="tech-badge primary">{{ technology.get_technology_display }}</span></span>
+                    </li>
+                    <li>
+                        <span class="label">Survey Type</span>
+                        <span class="value"><span class="tech-badge">{{ technology.get_survey_type_display }}</span></span>
+                    </li>
+                    {% if technology.obn_technique %}
+                    <li>
+                        <span class="label">OBN Technique</span>
+                        <span class="value">{{ technology.get_obn_technique_display }}</span>
+                    </li>
+                    {% endif %}
+                    {% if technology.obn_system %}
+                    <li>
+                        <span class="label">OBN System</span>
+                        <span class="value">{{ technology.get_obn_system_display }}</span>
+                    </li>
+                    {% endif %}
+                    {% if technology.streamer %}
+                    <li>
+                        <span class="label">Streamer</span>
+                        <span class="value">{{ technology.get_streamer_display }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-cpu d-block"></i>
+                    <p>No technology information available</p>
+                    <a href="{% url 'market_analysis:project_add_technology' project_id=project.project_id %}" class="btn btn-outline-primary btn-sm mt-3">
+                        <i class="bi bi-plus-circle me-1"></i>Add Technology
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ROW 2: Scope of Work & Financial Information -->
+<div class="row card-row">
+    <!-- Card 1: Scope of Work -->
+    <div class="col-md-6 mb-3 mb-md-0">
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <i class="bi bi-file-earmark-text"></i>
+                <h3>Scope of Work</h3>
+            </div>
+            <div class="detail-card-body">
+                {% if scope %}
+                <ul class="info-list">
+                    <li>
+                        <span class="label">Total Rx Locations</span>
+                        <span class="value">{{ scope.total_rx_locs|intcomma|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Total Sx Locations</span>
+                        <span class="value">{{ scope.total_sx_locs|intcomma|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Max Active Spread</span>
+                        <span class="value">{{ scope.max_active_spread|intcomma|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Crew Node Count</span>
+                        <span class="value">{{ scope.crew_node_count|intcomma|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Node Area (km²)</span>
+                        <span class="value">{{ scope.node_area|intcomma|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Source Area (km²)</span>
+                        <span class="value">{{ scope.source_area|intcomma|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Node Grid (IL x XL)</span>
+                        <span class="value">{{ scope.node_grid_IL|default:"-" }} x {{ scope.node_grid_XL|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Source Grid (IL x XL)</span>
+                        <span class="value">{{ scope.source_grid_IL|default:"-" }} x {{ scope.source_grid_XL|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Water Depth (min-max)</span>
+                        <span class="value">{{ scope.water_depth_min|default:"-" }} - {{ scope.water_depth_max|default:"-" }} m</span>
+                    </li>
+                    <li>
+                        <span class="label">Node Category</span>
+                        <span class="value">{{ scope.get_node_category_display|default:"-" }}</span>
+                    </li>
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-file-earmark-text d-block"></i>
+                    <p>No scope of work defined</p>
+                    <a href="{% url 'market_analysis:project_scope' project_id=project.project_id %}" class="btn btn-outline-primary btn-sm mt-3">
+                        <i class="bi bi-plus-circle me-1"></i>Add Scope
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card 2: Financial Information -->
+    <div class="col-md-6">
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <i class="bi bi-currency-dollar"></i>
+                <h3>Financial Information</h3>
+            </div>
+            <div class="detail-card-body">
+                {% if financial %}
+                <table class="financial-table">
+                    <tr>
+                        <td>Total Direct Cost</td>
+                        <td>${{ financial.total_direct_cost|floatformat:2|intcomma|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Gross Margin</td>
+                        <td>{{ financial.gm|floatformat:2|default:"-" }}%</td>
+                    </tr>
+                    <tr>
+                        <td>Total Revenue</td>
+                        <td class="total">${{ financial.total_revenue|floatformat:2|intcomma|default:"-" }}</td>
+                    </tr>
+                    <tr class="divider"><td colspan="2"></td></tr>
+                    <tr>
+                        <td>Gross Profit</td>
+                        <td>${{ financial.gp|floatformat:2|intcomma|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Total Overhead</td>
+                        <td>${{ financial.total_overhead|floatformat:2|intcomma|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td>EBITDA</td>
+                        <td>${{ financial.ebitda_amount|floatformat:2|intcomma|default:"-" }} ({{ financial.ebitda_pct|floatformat:2|default:"-" }}%)</td>
+                    </tr>
+                    <tr>
+                        <td>Depreciation</td>
+                        <td>${{ financial.depreciation|floatformat:2|intcomma|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td>EBIT</td>
+                        <td class="total">${{ financial.ebit_amount|floatformat:2|intcomma|default:"-" }} ({{ financial.ebit_pct|floatformat:2|default:"-" }}%)</td>
+                    </tr>
+                    <tr class="divider"><td colspan="2"></td></tr>
+                    <tr>
+                        <td>Taxes</td>
+                        <td>${{ financial.taxes|floatformat:2|intcomma|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Net Income</td>
+                        <td>${{ financial.net_amount|floatformat:2|intcomma|default:"-" }} ({{ financial.net_pct|floatformat:2|default:"-" }}%)</td>
+                    </tr>
+                    <tr class="divider"><td colspan="2"></td></tr>
+                    <tr>
+                        <td>Duration (days)</td>
+                        <td>{{ financial.duration_with_dt|floatformat:1|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td>EBIT/Day</td>
+                        <td class="total">${{ financial.ebit_day|floatformat:2|intcomma|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Net/Day</td>
+                        <td>${{ financial.net_day|floatformat:2|intcomma|default:"-" }}</td>
+                    </tr>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-wallet d-block"></i>
+                    <p>No financial information available</p>
+                    <a href="{% url 'market_analysis:project_add_financial' project_id=project.project_id %}" class="btn btn-outline-primary btn-sm mt-3">
+                        <i class="bi bi-plus-circle me-1"></i>Add Financials
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ROW 3: Contract Dates & Comments -->
+<div class="row card-row">
+    <!-- Card 1: Contract Dates -->
+    <div class="col-md-6 mb-3 mb-md-0">
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <i class="bi bi-file-earmark-check"></i>
+                <h3>Contract Dates</h3>
+            </div>
+            <div class="detail-card-body">
+                {% if contract %}
+                <ul class="info-list">
+                    <li>
+                        <span class="label">Contract Date</span>
+                        <span class="value">{% if contract.contract_date %}{{ contract.contract_date|date:"M d, Y" }}{% else %}-{% endif %}</span>
+                    </li>
+                    <li>
+                        <span class="label">Actual Start</span>
+                        <span class="value">{% if contract.actual_start %}{{ contract.actual_start|date:"M d, Y" }}{% else %}-{% endif %}</span>
+                    </li>
+                    <li>
+                        <span class="label">Actual End</span>
+                        <span class="value">{% if contract.actual_end %}{{ contract.actual_end|date:"M d, Y" }}{% else %}-{% endif %}</span>
+                    </li>
+                    <li>
+                        <span class="label">Actual Duration</span>
+                        <span class="value highlight">{% if contract.actual_duration %}{{ contract.actual_duration }} days{% else %}-{% endif %}</span>
+                    </li>
+                </ul>
+                {% elif project.status == 'Won' %}
+                <div class="empty-state">
+                    <i class="bi bi-file-earmark-check d-block"></i>
+                    <p>Contract details not yet entered</p>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-file-earmark-check d-block"></i>
+                    <p>Contract information available after project is won</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card 2: Comments During Bid -->
+    <div class="col-md-6">
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <i class="bi bi-chat-left-text"></i>
+                <h3>Comments During Bid</h3>
+            </div>
+            <div class="detail-card-body">
+                <div class="comments-box {% if not project.comments %}empty{% endif %}">
+                    {% if project.comments %}
+                        {{ project.comments|linebreaks }}
+                    {% else %}
+                        No comments have been added for this project.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'market_analysis/js/dashboard.js' %}"></script>
+{% endblock %}

@@ -8,17 +8,22 @@ class ProjectForm(forms.ModelForm):
         model = Project
         fields = [
             'bid_type', 'client', 'name', 'country', 'region',
-            'date_received', 'status', 'submission_date'
+            'date_received', 'status', 'submission_date', 'project_map'
         ]
         widgets = {
             'date_received': DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'submission_date': DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'project_map': forms.ClearableFileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/png, image/jpeg, image/gif'
+            }),
         }
         labels = {
             'name': 'Project Name',
             'bid_type': 'Bid Type',
             'date_received': 'Date Received',
             'submission_date': 'Submission Date',
+            'project_map': 'Project Map Image',
         }
 
     def __init__(self, *args, **kwargs):
@@ -26,7 +31,7 @@ class ProjectForm(forms.ModelForm):
 
         # Styling classes
         for name, field in self.fields.items():
-            if not isinstance(field.widget, (DateInput,)):
+            if not isinstance(field.widget, (DateInput, forms.ClearableFileInput)):
                 field.widget.attrs.setdefault('class', 'form-control')
 
         # client as select
@@ -35,6 +40,7 @@ class ProjectForm(forms.ModelForm):
 
         # submission_date optional by default
         self.fields['submission_date'].required = False
+        self.fields['project_map'].required = False
 
     def clean(self):
         cleaned = super().clean()
@@ -138,13 +144,20 @@ class ProjectEditForm(forms.ModelForm):
         model = Project
         fields = [
             'bid_type', 'client', 'name', 'country', 'region',
-            'date_received', 'status', 'submission_date', 'award_date', 'lost_date'
+            'date_received', 'status', 'submission_date', 'award_date', 'lost_date',
+            'deadline_date', 'comments', 'project_map'
         ]
         widgets = {
             'date_received': DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm'}),
             'submission_date': DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm'}),
             'award_date': DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm'}),
             'lost_date': DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm'}),
+            'deadline_date': DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm'}),
+            'comments': forms.Textarea(attrs={'class': 'form-control form-control-sm', 'rows': 3}),
+            'project_map': forms.ClearableFileInput(attrs={
+                'class': 'form-control form-control-sm',
+                'accept': 'image/png, image/jpeg, image/gif'
+            }),
         }
         labels = {
             'name': 'Project Name',
@@ -153,6 +166,9 @@ class ProjectEditForm(forms.ModelForm):
             'submission_date': 'Submission Date',
             'award_date': 'Award Date',
             'lost_date': 'Lost Date',
+            'deadline_date': 'Deadline Date',
+            'comments': 'Comments',
+            'project_map': 'Project Map Image',
         }
 
     def __init__(self, *args, **kwargs):
@@ -160,7 +176,7 @@ class ProjectEditForm(forms.ModelForm):
 
         # use compact controls
         for name, field in self.fields.items():
-            if not isinstance(field.widget, (DateInput,)):
+            if not isinstance(field.widget, (DateInput, forms.ClearableFileInput, forms.Textarea)):
                 field.widget.attrs.setdefault('class', 'form-control form-control-sm')
 
         # client select
@@ -171,6 +187,8 @@ class ProjectEditForm(forms.ModelForm):
         self.fields['submission_date'].required = False
         self.fields['award_date'].required = False
         self.fields['lost_date'].required = False
+        self.fields['deadline_date'].required = False
+        self.fields['project_map'].required = False
 
     def clean(self):
         cleaned = super().clean()

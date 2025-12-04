@@ -12,7 +12,7 @@ from .forms import ProjectForm, ProjectTechnologyFormSet, FinancialForm, Project
 from .models import (
     Project, Client, ProjectTechnology, Financial, BidTypeHistory,
     ProjectContract, Competitor, ScopeOfWork, ProjectSnapshot,
-    ProjectStatusHistory, ChangeLog
+    ProjectStatusHistory, ChangeLog, _build_snapshot_from_instance
 )
 
 
@@ -192,7 +192,7 @@ def create_project(request):
     Create project and (optionally) open the technology modal afterwards.
     """
     if request.method == 'POST':
-        form = ProjectForm(request.POST)
+        form = ProjectForm(request.POST, request.FILES)
         if form.is_valid():
             project = form.save()
             messages.success(request, 'Project created successfully. Add technology now.')
@@ -303,7 +303,7 @@ def edit_project(request, project_id):
         prev = None
 
     if request.method == 'POST':
-        form = ProjectEditForm(request.POST, instance=project)
+        form = ProjectEditForm(request.POST, request.FILES, instance=project)
         if form.is_valid():
             new_bid = form.cleaned_data.get('bid_type')
             new_status = form.cleaned_data.get('status')
@@ -574,3 +574,51 @@ def project_opportunities(request):
         'status_choices': Project.STATUS,
     }
     return render(request, 'market_analysis/project_opportunities.html', context)
+
+
+@login_required
+def project_detail(request, project_id):
+    """
+    Project Detail page with card layout showing all project information.
+    
+    Layout:
+    - Project Name header
+    - Map Image / Placeholder
+    - Row 1: Card 1 (Date Information + Competitor if Lost), Card 2 (Technology)
+    - Row 2: Card 1 (Scope of Work), Card 2 (Financial Information)
+    - Row 3: Card 1 (Contract Dates), Card 2 (Comments During Bid)
+    """
+    project = get_object_or_404(
+        Project.objects.select_related('client', 'contract')
+        .prefetch_related('technologies', 'scopes_of_work', 'competitors'),
+        pk=project_id
+    )
+    
+    # Get related data
+    technology = project.technologies.first()
+    scope = project.scopes_of_work.order_by('-created_at').first()
+    
+    try:
+        financial = project.financials
+    except Financial.DoesNotExist:
+        financial = None
+    
+    try:
+        contract = project.contract
+    except ProjectContract.DoesNotExist:
+        contract = None
+    
+    # Get competitor if project is Lost
+    competitor = None
+    if project.status == 'Lost':
+        competitor = project.competitors.order_by('-created_at').first()
+    
+    context = {
+        'project': project,
+        'technology': technology,
+        'scope': scope,
+        'financial': financial,
+        'contract': contract,
+        'competitor': competitor,
+    }
+    return render(request, 'market_analysis/project_detail.html', context)

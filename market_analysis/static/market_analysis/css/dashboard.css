@@ -176,6 +176,16 @@
     border-radius: 6px;
 }
 
+/* Clickable Internal ID links */
+a .gh-code {
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+a:hover .gh-code {
+    background-color: #ddf4ff;
+    color: #0969da;
+}
+
 /* GitHub-style Tables - kept for compatibility */
 .gh-table-wrapper {
     overflow-x: auto;

@@ -5,10 +5,23 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, FileExtensionValidator
+from django.core.exceptions import ValidationError
 
 DECIMAL_2 = Decimal("0.01")
 OVERHEAD_DAYRATE_DEFAULT = Decimal("21000.00")
+
+# Maximum file size for project map images (5 MB)
+MAX_PROJECT_MAP_SIZE = 5 * 1024 * 1024
+
+
+def validate_image_file_size(value):
+    """Validate that uploaded file doesn't exceed maximum size."""
+    if value.size > MAX_PROJECT_MAP_SIZE:
+        raise ValidationError(
+            f'File size must be no more than {MAX_PROJECT_MAP_SIZE // (1024 * 1024)} MB. '
+            f'Current file size is {value.size / (1024 * 1024):.2f} MB.'
+        )
 
 
 def _serialize_value_for_json(val):
@@ -24,6 +37,9 @@ def _serialize_value_for_json(val):
         return getattr(val, "code", str(val))
     if isinstance(val, models.Model):
         return str(val)
+    # Handle ImageFieldFile and FileField values
+    if hasattr(val, 'name') and hasattr(val, 'url'):
+        return val.name if val else None
     return val
 
 
@@ -109,6 +125,19 @@ class Project(models.Model):
     # Dashboard display fields
     deadline_date = models.DateField(null=True, blank=True, db_column='DeadlineDate')
     comments = models.TextField(null=True, blank=True, db_column='Comments')
+    
+    # Project map image field
+    project_map = models.ImageField(
+        upload_to='project_maps/',
+        null=True,
+        blank=True,
+        db_column='ProjectMap',
+        validators=[
+            FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif']),
+            validate_image_file_size
+        ],
+        help_text='Upload a project map image (PNG, JPG, GIF). Max size: 5 MB.'
+    )
 
     def save(self, *args, **kwargs):
         """
