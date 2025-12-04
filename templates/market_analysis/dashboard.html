@@ -27,23 +27,23 @@
         <span class="gh-badge gh-badge-primary">Ongoing & Submitted</span>
     </div>
     <div class="gh-card-body p-0">
-        <div class="gh-table-wrapper">
-            <table class="gh-table">
-                <thead>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered mb-0">
+                <thead class="table-dark">
                     <tr>
-                        <th>Internal ID</th>
-                        <th>Client</th>
-                        <th>Project Name</th>
-                        <th>Bid Type</th>
-                        <th>Country</th>
-                        <th>Region</th>
-                        <th>Bid Received</th>
-                        <th>Deadline</th>
-                        <th>Days to Deadline</th>
-                        <th>Bid Submitted</th>
-                        <th>Status</th>
-                        <th>Comments</th>
-                        <th class="text-end">Actions</th>
+                        <th scope="col">Internal ID</th>
+                        <th scope="col">Client</th>
+                        <th scope="col">Project Name</th>
+                        <th scope="col">Bid Type</th>
+                        <th scope="col">Country</th>
+                        <th scope="col">Region</th>
+                        <th scope="col">Bid Received</th>
+                        <th scope="col">Deadline</th>
+                        <th scope="col">Days to Deadline</th>
+                        <th scope="col">Bid Submitted</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Comments</th>
+                        <th scope="col" class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -125,7 +125,7 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
+        </div><!-- /.table-responsive -->
         
         <!-- Active Projects Pagination -->
         {% if active_projects_paginator.num_pages > 1 %}

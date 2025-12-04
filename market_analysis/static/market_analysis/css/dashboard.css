@@ -176,7 +176,7 @@
     border-radius: 6px;
 }
 
-/* GitHub-style Tables */
+/* GitHub-style Tables - kept for compatibility */
 .gh-table-wrapper {
     overflow-x: auto;
     max-height: 50vh;
@@ -224,6 +224,46 @@
 
 .gh-table tbody tr:last-child td {
     border-bottom: none;
+}
+
+/* Bootstrap 5 Table Enhancements */
+.table-responsive {
+    max-height: 50vh;
+    overflow-y: auto;
+    border-radius: 0 0 6px 6px;
+}
+
+.table {
+    font-size: 13px;
+}
+
+.table thead th {
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    vertical-align: middle;
+    padding: 12px 10px;
+}
+
+.table thead.table-dark th {
+    background: linear-gradient(to bottom, #1a7f37, #116329);
+    border-color: #0d4820;
+}
+
+.table tbody td {
+    vertical-align: middle;
+    padding: 10px;
+}
+
+/* Bootstrap 5 table customization using CSS custom properties (recommended approach) */
+.gh-card .table-striped > tbody > tr:nth-of-type(odd) > * {
+    --bs-table-bg-type: rgba(0, 0, 0, 0.02);
+}
+
+.gh-card .table-hover > tbody > tr:hover > * {
+    --bs-table-bg-state: rgba(9, 105, 218, 0.1);
 }
 
 /* Status Badges */
