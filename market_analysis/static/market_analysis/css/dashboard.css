@@ -24,6 +24,14 @@
     gap: 8px;
 }
 
+/* Divider Line */
+.gh-divider {
+    border: 0;
+    height: 2px;
+    background: linear-gradient(to right, #0969da, #1a7f37);
+    margin: 16px 0;
+}
+
 /* GitHub-style Buttons */
 .gh-btn {
     display: inline-flex;
@@ -179,7 +187,7 @@
 .gh-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .gh-table thead {
@@ -189,23 +197,29 @@
 }
 
 .gh-table th {
-    background-color: #f6f8fa;
-    border-bottom: 1px solid #d0d7de;
-    padding: 8px 16px;
+    background: linear-gradient(to bottom, #1a7f37, #116329);
+    border-bottom: 2px solid #0d4820;
+    padding: 10px 12px;
     text-align: left;
     font-weight: 600;
-    color: #1f2328;
+    color: #ffffff;
     white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .gh-table td {
-    padding: 8px 16px;
+    padding: 8px 12px;
     border-bottom: 1px solid #d0d7de;
     color: #1f2328;
 }
 
-.gh-table tbody tr:hover {
+.gh-table tbody tr:nth-child(even) {
     background-color: #f6f8fa;
+}
+
+.gh-table tbody tr:hover {
+    background-color: #ddf4ff;
 }
 
 .gh-table tbody tr:last-child td {
