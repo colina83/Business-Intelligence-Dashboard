@@ -399,7 +399,7 @@
                     </li>
                     <li>
                         <span class="label">Deadline Date</span>
-                        <span class="value {% if project.deadline_date %}{% with days=project.deadline_date|timesince_filter %}{% if days < 15 %}danger{% endif %}{% endwith %}{% endif %}">
+                        <span class="value">
                             {% if project.deadline_date %}{{ project.deadline_date|date:"M d, Y" }}{% else %}-{% endif %}
                         </span>
                     </li>
