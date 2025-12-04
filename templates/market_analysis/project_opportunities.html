@@ -260,6 +260,45 @@
     padding: 0 2px;
     border-radius: 2px;
 }
+
+/* Pagination: keep pages in a single horizontal line and centered */
+.gh-pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.gh-pagination {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    white-space: nowrap;
+}
+.gh-pagination li { display: inline-block; }
+.gh-page-link {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--gh-text-primary);
+    border: 1px solid var(--gh-border-default);
+    background: #ffffff;
+}
+.gh-page-link.active {
+    background: var(--gh-success);
+    color: #ffffff;
+    border-color: transparent;
+}
+.gh-page-link.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    background: #f6f8fa;
+}
 </style>
 {% endblock %}
 
@@ -269,11 +308,7 @@
     <h1 class="gh-page-title">
         <i class="bi bi-folder-plus me-2"></i>Project Opportunities
     </h1>
-    <div class="gh-page-actions">
-        <a href="{% url 'market_analysis:project_add' %}" class="gh-btn gh-btn-primary">
-            <i class="bi bi-plus-lg me-1"></i>Add Project
-        </a>
-    </div>
+    <!-- Add Project action removed per request -->
 </div>
 <hr class="gh-divider mb-4">
 
@@ -329,11 +364,12 @@
                         <th scope="col" class="col-bid-type">Bid Type</th>
                         <th scope="col" class="col-country">Country</th>
                         <th scope="col" class="col-region">Region</th>
+                        <th scope="col">Project Technology</th>
+                        <th scope="col" class="col-status">Status</th>
                         <th scope="col" class="col-date">Bid Received</th>
                         <th scope="col" class="col-date">Deadline</th>
                         <th scope="col" class="col-days">Days to Deadline</th>
                         <th scope="col" class="col-date">Bid Submitted</th>
-                        <th scope="col" class="col-status">Status</th>
                         <th scope="col" class="col-comments">Comments</th>
                         <th scope="col" class="col-actions">Actions</th>
                     </tr>
@@ -349,10 +385,31 @@
                             <span title="{{ p.name }}"><strong>{{ p.name }}</strong></span>
                         </td>
                         <td class="col-bid-type">
-                            <span class="gh-label">{{ p.get_bid_type_display }}</span>
+                            <span class="gh-label">{{ p.bid_type|default:"-" }}</span>
                         </td>
                         <td class="col-country">{{ p.country.name|default:p.country }}</td>
                         <td class="col-region">{{ p.get_region_display|default:"-" }}</td>
+                        <td class="col-tech">{% with tech=p.technologies.first %}{% if tech %}{{ tech.get_technology_display }}{% else %}-{% endif %}{% endwith %}</td>
+
+                        <!-- Status cell (moved next to technology) -->
+                        <td class="status-cell">
+                            {% if p.status == 'Ongoing' %}
+                                <span class="status-pill-small status-ongoing"><i class="bi bi-play-circle me-1"></i>Ongoing</span>
+                            {% elif p.status == 'Submitted' %}
+                                <span class="status-pill-small status-submitted"><i class="bi bi-hourglass-split me-1"></i>Submitted</span>
+                            {% elif p.status == 'Won' %}
+                                <span class="status-pill-small status-won"><i class="bi bi-trophy me-1"></i>Won</span>
+                            {% elif p.status == 'Lost' %}
+                                <span class="status-pill-small status-lost"><i class="bi bi-x-circle me-1"></i>Lost</span>
+                            {% elif p.status == 'Cancelled' %}
+                                <span class="status-pill-small status-secondary"><i class="bi bi-slash-circle me-1"></i>Cancelled</span>
+                            {% elif p.status == 'No Bid' %}
+                                <span class="status-pill-small status-secondary"><i class="bi bi-dash-circle me-1"></i>No Bid</span>
+                            {% else %}
+                                <span class="status-pill-small status-secondary">{{ p.status }}</span>
+                            {% endif %}
+                        </td>
+
                         <td class="col-date">{% if p.date_received %}{{ p.date_received|date:"Y-m-d" }}{% else %}-{% endif %}</td>
                         <td class="col-date">{% if p.deadline_date %}{{ p.deadline_date|date:"Y-m-d" }}{% else %}-{% endif %}</td>
                         <td class="col-days">
@@ -369,47 +426,6 @@
                             {% endif %}
                         </td>
                         <td class="col-date">{% if p.submission_date %}{{ p.submission_date|date:"Y-m-d" }}{% else %}-{% endif %}</td>
-
-                        <!-- Status cell -->
-                        <td class="status-cell">
-                            {% if p.status == 'Ongoing' %}
-                                <button type="button"
-                                        class="gh-status-badge gh-status-ongoing status-pill btn btn-sm btn-primary d-inline-flex align-items-center"
-                                        data-project-id="{{ p.project_id }}" data-status="Ongoing"
-                                        data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}">
-                                    <i class="bi bi-play-circle"></i>
-                                    <span class="ms-1 status-label">Ongoing</span>
-                                </button>
-                            {% elif p.status == 'Submitted' %}
-                                <button type="button"
-                                        class="gh-status-badge gh-status-submitted status-pill btn btn-sm btn-warning d-inline-flex align-items-center"
-                                        data-project-id="{{ p.project_id }}" data-status="Submitted"
-                                        data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
-                                        data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}"
-                                        data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}">
-                                    <i class="bi bi-hourglass-split"></i>
-                                    <span class="ms-1 status-label">Submitted</span>
-                                </button>
-                            {% elif p.status == 'Won' %}
-                                <span class="gh-badge gh-badge-success">
-                                    <i class="bi bi-trophy me-1"></i>Won
-                                </span>
-                            {% elif p.status == 'Lost' %}
-                                <span class="gh-badge gh-badge-danger">
-                                    <i class="bi bi-x-circle me-1"></i>Lost
-                                </span>
-                            {% elif p.status == 'Cancelled' %}
-                                <span class="gh-badge gh-badge-secondary">
-                                    <i class="bi bi-slash-circle me-1"></i>Cancelled
-                                </span>
-                            {% elif p.status == 'No Bid' %}
-                                <span class="gh-badge gh-badge-secondary">
-                                    <i class="bi bi-dash-circle me-1"></i>No Bid
-                                </span>
-                            {% else %}
-                                <span class="gh-badge gh-badge-secondary">{{ p.status }}</span>
-                            {% endif %}
-                        </td>
 
                         <td class="col-comments">
                             <span class="comments-text" title="{{ p.comments|default:'' }}">{{ p.comments|default:"-"|truncatechars:30 }}</span>
@@ -451,7 +467,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="13" class="text-center text-muted py-4">
+                        <td colspan="14" class="text-center text-muted py-4">
                             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                             {% if search_query %}
                                 No projects found matching "{{ search_query }}".
