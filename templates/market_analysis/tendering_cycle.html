@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Tendering Cycle Time - TGS Market Analysis{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'market_analysis/css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="gh-page-header">
+    <h1 class="gh-page-title"><i class="bi bi-clock-history me-2"></i>Tendering Cycle Time</h1>
+</div>
+<hr class="gh-divider mb-4">
+
+<div class="gh-card">
+  <div class="gh-card-header">
+    <h3 class="gh-card-title">Won Tenders Cycle Time</h3>
+    <span class="gh-badge gh-badge-primary">{{ rows|length }} Records</span>
+  </div>
+  <div class="gh-card-body">
+    <div class="table-responsive">
+      <table class="table table-sm table-striped table-bordered mb-0">
+        <thead class="table-light small">
+          <tr>
+            <th>Internal ID</th>
+            <th>Received</th>
+            <th>Submitted</th>
+            <th class="text-center">Days to Submission</th>
+            <th>Award</th>
+            <th class="text-center">Days to Award</th>
+            <th>Contract</th>
+            <th class="text-center">Days to Contract</th>
+            <th class="text-center">Total Cycle (days)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <td><a href="{% url 'market_analysis:project_detail' project_id=r.project.project_id %}"><code>{{ r.project.internal_id|default:'-' }}</code></a></td>
+            <td>{% if r.received %}{{ r.received|date:'Y-m-d' }}{% else %}-{% endif %}</td>
+            <td>{% if r.submission %}{{ r.submission|date:'Y-m-d' }}{% else %}-{% endif %}</td>
+            <td class="text-center">{% if r.days_to_submission is not None %}{{ r.days_to_submission }}{% else %}-{% endif %}</td>
+            <td>{% if r.award %}{{ r.award|date:'Y-m-d' }}{% else %}-{% endif %}</td>
+            <td class="text-center">{% if r.days_to_award is not None %}{{ r.days_to_award }}{% else %}-{% endif %}</td>
+            <td>{% if r.contract %}{{ r.contract|date:'Y-m-d' }}{% else %}-{% endif %}</td>
+            <td class="text-center">{% if r.days_to_contract is not None %}{{ r.days_to_contract }}{% else %}-{% endif %}</td>
+            <td class="text-center">{% if r.total_cycle is not None %}{{ r.total_cycle }}{% else %}-{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="9" class="text-center text-muted py-3">No won tenders found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

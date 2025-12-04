@@ -214,6 +214,9 @@
   };
 </script>
 
+<!-- Tendering Cycle Time Table -->
+{# Tendering Cycle Time removed from main dashboard - available at /market/tendering-cycle/ #}
+
 <!-- Enhanced status modal -->
 <div class="modal fade" id="contractModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -305,6 +308,54 @@
 {% block extra_js %}
 <script src="{% static 'market_analysis/js/chart.min.js' %}"></script>
 <script src="{% static 'market_analysis/js/dashboard.js' %}"></script>
+<script>
+// Compute cycle time values for the table rows on client side
+document.addEventListener('DOMContentLoaded', function() {
+    function parseISO(d) {
+        if (!d) return null;
+        var parts = d.split('-');
+        if (parts.length !== 3) return null;
+        return new Date(parts[0], parts[1]-1, parts[2]);
+    }
+
+    function diffDays(a,b) {
+        if (!a || !b) return null;
+        var diff = Math.floor((b - a) / (1000*60*60*24));
+        return isNaN(diff) ? null : diff;
+    }
+
+    document.querySelectorAll('#cycleTimeTable .cycle-row').forEach(function(row){
+        var received = parseISO(row.dataset.received);
+        var submission = parseISO(row.dataset.submission);
+        var award = parseISO(row.dataset.award);
+        var contract = parseISO(row.dataset.contract);
+        var lost = parseISO(row.dataset.lost);
+
+        var daysToSubmission = diffDays(received, submission);
+        var daysToAward = diffDays(submission || received, award);
+        var daysToContract = diffDays(award || submission || received, contract);
+        var daysToLost = diffDays(submission || received, lost);
+
+        var totalCycle = null;
+        // define total cycle as days from received to contract OR award OR lost
+        if (contract) totalCycle = diffDays(received, contract);
+        else if (award) totalCycle = diffDays(received, award);
+        else if (lost) totalCycle = diffDays(received, lost);
+
+        function setText(sel, val) {
+            var el = row.querySelector(sel);
+            if (!el) return;
+            el.textContent = (val === null || val === undefined) ? '-' : String(val);
+        }
+
+        setText('.days-to-submission', daysToSubmission);
+        setText('.days-to-award', daysToAward);
+        setText('.days-to-contract', daysToContract);
+        setText('.days-to-lost', daysToLost);
+        setText('.total-cycle', totalCycle);
+    });
+});
+</script>
 <script>
 // Chart.js initialization - inline to avoid timing issues with external script loading
 document.addEventListener('DOMContentLoaded', function() {

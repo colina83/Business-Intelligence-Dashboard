@@ -622,3 +622,60 @@ def project_detail(request, project_id):
         'competitor': competitor,
     }
     return render(request, 'market_analysis/project_detail.html', context)
+
+
+@login_required
+def tendering_cycle(request):
+    """
+    Tendering Cycle Time page: show table of tender activity times for Won tenders.
+    Only include projects with status 'Won'.
+    """
+    won_qs = (
+        Project.objects.select_related('client', 'contract')
+        .filter(status='Won')
+        .order_by('-award_date', '-project_id')
+    )
+
+    rows = []
+    for p in won_qs:
+        received = p.date_received
+        submission = p.submission_date
+        award = p.award_date
+        contract_date = None
+        try:
+            contract_date = p.contract.contract_date
+        except Exception:
+            contract_date = None
+
+        def days(a, b):
+            if not a or not b:
+                return None
+            try:
+                return (b - a).days
+            except Exception:
+                return None
+
+        days_to_submission = days(received, submission)
+        days_to_award = days(submission or received, award)
+        days_to_contract = days(award or submission or received, contract_date)
+
+        total_cycle = None
+        # Prefer contract date for total cycle, fallback to award
+        if contract_date:
+            total_cycle = days(received, contract_date)
+        elif award:
+            total_cycle = days(received, award)
+
+        rows.append({
+            'project': p,
+            'received': received,
+            'submission': submission,
+            'award': award,
+            'contract': contract_date,
+            'days_to_submission': days_to_submission,
+            'days_to_award': days_to_award,
+            'days_to_contract': days_to_contract,
+            'total_cycle': total_cycle,
+        })
+
+    return render(request, 'market_analysis/tendering_cycle.html', {'rows': rows})
