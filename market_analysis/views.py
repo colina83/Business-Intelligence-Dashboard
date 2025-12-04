@@ -475,3 +475,102 @@ def manage_scope(request, project_id):
         'project': project,
         'scope': scope,
     })
+
+
+@login_required
+def project_opportunities(request):
+    """
+    Project Opportunities page showing all projects with full details.
+    Features:
+    - All columns from legacy table (Internal ID, Client, Project Name, Bid Type, Country, Region,
+      Bid Received, Deadline, Days to Deadline, Bid Submitted, Status, Comments, Actions)
+    - Horizontal scrollbar for extensive data
+    - Pagination with 20 records per page
+    - Powerful search functionality across all columns
+    """
+    today = date.today()
+    
+    # Get search query
+    search_query = request.GET.get('q', '').strip()
+    
+    # Base queryset with all projects
+    projects_qs = (
+        Project.objects.select_related('client', 'contract')
+        .prefetch_related(Prefetch('competitors'))
+        .annotate(
+            has_financial=Exists(Financial.objects.filter(project=OuterRef('pk'))),
+            has_scope=Exists(ScopeOfWork.objects.filter(project=OuterRef('pk')))
+        )
+        .order_by('-date_received', '-project_id')
+    )
+    
+    # Apply search filter if search query is provided
+    if search_query:
+        projects_qs = projects_qs.filter(
+            Q(internal_id__icontains=search_query) |
+            Q(name__icontains=search_query) |
+            Q(client__name__icontains=search_query) |
+            Q(bid_type__icontains=search_query) |
+            Q(country__icontains=search_query) |
+            Q(region__icontains=search_query) |
+            Q(status__icontains=search_query) |
+            Q(comments__icontains=search_query)
+        )
+    
+    # Add days to deadline calculation for each project
+    projects_list = []
+    for p in projects_qs:
+        if p.deadline_date:
+            delta = (p.deadline_date - today).days
+            p.days_to_deadline = delta
+        else:
+            p.days_to_deadline = None
+        projects_list.append(p)
+    
+    # Pagination - 20 records per page
+    page = request.GET.get('page', 1)
+    paginator = Paginator(projects_list, 20)
+    try:
+        projects_page_obj = paginator.page(page)
+    except PageNotAnInteger:
+        projects_page_obj = paginator.page(1)
+    except EmptyPage:
+        projects_page_obj = paginator.page(paginator.num_pages)
+    
+    # Build compact page range helper
+    def compact_page_range(paginator, current, window=3):
+        total = paginator.num_pages
+        if total <= 10:
+            return list(range(1, total + 1))
+        start = max(1, current - window)
+        end = min(total, current + window)
+        pages = [1]
+        if start > 2:
+            pages.append('...')
+        for i in range(start, end + 1):
+            pages.append(i)
+        if end < total - 1:
+            pages.append('...')
+        pages.append(total)
+        # remove duplicates while preserving order
+        seen = set()
+        out = []
+        for p in pages:
+            if p not in seen:
+                out.append(p)
+                seen.add(p)
+        return out
+    
+    projects_page_range = compact_page_range(paginator, projects_page_obj.number)
+    
+    context = {
+        'projects': projects_page_obj.object_list,
+        'projects_page_obj': projects_page_obj,
+        'projects_paginator': paginator,
+        'projects_page_range': projects_page_range,
+        'search_query': search_query,
+        'total_projects': paginator.count,
+        'competitor_choices': getattr(Competitor, 'COMPETITOR_CHOICES', []),
+        'status_choices': Project.STATUS,
+    }
+    return render(request, 'market_analysis/project_opportunities.html', context)

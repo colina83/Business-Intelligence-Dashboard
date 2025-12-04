@@ -5,6 +5,7 @@ app_name = 'market_analysis'
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
+    path('projects/', views.project_opportunities, name='project_opportunities'),
     path('projects/add/', views.create_project, name='project_add'),
     path('projects/<int:project_id>/edit/', views.edit_project, name='project_edit'),
     path('projects/<int:project_id>/technology/add/', views.add_technology, name='project_add_technology'),
