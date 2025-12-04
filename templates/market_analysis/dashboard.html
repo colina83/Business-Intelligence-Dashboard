@@ -6,7 +6,6 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'market_analysis/css/dashboard.css' %}">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -304,10 +303,22 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'market_analysis/js/chart.min.js' %}"></script>
 <script src="{% static 'market_analysis/js/dashboard.js' %}"></script>
 <script>
 // Initialize charts when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if Chart.js is available
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js library not loaded. Charts will not be displayed.');
+        // Show user-friendly message in chart containers
+        var chartContainers = document.querySelectorAll('.chart-container');
+        chartContainers.forEach(function(container) {
+            container.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>Unable to load charts. Please refresh the page.</div>';
+        });
+        return;
+    }
+    
     // Win/Lost Doughnut Chart
     initWinLostChart('winLostChart', {{ win_count|default:0 }}, {{ lost_count|default:0 }});
 
