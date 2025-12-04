@@ -10,8 +10,10 @@
  * @param {number} lostCount - Number of lost projects
  */
 function initWinLostChart(canvasId, winCount, lostCount) {
-    const ctx = document.getElementById(canvasId);
-    if (!ctx) return;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    // Chart.js accepts either a canvas element or a 2D context. Prefer the context to avoid renderer issues.
+    const ctx = canvas.getContext ? canvas.getContext('2d') : canvas;
 
     new Chart(ctx, {
         type: 'doughnut',
@@ -68,18 +70,31 @@ function initWinLostChart(canvasId, winCount, lostCount) {
  * @param {Array} ebitData - Array of objects with name, ebit_day, and status properties
  */
 function initEbitDayChart(canvasId, ebitData) {
-    const ctx = document.getElementById(canvasId);
-    if (!ctx) return;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext ? canvas.getContext('2d') : canvas;
+
+    // ebitData may be passed as a JSON string from the template. Normalize it to an array.
+    if (!ebitData) ebitData = [];
+    if (typeof ebitData === 'string') {
+        try {
+            ebitData = JSON.parse(ebitData);
+        } catch (e) {
+            console.error('Unable to parse ebit_data for chart', e);
+            ebitData = [];
+        }
+    }
 
     const maxLabelLength = 25;
     const projectLabels = ebitData.map(item => {
-        if (item.name.length > maxLabelLength) {
-            return item.name.substring(0, maxLabelLength) + '...';
-        }
-        return item.name;
+        const name = item && item.name ? String(item.name) : '';
+        return name.length > maxLabelLength ? name.substring(0, maxLabelLength) + '...' : name;
     });
-    const ebitValues = ebitData.map(item => item.ebit_day);
-    const backgroundColors = ebitData.map(item => item.status === 'Won' ? '#009E73' : '#CC79A7');
+    const ebitValues = ebitData.map(item => {
+        const v = item && (item.ebit_day ?? item.ebitDay ?? item.ebit) ? Number(item.ebit_day ?? item.ebitDay ?? item.ebit) : 0;
+        return isNaN(v) ? 0 : v;
+    });
+    const backgroundColors = ebitData.map(item => (item && item.status === 'Won') ? '#009E73' : '#CC79A7');
 
     new Chart(ctx, {
         type: 'bar',
@@ -342,3 +357,11 @@ function initStatusModal() {
 document.addEventListener('DOMContentLoaded', function() {
     initStatusModal();
 });
+
+// Expose chart init functions to global scope in case templates call them directly
+// (some environments or bundlers may not automatically attach top-level functions to window)
+if (typeof window !== 'undefined') {
+    window.initWinLostChart = initWinLostChart;
+    window.initEbitDayChart = initEbitDayChart;
+    window.initStatusModal = initStatusModal;
+}
