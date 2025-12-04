@@ -1,9 +1,151 @@
 /**
  * Dashboard JavaScript
- * Handles modal functionality for project status management and contract details
+ * Handles modal functionality for project status management, contract details, and chart rendering
  */
 
-document.addEventListener('DOMContentLoaded', function () {
+/**
+ * Initialize the Win/Lost doughnut chart
+ * @param {string} canvasId - The ID of the canvas element
+ * @param {number} winCount - Number of won projects
+ * @param {number} lostCount - Number of lost projects
+ */
+function initWinLostChart(canvasId, winCount, lostCount) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Won', 'Lost'],
+            datasets: [{
+                data: [winCount, lostCount],
+                backgroundColor: [
+                    '#009E73', /* teal - Win (colorblind-safe) */
+                    '#CC79A7'  /* purple - Loss (colorblind-safe) */
+                ],
+                borderColor: [
+                    '#ffffff',
+                    '#ffffff'
+                ],
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        font: {
+                            size: 14,
+                            family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif'
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#24292f',
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            cutout: '60%'
+        }
+    });
+}
+
+/**
+ * Initialize the EBIT/Day horizontal bar chart
+ * @param {string} canvasId - The ID of the canvas element
+ * @param {Array} ebitData - Array of objects with name, ebit_day, and status properties
+ */
+function initEbitDayChart(canvasId, ebitData) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    const maxLabelLength = 25;
+    const projectLabels = ebitData.map(item => {
+        if (item.name.length > maxLabelLength) {
+            return item.name.substring(0, maxLabelLength) + '...';
+        }
+        return item.name;
+    });
+    const ebitValues = ebitData.map(item => item.ebit_day);
+    const backgroundColors = ebitData.map(item => item.status === 'Won' ? '#009E73' : '#CC79A7');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: projectLabels,
+            datasets: [{
+                label: 'EBIT/Day ($)',
+                data: ebitValues,
+                backgroundColor: backgroundColors,
+                borderColor: backgroundColors,
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: '#24292f',
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            return 'EBIT/Day: $' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#d0d7de'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                },
+                y: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Initialize modal functionality for project status management
+ */
+function initStatusModal() {
     const contractModalEl = document.getElementById('contractModal');
     const contractForm = document.getElementById('contractForm');
     const modal = new bootstrap.Modal(contractModalEl, {backdrop: 'static'});
@@ -194,4 +336,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     contractModalEl.addEventListener('shown.bs.modal', computeAndShowDuration);
+}
+
+// Initialize status modal when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initStatusModal();
 });
