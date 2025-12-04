@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Exists, OuterRef, Prefetch, Q
+from django.db.models.functions import Coalesce
 from django.forms import ModelForm, NumberInput, Select
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
@@ -127,13 +128,17 @@ def dashboard(request):
     ).count()
     
     # EBIT/Day data for latest 6 Won or Lost projects with financial data
+    # Use Coalesce to order by the most recent relevant date (award_date or lost_date)
     ebit_projects = (
         Project.objects.select_related('financials')
         .filter(
             Q(status='Won') | Q(status='Lost'),
             financials__ebit_day__isnull=False
         )
-        .order_by('-award_date', '-lost_date', '-project_id')[:6]
+        .annotate(
+            result_date=Coalesce('award_date', 'lost_date')
+        )
+        .order_by('-result_date', '-project_id')[:6]
     )
     
     ebit_data = []

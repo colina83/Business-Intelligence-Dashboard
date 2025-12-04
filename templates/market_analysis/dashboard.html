@@ -401,7 +401,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const ebitDayCtx = document.getElementById('ebitDayChart');
     if (ebitDayCtx) {
         const ebitData = {{ ebit_data|safe }};
-        const projectLabels = ebitData.map(item => item.name.substring(0, 20) + (item.name.length > 20 ? '...' : ''));
+        const maxLabelLength = 25;
+        const projectLabels = ebitData.map(item => {
+            if (item.name.length > maxLabelLength) {
+                return item.name.substring(0, maxLabelLength) + '...';
+            }
+            return item.name;
+        });
         const ebitValues = ebitData.map(item => item.ebit_day);
         const backgroundColors = ebitData.map(item => item.status === 'Won' ? '#1a7f37' : '#cf222e');
         

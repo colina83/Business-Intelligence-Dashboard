@@ -171,7 +171,8 @@
 /* GitHub-style Tables */
 .gh-table-wrapper {
     overflow-x: auto;
-    max-height: 400px;
+    max-height: 50vh;
+    min-height: 200px;
     overflow-y: auto;
 }
 
