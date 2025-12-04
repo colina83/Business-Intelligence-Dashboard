@@ -165,17 +165,15 @@ if (typeof window !== 'undefined') window.initEbitDayChart = initEbitDayChart;
  * Initialize modal functionality for project status management
  */
 function initStatusModal() {
-    // Guard against missing bootstrap
+    // Guard against missing bootstrap or required elements
+    const contractModalEl = document.getElementById('contractModal');
+    const contractForm = document.getElementById('contractForm');
+    
     if (typeof bootstrap === 'undefined') {
         console.warn('Bootstrap is not loaded. Modal functionality will be unavailable.');
         return;
     }
-    
-    const contractModalEl = document.getElementById('contractModal');
-    if (!contractModalEl) return;
-    
-    const contractForm = document.getElementById('contractForm');
-    if (!contractForm) return;
+    if (!contractModalEl || !contractForm) return;
     
     const modal = new bootstrap.Modal(contractModalEl, {backdrop: 'static'});
     const defaultAction = contractForm.getAttribute('action'); // contains project_id=0 placeholder
