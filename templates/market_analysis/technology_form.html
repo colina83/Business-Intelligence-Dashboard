@@ -1,116 +1,116 @@
-{% extends "base.html" %}
-{% load static %}
-{% block title %}Add Technology - {{ project.name }}{% endblock %}
-
-{% block content %}
-<div class="container py-5">
-  <div class="card border-0 shadow-sm">
-    <div class="card-header bg-info text-white">
-      <h4 class="mb-0"><i class="bi bi-tools me-2"></i>Add Technology for {{ project.name }}</h4>
-      <small class="text-white-50">Project ID: {{ project.internal_id }}</small>
-    </div>
-
-    <div class="card-body">
-      <form method="post" novalidate>
-        {% csrf_token %}
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Survey Type</label>
-            {{ form.survey_type }}
-          </div>
-
-          <div class="col-12">
-            <label class="form-label">Technology (select)</label>
-            <div class="ms-2">
-              {{ form.technologies }}
-            </div>
-            {% if form.technologies.errors %}<div class="text-danger small">{{ form.technologies.errors.0 }}</div>{% endif %}
-          </div>
-
-          <div class="col-md-6 obn-field" style="display:none;">
-            <label class="form-label">OBN Technique</label>
-            {{ form.obn_technique }}
-            {% if form.obn_technique.errors %}<div class="text-danger small">{{ form.obn_technique.errors.0 }}</div>{% endif %}
-          </div>
-
-          <div class="col-md-6 obn-field" style="display:none;">
-            <label class="form-label">OBN System</label>
-            {{ form.obn_system }}
-            {% if form.obn_system.errors %}<div class="text-danger small">{{ form.obn_system.errors.0 }}</div>{% endif %}
-          </div>
-
-          <div class="col-md-6 streamer-field" style="display:none;">
-            <label class="form-label">Streamer</label>
-            {{ form.streamer }}
-            {% if form.streamer.errors %}<div class="text-danger small">{{ form.streamer.errors.0 }}</div>{% endif %}
-          </div>
-        </div>
-
-        <hr class="my-4">
-        <div class="d-flex justify-content-between">
-          <a href="{% url 'market_analysis:dashboard' %}" class="btn btn-outline-secondary">Skip</a>
-          <button type="submit" class="btn btn-info text-white">Save Technology</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const surveyEl = document.querySelector('[name="survey_type"]');
-    const techChecks = Array.from(document.querySelectorAll('input[name="technologies"]'));
-    const obnFields = document.querySelectorAll('.obn-field');
-    const streamerFields = document.querySelectorAll('.streamer-field');
-
-    function updateTechUI() {
-        const survey = surveyEl ? surveyEl.value : null;
-        const isHybrid = (survey === 'HYBD');
-
-        // when not hybrid enforce single-selection visually via JS (but server validates)
-        if (!isHybrid) {
-            // convert checkboxes to behave like radio — uncheck others when one selected
-            techChecks.forEach(chk => {
-                chk.addEventListener('change', function () {
-                    if (this.checked) {
-                        techChecks.forEach(other => {
-                            if (other !== this) other.checked = false;
-                        });
-                    }
-                    refreshFields();
-                });
-            });
-        }
-
-        refreshFields();
-    }
-
-    function refreshFields() {
-        const selected = techChecks.filter(c => c.checked).map(c => c.value);
-        const hasOBN = selected.includes('OBN');
-        const hasSTR = selected.includes('STR');
-
-        // show/hide sections
-        obnFields.forEach(n => n.style.display = hasOBN ? '' : 'none');
-        streamerFields.forEach(n => n.style.display = hasSTR ? '' : 'none');
-    }
-
-    if (surveyEl) {
-        surveyEl.addEventListener('change', function () {
-            // when survey changes, if not hybrid and multiple boxes are checked keep only first checked
-            const isHybrid = (surveyEl.value === 'HYBD');
-            if (!isHybrid) {
-                // if more than one selected, keep first
-                const checked = techChecks.filter(c => c.checked);
-                if (checked.length > 1) {
-                    checked.slice(1).forEach(c => c.checked = false);
-                }
-            }
-            updateTechUI();
-        });
-    }
-
-    updateTechUI();
-});
-</script>
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Add Technology - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-info text-white">
+      <h4 class="mb-0"><i class="bi bi-tools me-2"></i>Add Technology for {{ project.name }}</h4>
+      <small class="text-white-50">Project ID: {{ project.internal_id }}</small>
+    </div>
+
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Survey Type</label>
+            {{ form.survey_type }}
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Technology (select)</label>
+            <div class="ms-2">
+              {{ form.technologies }}
+            </div>
+            {% if form.technologies.errors %}<div class="text-danger small">{{ form.technologies.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-6 obn-field" style="display:none;">
+            <label class="form-label">OBN Technique</label>
+            {{ form.obn_technique }}
+            {% if form.obn_technique.errors %}<div class="text-danger small">{{ form.obn_technique.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-6 obn-field" style="display:none;">
+            <label class="form-label">OBN System</label>
+            {{ form.obn_system }}
+            {% if form.obn_system.errors %}<div class="text-danger small">{{ form.obn_system.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-6 streamer-field" style="display:none;">
+            <label class="form-label">Streamer</label>
+            {{ form.streamer }}
+            {% if form.streamer.errors %}<div class="text-danger small">{{ form.streamer.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+
+        <hr class="my-4">
+        <div class="d-flex justify-content-between">
+          <a href="{% url 'market_analysis:dashboard' %}" class="btn btn-outline-secondary">Skip</a>
+          <button type="submit" class="btn btn-info text-white">Save Technology</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const surveyEl = document.querySelector('[name="survey_type"]');
+    const techChecks = Array.from(document.querySelectorAll('input[name="technologies"]'));
+    const obnFields = document.querySelectorAll('.obn-field');
+    const streamerFields = document.querySelectorAll('.streamer-field');
+
+    function updateTechUI() {
+        const survey = surveyEl ? surveyEl.value : null;
+        const isHybrid = (survey === 'HYBD');
+
+        // when not hybrid enforce single-selection visually via JS (but server validates)
+        if (!isHybrid) {
+            // convert checkboxes to behave like radio â€” uncheck others when one selected
+            techChecks.forEach(chk => {
+                chk.addEventListener('change', function () {
+                    if (this.checked) {
+                        techChecks.forEach(other => {
+                            if (other !== this) other.checked = false;
+                        });
+                    }
+                    refreshFields();
+                });
+            });
+        }
+
+        refreshFields();
+    }
+
+    function refreshFields() {
+        const selected = techChecks.filter(c => c.checked).map(c => c.value);
+        const hasOBN = selected.includes('OBN');
+        const hasSTR = selected.includes('STR');
+
+        // show/hide sections
+        obnFields.forEach(n => n.style.display = hasOBN ? '' : 'none');
+        streamerFields.forEach(n => n.style.display = hasSTR ? '' : 'none');
+    }
+
+    if (surveyEl) {
+        surveyEl.addEventListener('change', function () {
+            // when survey changes, if not hybrid and multiple boxes are checked keep only first checked
+            const isHybrid = (surveyEl.value === 'HYBD');
+            if (!isHybrid) {
+                // if more than one selected, keep first
+                const checked = techChecks.filter(c => c.checked);
+                if (checked.length > 1) {
+                    checked.slice(1).forEach(c => c.checked = false);
+                }
+            }
+            updateTechUI();
+        });
+    }
+
+    updateTechUI();
+});
+</script>
 {% endblock %}
