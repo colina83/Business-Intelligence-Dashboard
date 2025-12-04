@@ -1,8 +1,10 @@
-from datetime import datetime
+from datetime import datetime, date
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Exists, OuterRef, Prefetch
+from django.db.models import Exists, OuterRef, Prefetch, Q
+from django.db.models.functions import Coalesce
 from django.forms import ModelForm, NumberInput, Select
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
@@ -46,48 +48,46 @@ class ScopeOfWorkForm(ModelForm):
 @login_required
 def dashboard(request):
     """
-    Dashboard showing summary cards and two independent tables:
-      - Projects (paginated via ?projects_page=)
-      - Cycle Time (only Won projects, paginated via ?cycle_page=)
+    Dashboard with GitHub-style layout showing:
+    - ROW 1: Active Projects (Ongoing/Submitted) with pagination
+    - ROW 2: Win/Lost Pie Chart and EBIT/Day Bar Chart
+    - ROW 3: Latest Surveys (Won projects) data table
     """
-    projects_count = Project.objects.count()
-    clients_count = Client.objects.count()
-    technologies_count = ProjectTechnology.objects.count()
-    financials_count = Financial.objects.count()
-
-    projects_qs = (
+    today = date.today()
+    current_year = today.year
+    
+    # ROW 1: Active Projects (Ongoing or Submitted)
+    active_projects_qs = (
         Project.objects.select_related('client', 'contract')
         .prefetch_related(Prefetch('competitors'))
+        .filter(Q(status='Ongoing') | Q(status='Submitted'))
         .annotate(
             has_financial=Exists(Financial.objects.filter(project=OuterRef('pk'))),
             has_scope=Exists(ScopeOfWork.objects.filter(project=OuterRef('pk')))
         )
         .order_by('-date_received', '-project_id')
     )
-
-    # Separate pagination parameters
-    projects_page = request.GET.get('projects_page', 1)
-    cycle_page = request.GET.get('cycle_page', 1)
-
-    # Projects paginator
-    paginator_projects = Paginator(projects_qs, 20)
+    
+    # Add days to deadline calculation for each project
+    active_projects_list = []
+    for p in active_projects_qs:
+        if p.deadline_date:
+            delta = (p.deadline_date - today).days
+            p.days_to_deadline = delta
+        else:
+            p.days_to_deadline = None
+        active_projects_list.append(p)
+    
+    # Pagination for active projects
+    active_page = request.GET.get('active_page', 1)
+    active_paginator = Paginator(active_projects_list, 10)
     try:
-        page_obj_projects = paginator_projects.page(projects_page)
+        active_projects_page_obj = active_paginator.page(active_page)
     except PageNotAnInteger:
-        page_obj_projects = paginator_projects.page(1)
+        active_projects_page_obj = active_paginator.page(1)
     except EmptyPage:
-        page_obj_projects = paginator_projects.page(paginator_projects.num_pages)
-
-    # Won projects paginator (Cycle Time table)
-    won_qs = projects_qs.filter(status='Won').order_by('-award_date', '-project_id')
-    paginator_won = Paginator(won_qs, 20)
-    try:
-        page_obj_won = paginator_won.page(cycle_page)
-    except PageNotAnInteger:
-        page_obj_won = paginator_won.page(1)
-    except EmptyPage:
-        page_obj_won = paginator_won.page(paginator_won.num_pages)
-
+        active_projects_page_obj = active_paginator.page(active_paginator.num_pages)
+    
     # Build compact page range helper
     def compact_page_range(paginator, current, window=3):
         total = paginator.num_pages
@@ -111,53 +111,77 @@ def dashboard(request):
                 out.append(p)
                 seen.add(p)
         return out
-
-    page_range_display_projects = compact_page_range(paginator_projects, page_obj_projects.number)
-    page_range_display_won = compact_page_range(paginator_won, page_obj_won.number)
-
-    # helper to compute days between dates (accepts date/datetime)
-    def _days_between(later, earlier):
+    
+    active_projects_page_range = compact_page_range(active_paginator, active_projects_page_obj.number)
+    
+    # ROW 2: Win/Lost statistics (from 2021 to current year)
+    win_count = Project.objects.filter(
+        status='Won',
+        award_date__year__gte=2021,
+        award_date__year__lte=current_year
+    ).count()
+    
+    lost_count = Project.objects.filter(
+        status='Lost',
+        lost_date__year__gte=2021,
+        lost_date__year__lte=current_year
+    ).count()
+    
+    # EBIT/Day data for latest 6 Won or Lost projects with financial data
+    # Use Coalesce to order by the most recent relevant date (award_date or lost_date)
+    ebit_projects = (
+        Project.objects.select_related('financials')
+        .filter(
+            Q(status='Won') | Q(status='Lost'),
+            financials__ebit_day__isnull=False
+        )
+        .annotate(
+            result_date=Coalesce('award_date', 'lost_date')
+        )
+        .order_by('-result_date', '-project_id')[:6]
+    )
+    
+    ebit_data = []
+    for p in ebit_projects:
         try:
-            if not later or not earlier:
-                return 0
-            if hasattr(later, 'date'):
-                later = later.date()
-            if hasattr(earlier, 'date'):
-                earlier = earlier.date()
-            return max(0, (later - earlier).days)
-        except Exception:
-            return 0
-
-    # Compute cycle metrics only for the current won-page (efficient)
-    for p in page_obj_won.object_list:
-        date_received = getattr(p, 'date_received', None)
-        submission_date = getattr(p, 'submission_date', None)
-        award_date = getattr(p, 'award_date', None)
-        contract = getattr(p, 'contract', None)
-        contract_date = getattr(contract, 'contract_date', None) if contract else None
-        start_date = getattr(contract, 'actual_start', None) if contract else None
-
-        p.cycle_rec_to_sub = _days_between(submission_date, date_received)
-        p.cycle_sub_to_award = _days_between(award_date, submission_date)
-        p.cycle_award_to_contract = _days_between(contract_date, award_date)
-        p.cycle_contract_to_start = _days_between(start_date, contract_date)
-        p.cycle_rec_to_start = _days_between(start_date, date_received)
-        p.cycle_award_to_start = _days_between(start_date, award_date)
-
+            ebit_day = float(p.financials.ebit_day) if p.financials and p.financials.ebit_day else 0
+            ebit_data.append({
+                'name': p.name,
+                'ebit_day': ebit_day,
+                'status': p.status
+            })
+        except (AttributeError, TypeError):
+            pass
+    
+    # Reverse to show oldest first (for chart display)
+    ebit_data = list(reversed(ebit_data))
+    
+    # ROW 3: Latest Surveys (Won projects with contract info)
+    latest_surveys = (
+        Project.objects.select_related('client', 'contract')
+        .filter(status='Won')
+        .order_by('-award_date', '-project_id')[:10]
+    )
+    
     context = {
-        'projects_count': projects_count,
-        'clients_count': clients_count,
-        'technologies_count': technologies_count,
-        'financials_count': financials_count,
-        'projects': projects_qs,
-        'page_obj_projects': page_obj_projects,
-        'paginator_projects': paginator_projects,
-        'page_range_display_projects': page_range_display_projects,
-        'page_obj_won': page_obj_won,
-        'paginator_won': paginator_won,
-        'page_range_display_won': page_range_display_won,
+        # ROW 1: Active Projects
+        'active_projects': active_projects_page_obj.object_list,
+        'active_projects_page_obj': active_projects_page_obj,
+        'active_projects_paginator': active_paginator,
+        'active_projects_page_range': active_projects_page_range,
+        
+        # ROW 2: Charts data
+        'current_year': current_year,
+        'win_count': win_count,
+        'lost_count': lost_count,
+        'ebit_data': json.dumps(ebit_data),
+        
+        # ROW 3: Latest Surveys
+        'latest_surveys': latest_surveys,
+        
+        # Modal data
         'competitor_choices': getattr(Competitor, 'COMPETITOR_CHOICES', []),
-        'status_choices': Project.STATUS,  # list of (key, label)
+        'status_choices': Project.STATUS,
     }
     return render(request, 'market_analysis/dashboard.html', context)
 

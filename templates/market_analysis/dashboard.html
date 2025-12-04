@@ -1,316 +1,247 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
-{% block title %}Dashboard - Market Analysis{% endblock %}
+{% block title %}Dashboard - TGS Market Analysis{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'market_analysis/css/dashboard.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="display-5 fw-bold">
-            <i class="bi bi-speedometer2 me-2"></i>Market Analysis Dashboard
-        </h1>
-        <div class="mt-3">
-            <a href="{% url 'market_analysis:project_add' %}" class="btn btn-primary btn-lg">
-                <i class="bi bi-plus-lg me-2"></i>Add Project
-            </a>
-        </div>
+<!-- Page Header -->
+<div class="gh-page-header">
+    <h1 class="gh-page-title">
+        <i class="bi bi-speedometer2 me-2"></i>Market Analysis Dashboard
+    </h1>
+    <div class="gh-page-actions">
+        <a href="{% url 'market_analysis:project_add' %}" class="gh-btn gh-btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Add Project
+        </a>
     </div>
 </div>
 
+<!-- ROW 1: Active Projects Table (Ongoing/Submitted) -->
+<div class="gh-card mb-4">
+    <div class="gh-card-header">
+        <h3 class="gh-card-title">
+            <i class="bi bi-folder-check me-2"></i>Active Projects
+        </h3>
+        <span class="gh-badge gh-badge-primary">Ongoing & Submitted</span>
+    </div>
+    <div class="gh-card-body p-0">
+        <div class="gh-table-wrapper">
+            <table class="gh-table">
+                <thead>
+                    <tr>
+                        <th>Internal ID</th>
+                        <th>Client</th>
+                        <th>Project Name</th>
+                        <th>Bid Type</th>
+                        <th>Country</th>
+                        <th>Region</th>
+                        <th>Bid Received</th>
+                        <th>Deadline</th>
+                        <th>Days to Deadline</th>
+                        <th>Bid Submitted</th>
+                        <th>Status</th>
+                        <th>Comments</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in active_projects %}
+                    <tr>
+                        <td class="text-nowrap">
+                            <code class="gh-code">{{ p.internal_id|default:"-" }}</code>
+                        </td>
+                        <td>{% if p.client %}{{ p.client.name }}{% else %}-{% endif %}</td>
+                        <td>
+                            <strong>{{ p.name }}</strong>
+                        </td>
+                        <td>
+                            <span class="gh-label">{{ p.get_bid_type_display }}</span>
+                        </td>
+                        <td class="text-nowrap">{{ p.country.name|default:p.country }}</td>
+                        <td>{{ p.get_region_display|default:"-" }}</td>
+                        <td class="text-nowrap">{% if p.date_received %}{{ p.date_received|date:"Y-m-d" }}{% else %}-{% endif %}</td>
+                        <td class="text-nowrap">{% if p.deadline_date %}{{ p.deadline_date|date:"Y-m-d" }}{% else %}-{% endif %}</td>
+                        <td class="text-center">
+                            {% if p.days_to_deadline is not None %}
+                                {% if p.days_to_deadline < 0 %}
+                                    <span class="gh-badge gh-badge-danger">Overdue</span>
+                                {% elif p.days_to_deadline < 15 %}
+                                    <span class="gh-badge gh-badge-danger">{{ p.days_to_deadline }}</span>
+                                {% else %}
+                                    <span class="gh-badge gh-badge-success">{{ p.days_to_deadline }}</span>
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-nowrap">{% if p.submission_date %}{{ p.submission_date|date:"Y-m-d" }}{% else %}-{% endif %}</td>
+                        <td>
+                            {% if p.status == 'Ongoing' %}
+                                <button type="button" class="gh-status-badge gh-status-ongoing status-pill"
+                                        data-project-id="{{ p.project_id }}" data-status="Ongoing"
+                                        data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}">
+                                    <i class="bi bi-play-circle me-1"></i>Ongoing
+                                </button>
+                            {% elif p.status == 'Submitted' %}
+                                <button type="button" class="gh-status-badge gh-status-submitted status-pill"
+                                        data-project-id="{{ p.project_id }}" data-status="Submitted"
+                                        data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
+                                        data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}"
+                                        data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}">
+                                    <i class="bi bi-hourglass-split me-1"></i>Submitted
+                                </button>
+                            {% endif %}
+                        </td>
+                        <td class="comments-cell">
+                            <span class="comments-text" title="{{ p.comments|default:'' }}">{{ p.comments|default:"-"|truncatechars:30 }}</span>
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a href="{% url 'market_analysis:project_edit' project_id=p.project_id %}" class="gh-btn gh-btn-sm gh-btn-outline" title="Edit Project">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            {% if p.has_scope %}
+                            <a href="{% url 'market_analysis:project_scope' project_id=p.project_id %}" class="gh-btn gh-btn-sm gh-btn-outline" title="View Scope">
+                                <i class="bi bi-file-earmark-text"></i>
+                            </a>
+                            {% else %}
+                            <a href="{% url 'market_analysis:project_scope' project_id=p.project_id %}" class="gh-btn gh-btn-sm gh-btn-success" title="Add Scope">
+                                <i class="bi bi-plus-circle"></i>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="gh-btn gh-btn-sm gh-btn-outline" title="{% if p.has_financial %}View P&L{% else %}Add P&L{% endif %}">
+                                <i class="bi bi-{% if p.has_financial %}wallet-fill{% else %}wallet{% endif %}"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="13" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            No active projects found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Active Projects Pagination -->
+        {% if active_projects_paginator.num_pages > 1 %}
+        <div class="gh-pagination-wrapper">
+            <nav aria-label="Active projects pagination">
+                <ul class="gh-pagination">
+                    {% if active_projects_page_obj.has_previous %}
+                        <li><a href="?active_page={{ active_projects_page_obj.previous_page_number }}" class="gh-page-link">&laquo; Previous</a></li>
+                    {% else %}
+                        <li><span class="gh-page-link disabled">&laquo; Previous</span></li>
+                    {% endif %}
+                    
+                    {% for num in active_projects_page_range %}
+                        {% if num == '...' %}
+                            <li><span class="gh-page-link disabled">…</span></li>
+                        {% else %}
+                            <li><a href="?active_page={{ num }}" class="gh-page-link {% if num == active_projects_page_obj.number %}active{% endif %}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if active_projects_page_obj.has_next %}
+                        <li><a href="?active_page={{ active_projects_page_obj.next_page_number }}" class="gh-page-link">Next &raquo;</a></li>
+                    {% else %}
+                        <li><span class="gh-page-link disabled">Next &raquo;</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ROW 2: Charts Row -->
 <div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="card text-white bg-primary card-hover h-100 shadow">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">Total Projects</h6>
-                <h2 class="card-title display-6 fw-bold mb-0">{{ projects_count }}</h2>
+    <!-- Left: Win/Lost Pie Chart -->
+    <div class="col-md-6">
+        <div class="gh-card h-100">
+            <div class="gh-card-header">
+                <h3 class="gh-card-title">
+                    <i class="bi bi-pie-chart-fill me-2"></i>Tenders Win/Lost 2021 – {{ current_year }}
+                </h3>
+            </div>
+            <div class="gh-card-body d-flex align-items-center justify-content-center">
+                <div class="chart-container" style="position: relative; width: 100%; max-width: 400px;">
+                    <canvas id="winLostChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
-
-    <div class="col-md-3">
-        <div class="card text-white bg-success card-hover h-100 shadow">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">Total Clients</h6>
-                <h2 class="card-title display-6 fw-bold mb-0">{{ clients_count }}</h2>
+    
+    <!-- Right: EBIT/Day Bar Chart -->
+    <div class="col-md-6">
+        <div class="gh-card h-100">
+            <div class="gh-card-header">
+                <h3 class="gh-card-title">
+                    <i class="bi bi-bar-chart-fill me-2"></i>EBIT/Day - Latest 6 Tenders
+                </h3>
             </div>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="card text-white bg-info card-hover h-100 shadow">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">Technologies</h6>
-                <h2 class="card-title display-6 fw-bold mb-0">{{ technologies_count }}</h2>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="card text-white bg-secondary card-hover h-100 shadow">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-white-50 text-uppercase small">Financial Records</h6>
-                <h2 class="card-title display-6 fw-bold mb-0">{{ financials_count }}</h2>
+            <div class="gh-card-body d-flex align-items-center justify-content-center">
+                <div class="chart-container" style="position: relative; width: 100%;">
+                    <canvas id="ebitDayChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card shadow-sm">
-  <div class="card-header bg-light">
-    <ul class="nav nav-tabs card-header-tabs" id="dashboardTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="projects-tab" data-bs-toggle="tab" data-bs-target="#projects-pane" type="button" role="tab" aria-controls="projects-pane" aria-selected="true">
-          Projects
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="cycle-tab" data-bs-toggle="tab" data-bs-target="#cycle-pane" type="button" role="tab" aria-controls="cycle-pane" aria-selected="false">
-          Cycle Time
-        </button>
-      </li>
-    </ul>
-  </div>
-
-  <div class="card-body p-0">
-    <div class="tab-content">
-      <!-- Projects tab -->
-      <div class="tab-pane fade show active" id="projects-pane" role="tabpanel" aria-labelledby="projects-tab">
-        <div class="projects-table-wrapper">
-          <table class="table table-striped mb-0 align-middle table-sm projects-table">
-            <thead class="table-light">
-              <tr>
-                <th>Internal ID</th>
-                <th>Project Name</th>
-                <th>Client</th>
-                <th>Bid Type</th>
-                <th>Date Received</th>
-                <th>Country</th>
-                <th>Region</th>
-                <th>Status</th>
-                <th class="text-center">SoW</th>
-                <th class="text-center">P&amp;L</th>
-                <th class="text-end">Edit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for p in page_obj_projects.object_list %}
-              <tr>
-                <td class="text-nowrap">{{ p.internal_id }}</td>
-                <td>{{ p.name }}</td>
-                <td>{% if p.client %}{{ p.client.name }}{% else %}-{% endif %}</td>
-                <td>{{ p.get_bid_type_display }}</td>
-                <td class="text-nowrap">{% if p.date_received %}{{ p.date_received|date:"Y-m-d" }}{% else %}-{% endif %}</td>
-                <td class="text-nowrap">{{ p.country }}</td>
-                <td>{{ p.get_region_display }}</td>
-                <td>
-                  {% if p.status == 'Won' %}
-                    <button type="button" class="btn btn-sm btn-success status-pill"
-                            data-project-id="{{ p.project_id }}" data-status="Won"
-                            data-start="{% if p.contract and p.contract.actual_start %}{{ p.contract.actual_start|date:'Y-m-d' }}{% endif %}"
-                            data-end="{% if p.contract and p.contract.actual_end %}{{ p.contract.actual_end|date:'Y-m-d' }}{% endif %}"
-                            data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}"
-                            data-contract="{% if p.contract and p.contract.contract_date %}{{ p.contract.contract_date|date:'Y-m-d' }}{% endif %}"
-                            data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
-                            data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}">
-                      <i class="bi bi-check-circle me-1"></i>Won
-                    </button>
-                  {% elif p.status == 'Lost' %}
-                    <button type="button" class="btn btn-sm btn-danger status-pill"
-                            data-project-id="{{ p.project_id }}" data-status="Lost"
-                            data-start="{% if p.contract and p.contract.actual_start %}{{ p.contract.actual_start|date:'Y-m-d' }}{% endif %}"
-                            data-end="{% if p.contract and p.contract.actual_end %}{{ p.contract.actual_end|date:'Y-m-d' }}{% endif %}"
-                            data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}"
-                            data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
-                            data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}">
-                      <i class="bi bi-x-circle me-1"></i>Lost
-                    </button>
-                  {% elif p.status == 'Submitted' %}
-                    <button type="button" class="btn btn-sm btn-warning status-pill"
-                            data-project-id="{{ p.project_id }}" data-status="Submitted"
-                            data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}"
-                            data-award="{% if p.award_date %}{{ p.award_date|date:'Y-m-d' }}{% endif %}"
-                            data-lost="{% if p.lost_date %}{{ p.lost_date|date:'Y-m-d' }}{% endif %}">
-                      <i class="bi bi-hourglass-split me-1"></i>Submitted
-                    </button>
-                  {% elif p.status == 'Ongoing' %}
-                    <button type="button" class="btn btn-sm btn-primary status-pill"
-                            data-project-id="{{ p.project_id }}" data-status="Ongoing"
-                            data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}">
-                      <i class="bi bi-play-circle me-1"></i>Ongoing
-                    </button>
-                  {% else %}
-                    {{ p.get_status_display }}
-                  {% endif %}
-                </td>
-
-                <td>
-                  {% if p.has_scope %}
-                    <a href="{% url 'market_analysis:project_scope' project_id=p.project_id %}" class="btn btn-sm btn-outline-primary">
-                      <i class="bi bi-eye me-1"></i>View
-                    </a>
-                  {% else %}
-                    <a href="{% url 'market_analysis:project_scope' project_id=p.project_id %}" class="btn btn-sm btn-outline-success">
-                      <i class="bi bi-plus-circle me-1"></i>Add
-                    </a>
-                  {% endif %}
-                </td>
-
-                <td class="text-center">
-                  {% if not p.has_financial %}
-                    <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="btn btn-sm btn-outline-success" title="Add P&L">
-                      <i class="bi bi-plus-circle"></i> Add
-                    </a>
-                  {% else %}
-                    <a href="{% url 'market_analysis:project_add_financial' project_id=p.project_id %}" class="btn btn-sm btn-outline-secondary" title="View / Edit P&L">
-                      <i class="bi bi-wallet-fill"></i> View
-                    </a>
-                  {% endif %}
-                </td>
-
-                <td class="text-end">
-                  <a href="{% url 'market_analysis:project_edit' project_id=p.project_id %}" class="btn btn-sm btn-outline-primary" title="Edit Project">
-                    <i class="bi bi-pencil-square"></i> Edit
-                  </a>
-                </td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="11" class="text-center text-muted py-4">No projects found.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-
-          <!-- Projects pagination (independent) -->
-          {% if paginator_projects.num_pages > 1 %}
-            <nav class="d-flex justify-content-center my-3" aria-label="Projects pagination">
-              <ul class="pagination pagination-sm mb-0">
-                {% if page_obj_projects.has_previous %}
-                  <li class="page-item"><a class="page-link" href="?projects_page={{ page_obj_projects.previous_page_number }}&tab=projects">&laquo;</a></li>
-                {% else %}
-                  <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-                {% endif %}
-                {% for item in page_range_display_projects %}
-                  {% if item == '...' %}
-                    <li class="page-item disabled"><span class="page-link">…</span></li>
-                  {% else %}
-                    <li class="page-item {% if item == page_obj_projects.number %}active{% endif %}">
-                      <a class="page-link" href="?projects_page={{ item }}&tab=projects">{{ item }}</a>
-                    </li>
-                  {% endif %}
-                {% endfor %}
-                {% if page_obj_projects.has_next %}
-                  <li class="page-item"><a class="page-link" href="?projects_page={{ page_obj_projects.next_page_number }}&tab=projects">&raquo;</a></li>
-                {% else %}
-                  <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-                {% endif %}
-              </ul>
-            </nav>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Cycle Time tab -->
-      <div class="tab-pane fade" id="cycle-pane" role="tabpanel" aria-labelledby="cycle-tab">
-        <div class="projects-table-wrapper">
-          <table class="table table-striped mb-0 align-middle table-sm projects-table metrics-table">
-            <thead class="table-light">
-              <tr>
-                <th>Internal ID</th>
-                <th>Project Name</th>
-                <th>Client</th>
-                <th class="text-end">Rec → Sub (days)</th>
-                <th class="text-end">Sub → Award (days)</th>
-                <th class="text-end">Award → Contract (days)</th>
-                <th class="text-end">Contract → Start (days)</th>
-                <th class="text-end">Rec → Start (days)</th>
-                <th class="text-end">Award → Start (days)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for p in page_obj_won.object_list %}
-              <tr>
-                <td class="text-nowrap">{{ p.internal_id }}</td>
-                <td>{{ p.name }}</td>
-                <td>{% if p.client %}{{ p.client.name }}{% else %}-{% endif %}</td>
-                <td class="text-end">{{ p.cycle_rec_to_sub }}</td>
-                <td class="text-end">{{ p.cycle_sub_to_award }}</td>
-                <td class="text-end">{{ p.cycle_award_to_contract }}</td>
-                <td class="text-end">{{ p.cycle_contract_to_start }}</td>
-                <td class="text-end">{{ p.cycle_rec_to_start }}</td>
-                <td class="text-end">{{ p.cycle_award_to_start }}</td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="9" class="text-center text-muted py-4">No projects found.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-
-          <!-- Cycle pagination (independent) -->
-          {% if paginator_won.num_pages > 1 %}
-            <nav class="d-flex justify-content-center my-3" aria-label="Cycle pagination">
-              <ul class="pagination pagination-sm mb-0">
-                {% if page_obj_won.has_previous %}
-                  <li class="page-item"><a class="page-link" href="?cycle_page={{ page_obj_won.previous_page_number }}&tab=cycle">&laquo;</a></li>
-                {% else %}
-                  <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-                {% endif %}
-                {% for item in page_range_display_won %}
-                  {% if item == '...' %}
-                    <li class="page-item disabled"><span class="page-link">…</span></li>
-                  {% else %}
-                    <li class="page-item {% if item == page_obj_won.number %}active{% endif %}">
-                      <a class="page-link" href="?cycle_page={{ item }}&tab=cycle">{{ item }}</a>
-                    </li>
-                  {% endif %}
-                {% endfor %}
-                {% if page_obj_won.has_next %}
-                  <li class="page-item"><a class="page-link" href="?cycle_page={{ page_obj_won.next_page_number }}&tab=cycle">&raquo;</a></li>
-                {% else %}
-                  <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-                {% endif %}
-              </ul>
-            </nav>
-          {% endif %}
-        </div>
-      </div>
+<!-- ROW 3: Latest Surveys Table -->
+<div class="gh-card">
+    <div class="gh-card-header">
+        <h3 class="gh-card-title">
+            <i class="bi bi-table me-2"></i>Latest Surveys
+        </h3>
+        <span class="gh-badge gh-badge-secondary">Won Projects</span>
     </div>
-
-    <!-- shared pagination controls (works for both tabs) -->
-    {% if page_obj.paginator.num_pages > 1 %}
-      <nav class="d-flex justify-content-center my-3" aria-label="Projects pagination">
-        <ul class="pagination pagination-sm mb-0">
-          {% if page_obj.has_previous %}
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">&laquo;</a></li>
-          {% else %}
-            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-          {% endif %}
-
-          {% for item in page_range_display %}
-            {% if item == '...' %}
-              <li class="page-item disabled"><span class="page-link">…</span></li>
-            {% else %}
-              <li class="page-item {% if item == page_obj.number %}active{% endif %}">
-                <a class="page-link" href="?page={{ item }}">{{ item }}</a>
-              </li>
-            {% endif %}
-          {% endfor %}
-
-          {% if page_obj.has_next %}
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">&raquo;</a></li>
-          {% else %}
-            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-          {% endif %}
-        </ul>
-      </nav>
-    {% endif %}
-  </div>
+    <div class="gh-card-body p-0">
+        <div class="gh-table-wrapper">
+            <table class="gh-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Operator</th>
+                        <th>Status</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for survey in latest_surveys %}
+                    <tr>
+                        <td><strong>{{ survey.name }}</strong></td>
+                        <td>{% if survey.client %}{{ survey.client.name }}{% else %}-{% endif %}</td>
+                        <td>
+                            <span class="gh-status-badge gh-status-won">
+                                <i class="bi bi-check-circle me-1"></i>{{ survey.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="text-nowrap">{% if survey.contract and survey.contract.actual_start %}{{ survey.contract.actual_start|date:"Y-m-d" }}{% else %}-{% endif %}</td>
+                        <td class="text-nowrap">{% if survey.contract and survey.contract.actual_end %}{{ survey.contract.actual_end|date:"Y-m-d" }}{% else %}-{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            No surveys found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <!-- provide a JS mapping of status labels so client script never has to read DOM options -->
@@ -407,30 +338,139 @@
     </div>
   </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'market_analysis/js/dashboard.js' %}"></script>
 <script>
-  // Activate the requested tab if query parameter "tab" is present.
-  (function () {
-    function getQueryParam(name) {
-      const params = new URLSearchParams(window.location.search);
-      return params.get(name);
+// Chart.js initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Win/Lost Pie Chart
+    const winLostCtx = document.getElementById('winLostChart');
+    if (winLostCtx) {
+        new Chart(winLostCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Won', 'Lost'],
+                datasets: [{
+                    data: [{{ win_count|default:0 }}, {{ lost_count|default:0 }}],
+                    backgroundColor: [
+                        '#1a7f37',
+                        '#cf222e'
+                    ],
+                    borderColor: [
+                        '#ffffff',
+                        '#ffffff'
+                    ],
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: {
+                                size: 14,
+                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#24292f',
+                        titleFont: {
+                            size: 14
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                cutout: '60%'
+            }
+        });
     }
-    const tab = getQueryParam('tab');
-    if (tab) {
-      const selector = tab === 'cycle' ? '#cycle-tab' : '#projects-tab';
-      const el = document.querySelector(selector);
-      if (el) {
-        const bsTab = new bootstrap.Tab(el);
-        bsTab.show();
-        // Scroll to top of card for clarity
-        const card = el.closest('.card');
-        if (card) card.scrollIntoView({behavior: 'smooth', block: 'start'});
-      }
+
+    // EBIT/Day Bar Chart
+    const ebitDayCtx = document.getElementById('ebitDayChart');
+    if (ebitDayCtx) {
+        const ebitData = {{ ebit_data|safe }};
+        const maxLabelLength = 25;
+        const projectLabels = ebitData.map(item => {
+            if (item.name.length > maxLabelLength) {
+                return item.name.substring(0, maxLabelLength) + '...';
+            }
+            return item.name;
+        });
+        const ebitValues = ebitData.map(item => item.ebit_day);
+        const backgroundColors = ebitData.map(item => item.status === 'Won' ? '#1a7f37' : '#cf222e');
+        
+        new Chart(ebitDayCtx, {
+            type: 'bar',
+            data: {
+                labels: projectLabels,
+                datasets: [{
+                    label: 'EBIT/Day ($)',
+                    data: ebitValues,
+                    backgroundColor: backgroundColors,
+                    borderColor: backgroundColors,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#24292f',
+                        titleFont: {
+                            size: 14
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw;
+                                return 'EBIT/Day: $' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#d0d7de'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
     }
-  })();
+});
 </script>
 {% endblock %}

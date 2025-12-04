@@ -1,17 +1,369 @@
-/* Dashboard-specific styles */
+/* Dashboard-specific styles - GitHub-inspired design */
 
-/* slightly smaller text for project table */
-.projects-table {
-    font-size: 0.85rem;
+/* Page Header */
+.gh-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #d0d7de;
 }
 
-/* scrollable area for long tables */
-.projects-table-wrapper {
-    max-height: 520px;
-    overflow: auto;
+.gh-page-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1f2328;
+    margin: 0;
+    display: flex;
+    align-items: center;
 }
 
-.metrics-table th,
-.metrics-table td {
+.gh-page-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* GitHub-style Buttons */
+.gh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 5px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.gh-btn-primary {
+    background-color: #1a7f37;
+    border-color: rgba(27, 31, 36, 0.15);
+    color: #ffffff;
+}
+
+.gh-btn-primary:hover {
+    background-color: #116329;
+    color: #ffffff;
+}
+
+.gh-btn-outline {
+    background-color: #f6f8fa;
+    border-color: #d0d7de;
+    color: #24292f;
+}
+
+.gh-btn-outline:hover {
+    background-color: #f3f4f6;
+    border-color: #c6cdd3;
+    color: #24292f;
+}
+
+.gh-btn-success {
+    background-color: #dafbe1;
+    border-color: #aceebb;
+    color: #1a7f37;
+}
+
+.gh-btn-success:hover {
+    background-color: #aceebb;
+    color: #116329;
+}
+
+.gh-btn-sm {
+    padding: 3px 12px;
+    font-size: 12px;
+}
+
+/* GitHub-style Cards */
+.gh-card {
+    background: #ffffff;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.gh-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f6f8fa;
+    border-bottom: 1px solid #d0d7de;
+}
+
+.gh-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2328;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.gh-card-body {
+    padding: 16px;
+}
+
+/* GitHub-style Badges */
+.gh-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 22px;
+    border-radius: 12px;
+}
+
+.gh-badge-primary {
+    background-color: #ddf4ff;
+    color: #0969da;
+}
+
+.gh-badge-secondary {
+    background-color: #eaeef2;
+    color: #57606a;
+}
+
+.gh-badge-success {
+    background-color: #dafbe1;
+    color: #1a7f37;
+}
+
+.gh-badge-danger {
+    background-color: #ffebe9;
+    color: #cf222e;
+}
+
+.gh-badge-warning {
+    background-color: #fff8c5;
+    color: #9a6700;
+}
+
+/* GitHub-style Labels */
+.gh-label {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 7px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 20px;
+    border-radius: 12px;
+    background-color: #ddf4ff;
+    color: #0969da;
+}
+
+/* GitHub-style Code */
+.gh-code {
+    padding: 0.2em 0.4em;
+    font-size: 85%;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+    background-color: rgba(175, 184, 193, 0.2);
+    border-radius: 6px;
+}
+
+/* GitHub-style Tables */
+.gh-table-wrapper {
+    overflow-x: auto;
+    max-height: 50vh;
+    min-height: 200px;
+    overflow-y: auto;
+}
+
+.gh-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.gh-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.gh-table th {
+    background-color: #f6f8fa;
+    border-bottom: 1px solid #d0d7de;
+    padding: 8px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #1f2328;
     white-space: nowrap;
 }
+
+.gh-table td {
+    padding: 8px 16px;
+    border-bottom: 1px solid #d0d7de;
+    color: #1f2328;
+}
+
+.gh-table tbody tr:hover {
+    background-color: #f6f8fa;
+}
+
+.gh-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Status Badges */
+.gh-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.gh-status-ongoing {
+    background-color: #ddf4ff;
+    color: #0969da;
+}
+
+.gh-status-ongoing:hover {
+    background-color: #b6e3ff;
+}
+
+.gh-status-submitted {
+    background-color: #fff8c5;
+    color: #9a6700;
+}
+
+.gh-status-submitted:hover {
+    background-color: #f5e0a6;
+}
+
+.gh-status-won {
+    background-color: #dafbe1;
+    color: #1a7f37;
+}
+
+.gh-status-won:hover {
+    background-color: #aceebb;
+}
+
+.gh-status-lost {
+    background-color: #ffebe9;
+    color: #cf222e;
+}
+
+.gh-status-lost:hover {
+    background-color: #ffcecb;
+}
+
+/* Comments cell */
+.comments-cell {
+    max-width: 200px;
+}
+
+.comments-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Pagination */
+.gh-pagination-wrapper {
+    padding: 16px;
+    border-top: 1px solid #d0d7de;
+    display: flex;
+    justify-content: center;
+}
+
+.gh-pagination {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 4px;
+}
+
+.gh-page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    padding: 5px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #0969da;
+    background-color: #ffffff;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.gh-page-link:hover:not(.disabled):not(.active) {
+    background-color: #f6f8fa;
+    border-color: #c6cdd3;
+    color: #0969da;
+}
+
+.gh-page-link.active {
+    background-color: #0969da;
+    border-color: #0969da;
+    color: #ffffff;
+}
+
+.gh-page-link.disabled {
+    color: #8c959f;
+    cursor: not-allowed;
+    background-color: #f6f8fa;
+}
+
+/* Chart container */
+.chart-container {
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .gh-table-wrapper {
+        max-height: 350px;
+    }
+}
+
+@media (max-width: 768px) {
+    .gh-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .chart-container {
+        min-height: 250px;
+    }
+}
+
+/* Text utilities */
+.text-nowrap {
+    white-space: nowrap;
+}
+
+.text-end {
+    text-align: right;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-muted {
+    color: #656d76;
+}
+
