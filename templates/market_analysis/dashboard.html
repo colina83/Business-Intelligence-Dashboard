@@ -320,8 +320,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Win/Lost Pie Chart
-    var winLostCtx = document.getElementById('winLostChart');
-    if (winLostCtx) {
+    var winLostCanvas = document.getElementById('winLostChart');
+    if (winLostCanvas) {
+        var winLostCtx = winLostCanvas.getContext ? winLostCanvas.getContext('2d') : winLostCanvas;
         new Chart(winLostCtx, {
             type: 'doughnut',
             data: {
@@ -372,18 +373,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // EBIT/Day Bar Chart
-    var ebitDayCtx = document.getElementById('ebitDayChart');
-    if (ebitDayCtx) {
+    var ebitDayCanvas = document.getElementById('ebitDayChart');
+    if (ebitDayCanvas) {
+        var ebitDayCtx = ebitDayCanvas.getContext ? ebitDayCanvas.getContext('2d') : ebitDayCanvas;
         var ebitData = {{ ebit_data|safe }};
+        
+        // Handle JSON parsing if needed
+        if (!ebitData) ebitData = [];
+        if (typeof ebitData === 'string') {
+            try {
+                ebitData = JSON.parse(ebitData);
+            } catch (e) {
+                console.error('Unable to parse ebit_data for chart', e);
+                ebitData = [];
+            }
+        }
+        
         var maxLabelLength = 25;
         var projectLabels = ebitData.map(function(item) {
-            if (item.name.length > maxLabelLength) {
-                return item.name.substring(0, maxLabelLength) + '...';
+            var name = item && item.name ? String(item.name) : '';
+            if (name.length > maxLabelLength) {
+                return name.substring(0, maxLabelLength) + '...';
             }
-            return item.name;
+            return name;
         });
-        var ebitValues = ebitData.map(function(item) { return item.ebit_day; });
-        var backgroundColors = ebitData.map(function(item) { return item.status === 'Won' ? '#009E73' : '#CC79A7'; });
+        var ebitValues = ebitData.map(function(item) {
+            var v = item && (item.ebit_day !== undefined) ? Number(item.ebit_day) : 0;
+            return isNaN(v) ? 0 : v;
+        });
+        var backgroundColors = ebitData.map(function(item) { return item && item.status === 'Won' ? '#009E73' : '#CC79A7'; });
         
         new Chart(ebitDayCtx, {
             type: 'bar',
