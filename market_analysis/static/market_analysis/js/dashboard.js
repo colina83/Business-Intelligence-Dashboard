@@ -63,6 +63,8 @@ function initWinLostChart(canvasId, winCount, lostCount) {
         }
     });
 }
+// Expose to global scope immediately
+if (typeof window !== 'undefined') window.initWinLostChart = initWinLostChart;
 
 /**
  * Initialize the EBIT/Day horizontal bar chart
@@ -156,13 +158,25 @@ function initEbitDayChart(canvasId, ebitData) {
         }
     });
 }
+// Expose to global scope immediately
+if (typeof window !== 'undefined') window.initEbitDayChart = initEbitDayChart;
 
 /**
  * Initialize modal functionality for project status management
  */
 function initStatusModal() {
+    // Guard against missing bootstrap
+    if (typeof bootstrap === 'undefined') {
+        console.warn('Bootstrap is not loaded. Modal functionality will be unavailable.');
+        return;
+    }
+    
     const contractModalEl = document.getElementById('contractModal');
+    if (!contractModalEl) return;
+    
     const contractForm = document.getElementById('contractForm');
+    if (!contractForm) return;
+    
     const modal = new bootstrap.Modal(contractModalEl, {backdrop: 'static'});
     const defaultAction = contractForm.getAttribute('action'); // contains project_id=0 placeholder
 
@@ -352,6 +366,8 @@ function initStatusModal() {
 
     contractModalEl.addEventListener('shown.bs.modal', computeAndShowDuration);
 }
+// Expose to global scope immediately
+if (typeof window !== 'undefined') window.initStatusModal = initStatusModal;
 
 // Initialize status modal when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
