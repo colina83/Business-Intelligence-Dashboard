@@ -365,6 +365,121 @@
         }
 
         
+        /* Expandable menu styles */
+
+        .gh-sidebar-nav-parent {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            padding: 8px 12px;
+
+            margin-bottom: 2px;
+
+            color: var(--gh-text-primary);
+
+            text-decoration: none;
+
+            border-radius: 6px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            transition: background-color 0.15s ease;
+
+            cursor: pointer;
+
+            user-select: none;
+
+        }
+
+        
+
+        .gh-sidebar-nav-parent:hover {
+
+            background-color: rgba(208, 215, 222, 0.5);
+
+            color: var(--gh-text-primary);
+
+        }
+
+        
+
+        .gh-sidebar-nav-parent i.menu-icon {
+
+            font-size: 16px;
+
+            width: 20px;
+
+            text-align: center;
+
+        }
+
+        
+
+        .gh-sidebar-nav-parent .expand-icon {
+
+            margin-left: auto;
+
+            font-size: 12px;
+
+            transition: transform 0.2s ease;
+
+        }
+
+        
+
+        .gh-sidebar-nav-parent.expanded .expand-icon {
+
+            transform: rotate(90deg);
+
+        }
+
+        
+
+        .gh-sidebar-submenu {
+
+            max-height: 0;
+
+            overflow: hidden;
+
+            transition: max-height 0.3s ease;
+
+            padding-left: 16px;
+
+        }
+
+        
+
+        .gh-sidebar-submenu.expanded {
+
+            max-height: 500px;
+
+        }
+
+        
+
+        .gh-sidebar-submenu .gh-sidebar-nav-item {
+
+            font-size: 13px;
+
+            padding: 6px 12px;
+
+        }
+
+        
+
+        .gh-sidebar-submenu .gh-sidebar-nav-item i {
+
+            font-size: 14px;
+
+        }
+
+        
 
         /* Main content */
 
@@ -570,9 +685,9 @@
 
                 <a href="{% url 'market_analysis:dashboard' %}" class="gh-header-nav-item">
 
-                    <i class="bi bi-speedometer2"></i>
+                    <i class="bi bi-globe-americas"></i>
 
-                    Dashboard
+                    Market Dashboard
 
                 </a>
 
@@ -626,37 +741,61 @@
 
         <nav class="gh-sidebar-nav">
 
-            <a href="{% url 'market_analysis:dashboard' %}" class="gh-sidebar-nav-item active">
+            <!-- Market Dashboard Parent Menu -->
 
-                <i class="bi bi-grid-3x3-gap-fill"></i>
+            <div class="gh-sidebar-nav-parent expanded" onclick="toggleSubmenu(this)" onkeydown="handleMenuKeydown(event, this)" tabindex="0" role="button" aria-expanded="true">
 
-                Dashboard
+                <i class="bi bi-globe-americas menu-icon"></i>
 
-            </a>
+                Market Dashboard
 
-            <a href="{% url 'market_analysis:project_opportunities' %}" class="gh-sidebar-nav-item">
+                <i class="bi bi-chevron-right expand-icon"></i>
 
-                <i class="bi bi-folder-plus"></i>
+            </div>
 
-                Project Opportunities
+            <div class="gh-sidebar-submenu expanded">
 
-            </a>
+                <a href="{% url 'market_analysis:project_opportunities' %}" class="gh-sidebar-nav-item">
 
-            <a href="#" class="gh-sidebar-nav-item">
+                    <i class="bi bi-lightbulb"></i>
 
-                <i class="bi bi-graph-up"></i>
+                    Project Opportunities
 
-                Pricing Analytics
+                </a>
 
-            </a>
+                <a href="#" class="gh-sidebar-nav-item">
 
-            <a href="#" class="gh-sidebar-nav-item">
+                    <i class="bi bi-graph-up-arrow"></i>
 
-                <i class="bi bi-robot"></i>
+                    Pricing Analytics
 
-                MarketGPT
+                </a>
 
-            </a>
+                <a href="#" class="gh-sidebar-nav-item">
+
+                    <i class="bi bi-bar-chart-line"></i>
+
+                    Pricing Graphs
+
+                </a>
+
+                <a href="#" class="gh-sidebar-nav-item">
+
+                    <i class="bi bi-clock-history"></i>
+
+                    Tendering Cycle Time
+
+                </a>
+
+                <a href="#" class="gh-sidebar-nav-item">
+
+                    <i class="bi bi-robot"></i>
+
+                    MarketAgent AI
+
+                </a>
+
+            </div>
 
         </nav>
 
@@ -739,6 +878,40 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+
+        // Toggle submenu expand/collapse
+
+        function toggleSubmenu(parentElement) {
+
+            const submenu = parentElement.nextElementSibling;
+
+            const isExpanded = parentElement.classList.toggle('expanded');
+
+            submenu.classList.toggle('expanded');
+
+            parentElement.setAttribute('aria-expanded', isExpanded);
+
+        }
+
+        
+
+        // Handle keyboard navigation for submenu
+
+        function handleMenuKeydown(event, parentElement) {
+
+            if (event.key === 'Enter' || event.key === ' ') {
+
+                event.preventDefault();
+
+                toggleSubmenu(parentElement);
+
+            }
+
+        }
+
+    </script>
 
     {% block extra_js %}{% endblock %}
 
