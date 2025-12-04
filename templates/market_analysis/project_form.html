@@ -10,7 +10,7 @@
     </div>
 
     <div class="card-body">
-      <form method="post" novalidate>
+      <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
         <div class="row g-3">
           <div class="col-md-4">
@@ -59,6 +59,13 @@
             <label class="form-label">Submission Date</label>
             {{ form.submission_date }}
             {% if form.submission_date.errors %}<div class="text-danger small">{{ form.submission_date.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Project Map Image</label>
+            {{ form.project_map }}
+            {% if form.project_map.errors %}<div class="text-danger small">{{ form.project_map.errors.0 }}</div>{% endif %}
+            <small class="text-muted">Accepted formats: PNG, JPG, GIF. Max size: 5 MB.</small>
           </div>
         </div>
 

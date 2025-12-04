@@ -11,7 +11,7 @@
     </div>
 
     <div class="card-body">
-      <form method="post" novalidate>
+      <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
         <div class="row g-3">
           <div class="col-md-4">
@@ -49,6 +49,11 @@
             {{ form.status }}
           </div>
 
+          <div class="col-md-4">
+            <label class="form-label">Deadline Date</label>
+            {{ form.deadline_date }}
+          </div>
+
           <div class="col-md-4" id="submission-date-col" style="display:none;">
             <label class="form-label">Submission Date</label>
             {{ form.submission_date }}
@@ -67,6 +72,23 @@
           <div class="col-12" id="competitor-col" style="display:none;">
             <label class="form-label">Competitor that won</label>
             {{ form.competitor_name }}
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Comments</label>
+            {{ form.comments }}
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Project Map Image</label>
+            {% if project.project_map %}
+            <div class="mb-2">
+              <img src="{{ project.project_map.url }}" alt="Current project map" style="max-width: 200px; max-height: 150px; border-radius: 6px; border: 1px solid #d0d7de;">
+              <p class="text-muted small mt-1">Current image. Upload a new file to replace it.</p>
+            </div>
+            {% endif %}
+            {{ form.project_map }}
+            <small class="text-muted">Accepted formats: PNG, JPG, GIF. Max size: 5 MB.</small>
           </div>
         </div>
 

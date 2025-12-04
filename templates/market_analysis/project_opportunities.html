@@ -378,7 +378,9 @@
                     {% for p in projects %}
                     <tr>
                         <td class="col-internal-id">
-                            <code class="gh-code" title="{{ p.internal_id|default:'' }}">{{ p.internal_id|default:"-" }}</code>
+                            <a href="{% url 'market_analysis:project_detail' project_id=p.project_id %}" class="text-decoration-none">
+                                <code class="gh-code" title="{{ p.internal_id|default:'' }}" style="cursor: pointer;">{{ p.internal_id|default:"-" }}</code>
+                            </a>
                         </td>
                         <td class="col-client">{% if p.client %}{{ p.client.name }}{% else %}-{% endif %}</td>
                         <td class="col-project-name">
