@@ -105,6 +105,10 @@ class Project(models.Model):
     lost_date = models.DateField(null=True, blank=True, db_column='LostDate')
 
     project_portal_id = models.CharField(max_length=100, null=True, blank=True, db_column='ProjectPortalID')
+    
+    # Dashboard display fields
+    deadline_date = models.DateField(null=True, blank=True, db_column='DeadlineDate')
+    comments = models.TextField(null=True, blank=True, db_column='Comments')
 
     def save(self, *args, **kwargs):
         """
