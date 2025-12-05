@@ -2,33 +2,31 @@
 {% load static %}
 {% block title %}Add Project - Market Analysis{% endblock %}
 
+{% block extra_css %}
+{{ form.media }}
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
-  <div class="card shadow-sm border-0">
+  <div class="card shadow-sm border-0 mx-auto" style="max-width: 700px;">
     <div class="card-header bg-primary text-white">
-      <h3 class="mb-0"><i class="bi bi-folder-plus me-2"></i>Add Project</h3>
+      <h4 class="mb-0"><i class="bi bi-folder-plus me-2"></i>Add Project</h4>
     </div>
 
     <div class="card-body">
       <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
         <div class="row g-3">
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">Bid Type</label>
             {{ form.bid_type }}
             {% if form.bid_type.errors %}<div class="text-danger small">{{ form.bid_type.errors.0 }}</div>{% endif %}
           </div>
 
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">Client</label>
             {{ form.client }}
             {% if form.client.errors %}<div class="text-danger small">{{ form.client.errors.0 }}</div>{% endif %}
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">Region</label>
-            {{ form.region }}
-            {% if form.region.errors %}<div class="text-danger small">{{ form.region.errors.0 }}</div>{% endif %}
           </div>
 
           <div class="col-12">
@@ -37,25 +35,31 @@
             {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors.0 }}</div>{% endif %}
           </div>
 
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">Country</label>
             {{ form.country }}
             {% if form.country.errors %}<div class="text-danger small">{{ form.country.errors.0 }}</div>{% endif %}
           </div>
 
-          <div class="col-md-4">
+          <div class="col-md-6">
+            <label class="form-label">Region</label>
+            {{ form.region }}
+            {% if form.region.errors %}<div class="text-danger small">{{ form.region.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-6">
             <label class="form-label">Date Received</label>
             {{ form.date_received }}
             {% if form.date_received.errors %}<div class="text-danger small">{{ form.date_received.errors.0 }}</div>{% endif %}
           </div>
 
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">Status</label>
             {{ form.status }}
             {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors.0 }}</div>{% endif %}
           </div>
 
-          <div class="col-md-4" id="submission-date-col" style="display:none;">
+          <div class="col-md-6" id="submission-date-col" style="display:none;">
             <label class="form-label">Submission Date</label>
             {{ form.submission_date }}
             {% if form.submission_date.errors %}<div class="text-danger small">{{ form.submission_date.errors.0 }}</div>{% endif %}
@@ -65,7 +69,14 @@
             <label class="form-label">Project Map Image</label>
             {{ form.project_map }}
             {% if form.project_map.errors %}<div class="text-danger small">{{ form.project_map.errors.0 }}</div>{% endif %}
-            <small class="text-muted">Accepted formats: PNG, JPG, GIF. Max size: 5 MB.</small>
+            <small class="text-muted d-block mt-1">Accepted formats: PNG, JPG, GIF. Max size: 5 MB.</small>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Comments</label>
+            {{ form.comments }}
+            {% if form.comments.errors %}<div class="text-danger small">{{ form.comments.errors.0 }}</div>{% endif %}
+            <small class="text-muted d-block mt-1">Add any notes or details about the project. You can format text using the toolbar above.</small>
           </div>
         </div>
 
@@ -75,8 +86,8 @@
           <a href="{% url 'market_analysis:dashboard' %}" class="btn btn-outline-secondary">
             Cancel
           </a>
-          <button type="submit" class="btn btn-primary btn-lg">
-            Create Project
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i>Create Project
           </button>
         </div>
       </form>

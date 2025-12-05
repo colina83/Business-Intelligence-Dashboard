@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'accounts',
     'market_analysis',
     'django_countries',
+    'ckeditor',
 ]
 
 MIDDLEWARE = [
@@ -129,3 +130,20 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# CKEditor Configuration
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Bold', 'Italic', 'Underline', 'Strike'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
+            ['Link', 'Unlink'],
+            ['RemoveFormat'],
+        ],
+        'height': 200,
+        'width': '100%',
+        'removePlugins': 'elementspath',
+        'resize_enabled': False,
+    },
+}
