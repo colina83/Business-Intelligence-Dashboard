@@ -163,7 +163,7 @@ class ProjectEditForm(forms.ModelForm):
             'award_date': DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm'}),
             'lost_date': DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm'}),
             'deadline_date': DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm'}),
-            'comments': forms.Textarea(attrs={'class': 'form-control form-control-sm', 'rows': 3}),
+            'comments': forms.Textarea(attrs={'class': 'form-control form-control-sm', 'rows': 8}),
             'project_map': forms.ClearableFileInput(attrs={
                 'class': 'form-control form-control-sm',
                 'accept': 'image/png, image/jpeg, image/gif'
