@@ -1,6 +1,7 @@
 from django import forms
 from django.forms import DateInput
 from django.forms.models import inlineformset_factory
+from ckeditor.widgets import CKEditorWidget
 from .models import Project, ProjectTechnology, Client, Financial, Competitor, ProjectContract, ProjectSnapshot
 
 class ProjectForm(forms.ModelForm):
@@ -8,7 +9,7 @@ class ProjectForm(forms.ModelForm):
         model = Project
         fields = [
             'bid_type', 'client', 'name', 'country', 'region',
-            'date_received', 'status', 'submission_date', 'project_map'
+            'date_received', 'status', 'submission_date', 'project_map', 'comments'
         ]
         widgets = {
             'date_received': DateInput(attrs={'type': 'date', 'class': 'form-control'}),
@@ -17,6 +18,7 @@ class ProjectForm(forms.ModelForm):
                 'class': 'form-control',
                 'accept': 'image/png, image/jpeg, image/gif'
             }),
+            'comments': CKEditorWidget(config_name='default'),
         }
         labels = {
             'name': 'Project Name',
@@ -24,23 +26,26 @@ class ProjectForm(forms.ModelForm):
             'date_received': 'Date Received',
             'submission_date': 'Submission Date',
             'project_map': 'Project Map Image',
+            'comments': 'Comments',
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Styling classes
+        # Styling classes for all form fields
         for name, field in self.fields.items():
-            if not isinstance(field.widget, (DateInput, forms.ClearableFileInput)):
-                field.widget.attrs.setdefault('class', 'form-control')
-
-        # client as select
-        if 'client' in self.fields:
-            self.fields['client'].widget.attrs.setdefault('class', 'form-select')
+            widget = field.widget
+            if isinstance(widget, forms.Select):
+                widget.attrs.setdefault('class', 'form-select')
+            elif isinstance(widget, (DateInput, forms.ClearableFileInput, CKEditorWidget)):
+                pass  # These already have styling or handle their own
+            else:
+                widget.attrs.setdefault('class', 'form-control')
 
         # submission_date optional by default
         self.fields['submission_date'].required = False
         self.fields['project_map'].required = False
+        self.fields['comments'].required = False
 
     def clean(self):
         cleaned = super().clean()
