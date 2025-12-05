@@ -17,7 +17,7 @@
 <div class="gh-card">
   <div class="gh-card-header">
     <h3 class="gh-card-title">Won Tenders Cycle Time</h3>
-    <span class="gh-badge gh-badge-primary">{{ rows|length }} Records</span>
+    <span class="gh-badge gh-badge-primary">{{ page_obj_won.paginator.count }} Records</span>
   </div>
   <div class="gh-card-body">
     <div class="table-responsive">
@@ -25,34 +25,53 @@
         <thead class="table-light small">
           <tr>
             <th>Internal ID</th>
-            <th>Received</th>
-            <th>Submitted</th>
-            <th class="text-center">Days to Submission</th>
-            <th>Award</th>
-            <th class="text-center">Days to Award</th>
-            <th>Contract</th>
-            <th class="text-center">Days to Contract</th>
-            <th class="text-center">Total Cycle (days)</th>
+            <th>Project</th>
+            <th>Client</th>
+            <th class="text-end">Rec ? Sub (days)</th>
+            <th class="text-end">Sub ? Award (days)</th>
+            <th class="text-end">Award ? Contract (days)</th>
+            <th class="text-end">Contract ? Start (days)</th>
+            <th class="text-end">Rec ? Start (days)</th>
+            <th class="text-end">Award ? Start (days)</th>
           </tr>
         </thead>
         <tbody>
-          {% for r in rows %}
+          {% for p in page_obj_won.object_list %}
           <tr>
-            <td><a href="{% url 'market_analysis:project_detail' project_id=r.project.project_id %}"><code>{{ r.project.internal_id|default:'-' }}</code></a></td>
-            <td>{% if r.received %}{{ r.received|date:'Y-m-d' }}{% else %}-{% endif %}</td>
-            <td>{% if r.submission %}{{ r.submission|date:'Y-m-d' }}{% else %}-{% endif %}</td>
-            <td class="text-center">{% if r.days_to_submission is not None %}{{ r.days_to_submission }}{% else %}-{% endif %}</td>
-            <td>{% if r.award %}{{ r.award|date:'Y-m-d' }}{% else %}-{% endif %}</td>
-            <td class="text-center">{% if r.days_to_award is not None %}{{ r.days_to_award }}{% else %}-{% endif %}</td>
-            <td>{% if r.contract %}{{ r.contract|date:'Y-m-d' }}{% else %}-{% endif %}</td>
-            <td class="text-center">{% if r.days_to_contract is not None %}{{ r.days_to_contract }}{% else %}-{% endif %}</td>
-            <td class="text-center">{% if r.total_cycle is not None %}{{ r.total_cycle }}{% else %}-{% endif %}</td>
+            <td class="text-nowrap"><a href="{% url 'market_analysis:project_detail' project_id=p.project_id %}"><code>{{ p.internal_id|default:'-' }}</code></a></td>
+            <td>{{ p.name|default:'-' }}</td>
+            <td>{% if p.client %}{{ p.client.name }}{% else %}-{% endif %}</td>
+            <td class="text-end">{% if p.cycle_rec_to_sub is not None %}{{ p.cycle_rec_to_sub }}{% else %}-{% endif %}</td>
+            <td class="text-end">{% if p.cycle_sub_to_award is not None %}{{ p.cycle_sub_to_award }}{% else %}-{% endif %}</td>
+            <td class="text-end">{% if p.cycle_award_to_contract is not None %}{{ p.cycle_award_to_contract }}{% else %}-{% endif %}</td>
+            <td class="text-end">{% if p.cycle_contract_to_start is not None %}{{ p.cycle_contract_to_start }}{% else %}-{% endif %}</td>
+            <td class="text-end">{% if p.cycle_rec_to_start is not None %}{{ p.cycle_rec_to_start }}{% else %}-{% endif %}</td>
+            <td class="text-end">{% if p.cycle_award_to_start is not None %}{{ p.cycle_award_to_start }}{% else %}-{% endif %}</td>
           </tr>
           {% empty %}
           <tr><td colspan="9" class="text-center text-muted py-3">No won tenders found.</td></tr>
           {% endfor %}
         </tbody>
       </table>
+      {% if page_obj_won.paginator.num_pages > 1 %}
+      <div class="gh-pagination-wrapper mt-3">
+        <nav aria-label="Won tenders pagination">
+          <ul class="gh-pagination">
+            {% if page_obj_won.has_previous %}
+              <li><a href="?page={{ page_obj_won.previous_page_number }}" class="gh-page-link">&laquo; Previous</a></li>
+            {% else %}
+              <li><span class="gh-page-link disabled">&laquo; Previous</span></li>
+            {% endif %}
+            <li><span class="gh-page-link disabled">Page {{ page_obj_won.number }} of {{ page_obj_won.paginator.num_pages }}</span></li>
+            {% if page_obj_won.has_next %}
+              <li><a href="?page={{ page_obj_won.next_page_number }}" class="gh-page-link">Next &raquo;</a></li>
+            {% else %}
+              <li><span class="gh-page-link disabled">Next &raquo;</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>

@@ -9,10 +9,11 @@ class ProjectForm(forms.ModelForm):
         model = Project
         fields = [
             'bid_type', 'client', 'name', 'country', 'region',
-            'date_received', 'status', 'submission_date', 'project_map', 'comments'
+            'date_received', 'deadline_date', 'status', 'submission_date', 'project_map', 'comments'
         ]
         widgets = {
             'date_received': DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'deadline_date': DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'submission_date': DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'project_map': forms.ClearableFileInput(attrs={
                 'class': 'form-control',
@@ -24,6 +25,7 @@ class ProjectForm(forms.ModelForm):
             'name': 'Project Name',
             'bid_type': 'Bid Type',
             'date_received': 'Date Received',
+            'deadline_date': 'Deadline Date',
             'submission_date': 'Submission Date',
             'project_map': 'Project Map Image',
             'comments': 'Comments',
@@ -44,6 +46,9 @@ class ProjectForm(forms.ModelForm):
 
         # submission_date optional by default
         self.fields['submission_date'].required = False
+        # deadline optional on create
+        if 'deadline_date' in self.fields:
+            self.fields['deadline_date'].required = False
         self.fields['project_map'].required = False
         self.fields['comments'].required = False
 

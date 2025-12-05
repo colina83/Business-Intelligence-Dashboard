@@ -630,52 +630,49 @@ def tendering_cycle(request):
     Tendering Cycle Time page: show table of tender activity times for Won tenders.
     Only include projects with status 'Won'.
     """
-    won_qs = (
+    qs = (
         Project.objects.select_related('client', 'contract')
         .filter(status='Won')
         .order_by('-award_date', '-project_id')
     )
 
-    rows = []
-    for p in won_qs:
-        received = p.date_received
-        submission = p.submission_date
-        award = p.award_date
-        contract_date = None
+    # helper to compute days between two dates (later - earlier)
+    def _days_between(later, earlier):
+        if not earlier or not later:
+            return None
         try:
-            contract_date = p.contract.contract_date
+            return (later - earlier).days
         except Exception:
-            contract_date = None
+            return None
 
-        def days(a, b):
-            if not a or not b:
-                return None
-            try:
-                return (b - a).days
-            except Exception:
-                return None
+    # annotate each Project instance with cycle attributes used in template
+    won_list = []
+    for p in qs:
+        date_received = getattr(p, 'date_received', None)
+        submission_date = getattr(p, 'submission_date', None)
+        award_date = getattr(p, 'award_date', None)
+        contract = getattr(p, 'contract', None)
+        contract_date = getattr(contract, 'contract_date', None) if contract else None
+        start_date = getattr(contract, 'actual_start', None) if contract else None
 
-        days_to_submission = days(received, submission)
-        days_to_award = days(submission or received, award)
-        days_to_contract = days(award or submission or received, contract_date)
+        p.cycle_rec_to_sub = _days_between(submission_date, date_received)
+        p.cycle_sub_to_award = _days_between(award_date, submission_date)
+        p.cycle_award_to_contract = _days_between(contract_date, award_date)
+        p.cycle_contract_to_start = _days_between(start_date, contract_date)
+        p.cycle_rec_to_start = _days_between(start_date, date_received)
+        p.cycle_award_to_start = _days_between(start_date, award_date)
 
-        total_cycle = None
-        # Prefer contract date for total cycle, fallback to award
-        if contract_date:
-            total_cycle = days(received, contract_date)
-        elif award:
-            total_cycle = days(received, award)
+        won_list.append(p)
 
-        rows.append({
-            'project': p,
-            'received': received,
-            'submission': submission,
-            'award': award,
-            'contract': contract_date,
-            'days_to_submission': days_to_submission,
-            'days_to_award': days_to_award,
-            'days_to_contract': days_to_contract,
-            'total_cycle': total_cycle,
-        })
+    # pagination for won list
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    page = request.GET.get('page', 1)
+    paginator = Paginator(won_list, 25)
+    try:
+        page_obj_won = paginator.page(page)
+    except PageNotAnInteger:
+        page_obj_won = paginator.page(1)
+    except EmptyPage:
+        page_obj_won = paginator.page(paginator.num_pages)
 
-    return render(request, 'market_analysis/tendering_cycle.html', {'rows': rows})
+    return render(request, 'market_analysis/tendering_cycle.html', {'page_obj_won': page_obj_won})
