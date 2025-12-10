@@ -577,6 +577,31 @@ def project_opportunities(request):
 
 
 @login_required
+def update_comment(request, project_id):
+    """Handle AJAX/modal POST to update a project's comments (HTML allowed).
+    - GET returns a small form fragment for the modal body.
+    - POST saves the comment and redirects back to project_opportunities.
+    """
+    project = get_object_or_404(Project, pk=project_id)
+
+    if request.method == 'POST':
+        new_comment = request.POST.get('comments')
+        project.comments = new_comment
+        try:
+            project.save()
+            messages.success(request, 'Comments saved.')
+        except Exception:
+            messages.error(request, 'Could not save comments; check server logs.')
+        # redirect back to opportunities (could be AJAX)
+        return redirect('market_analysis:project_opportunities')
+
+    # GET -> render fragment
+    return render(request, 'market_analysis/comment_modal_fragment.html', {
+        'project': project,
+    })
+
+
+@login_required
 def project_detail(request, project_id):
     """
     Project Detail page with card layout showing all project information.

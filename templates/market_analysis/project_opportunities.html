@@ -231,6 +231,25 @@
     text-align: center;
     vertical-align: middle;
 }
+/* Pills for status labels */
+.status-pill-small {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.05) inset;
+}
+/* use color-blind-friendly palette consistent with dashboard charts */
+.status-ongoing { background: #0072B2; }    /* blue (color-blind safe) */
+.status-submitted { background: #E69F00; color: #111; } /* orange/amber (color-blind safe) */
+.status-won { background: #009E73; }        /* teal (used in charts) */
+.status-lost { background: #CC79A7; }       /* purple/pink (used in charts) */
+.status-secondary { background: #6c757d; }
 
 .status-cell .status-pill {
     display: inline-flex;
@@ -359,17 +378,13 @@
                 <thead class="table-dark">
                     <tr>
                         <th scope="col" class="col-internal-id">Internal ID</th>
+                        <th scope="col" class="col-status">Status</th>
                         <th scope="col" class="col-client">Client</th>
                         <th scope="col" class="col-project-name">Project Name</th>
                         <th scope="col" class="col-bid-type">Bid Type</th>
                         <th scope="col" class="col-country">Country</th>
                         <th scope="col" class="col-region">Region</th>
                         <th scope="col">Project Technology</th>
-                        <th scope="col" class="col-status">Status</th>
-                        <th scope="col" class="col-date">Bid Received</th>
-                        <th scope="col" class="col-date">Deadline</th>
-                        <th scope="col" class="col-days">Days to Deadline</th>
-                        <th scope="col" class="col-date">Bid Submitted</th>
                         <th scope="col" class="col-comments">Comments</th>
                         <th scope="col" class="col-actions">Actions</th>
                     </tr>
@@ -382,18 +397,8 @@
                                 <code class="gh-code" title="{{ p.internal_id|default:'' }}" style="cursor: pointer;">{{ p.internal_id|default:"-" }}</code>
                             </a>
                         </td>
-                        <td class="col-client">{% if p.client %}{{ p.client.name }}{% else %}-{% endif %}</td>
-                        <td class="col-project-name">
-                            <span title="{{ p.name }}"><strong>{{ p.name }}</strong></span>
-                        </td>
-                        <td class="col-bid-type">
-                            <span class="gh-label">{{ p.bid_type|default:"-" }}</span>
-                        </td>
-                        <td class="col-country">{{ p.country.name|default:p.country }}</td>
-                        <td class="col-region">{{ p.get_region_display|default:"-" }}</td>
-                        <td class="col-tech">{% with tech=p.technologies.first %}{% if tech %}{{ tech.get_technology_display }}{% else %}-{% endif %}{% endwith %}</td>
 
-                        <!-- Status cell (moved next to technology) -->
+                        <!-- Status immediately after Internal ID -->
                         <td class="status-cell">
                             {% if p.status == 'Ongoing' %}
                                 <span class="status-pill-small status-ongoing"><i class="bi bi-play-circle me-1"></i>Ongoing</span>
@@ -412,25 +417,27 @@
                             {% endif %}
                         </td>
 
-                        <td class="col-date">{% if p.date_received %}{{ p.date_received|date:"Y-m-d" }}{% else %}-{% endif %}</td>
-                        <td class="col-date">{% if p.deadline_date %}{{ p.deadline_date|date:"Y-m-d" }}{% else %}-{% endif %}</td>
-                        <td class="col-days">
-                            {% if p.days_to_deadline is not None %}
-                                {% if p.days_to_deadline < 0 %}
-                                    <span class="gh-badge gh-badge-danger">Overdue</span>
-                                {% elif p.days_to_deadline < 10 %}
-                                    <span class="gh-badge gh-badge-danger">{{ p.days_to_deadline }}</span>
-                                {% else %}
-                                    <span class="gh-badge gh-badge-success">{{ p.days_to_deadline }}</span>
-                                {% endif %}
-                            {% else %}
-                                -
-                            {% endif %}
+                        <td class="col-client">{% if p.client %}{{ p.client.name }}{% else %}-{% endif %}</td>
+                        <td class="col-project-name">
+                            <span title="{{ p.name }}"><strong>{{ p.name }}</strong></span>
                         </td>
-                        <td class="col-date">{% if p.submission_date %}{{ p.submission_date|date:"Y-m-d" }}{% else %}-{% endif %}</td>
+                        <td class="col-bid-type">
+                            <span class="gh-label">{{ p.bid_type|default:"-" }}</span>
+                        </td>
+                        <td class="col-country">{{ p.country.name|default:p.country }}</td>
+                        <td class="col-region">{{ p.get_region_display|default:"-" }}</td>
+                        <td class="col-tech">{% with tech=p.technologies.first %}{% if tech %}{{ tech.get_technology_display }}{% else %}-{% endif %}{% endwith %}</td>
 
-                        <td class="col-comments">
-                            <span class="comments-text" title="{{ p.comments|default:'' }}">{{ p.comments|default:"-"|truncatechars:30 }}</span>
+                        <td class="col-comments text-center">
+                            {% if p.comments %}
+                                <a href="#" class="btn btn-sm btn-success open-comment-modal" data-project-id="{{ p.project_id }}" title="View/Edit comment">
+                                    <i class="bi bi-chat-dots-fill"></i>
+                                </a>
+                            {% else %}
+                                <a href="#" class="btn btn-sm btn-outline-secondary open-comment-modal" data-project-id="{{ p.project_id }}" title="Add comment">
+                                    <i class="bi bi-chat-dots"></i>
+                                </a>
+                            {% endif %}
                         </td>
 
                         <!-- Actions -->
@@ -613,4 +620,72 @@
 
 {% block extra_js %}
 <script src="{% static 'market_analysis/js/dashboard.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.open-comment-modal').forEach(function(btn){
+    btn.addEventListener('click', function(ev){
+      ev.preventDefault();
+      var projectId = this.dataset.projectId;
+      // fetch modal fragment
+      fetch('{% url "market_analysis:update_comment" project_id=0 %}'.replace('/0/', '/' + projectId + '/'))
+        .then(r => r.text())
+        .then(html => {
+          // create modal container if not present
+          var container = document.getElementById('commentModalContainer');
+          if (!container) {
+            container = document.createElement('div');
+            container.id = 'commentModalContainer';
+            document.body.appendChild(container);
+          }
+          // wrap fragment in required Bootstrap modal structure
+          container.innerHTML = '<div class="modal fade" id="commentModal" tabindex="-1">'
+            + '<div class="modal-dialog modal-dialog-centered">'
+            + '<div class="modal-content">' + html + '</div></div></div>';
+          var modalEl = document.getElementById('commentModal');
+          // initialize CKEditor in modal (if available)
+          if (window.initCommentModal) window.initCommentModal();
+          var modal = new bootstrap.Modal(modalEl, {backdrop: 'static'});
+          modal.show();
+        })
+        .catch(err => console.error('Error loading comment modal', err));
+    });
+  });
+});
+
+// function to load/initialize CKEditor for the comment modal
+window.initCommentModal = function() {
+  function setup() {
+    try {
+      if (CKEDITOR.instances['comment-editor']) {
+        CKEDITOR.instances['comment-editor'].destroy(true);
+      }
+      CKEDITOR.replace('comment-editor', {height: 300});
+      var modalEl = document.getElementById('commentModal');
+      if (modalEl) {
+        modalEl.addEventListener('hidden.bs.modal', function(){
+          if (CKEDITOR.instances['comment-editor']) {
+            CKEDITOR.instances['comment-editor'].destroy(true);
+          }
+        });
+      }
+      var form = document.getElementById('commentForm');
+      if (form) {
+        form.addEventListener('submit', function(){
+          if (CKEDITOR.instances['comment-editor']) CKEDITOR.instances['comment-editor'].updateElement();
+        });
+      }
+    } catch (e) {
+      console.error('CKEditor init error', e);
+    }
+  }
+  if (window.CKEDITOR) {
+    setup();
+    return;
+  }
+  var s = document.createElement('script');
+  s.src = 'https://cdn.ckeditor.com/4.20.2/standard/ckeditor.js';
+  s.onload = setup;
+  document.head.appendChild(s);
+};
+</script>
 {% endblock %}

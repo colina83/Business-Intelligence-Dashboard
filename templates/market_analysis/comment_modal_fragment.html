@@ -1,0 +1,16 @@
+<div class="modal-header">
+  <h5 class="modal-title">Comments for {{ project.internal_id|default:project.name }}</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body">
+  <form id="commentForm" method="post" action="{% url 'market_analysis:update_comment' project_id=project.project_id %}">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label small">Comment (HTML allowed)</label>
+      <textarea id="comment-editor" name="comments" class="form-control" rows="8">{{ project.comments|default:'' }}</textarea>
+    </div>
+    <div class="text-end">
+      <button type="submit" class="btn btn-primary btn-sm">Save</button>
+    </div>
+  </form>
+</div>

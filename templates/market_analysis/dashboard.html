@@ -25,15 +25,23 @@
         </h3>
     </div>
     <div class="gh-card-body p-0">
+        <div class="p-3 border-bottom">
+            <div class="d-flex align-items-center gap-3">
+                <div>
+                    <input id="dashboard-table-search" type="search" class="form-control form-control-sm" placeholder="Search table...">
+                </div>
+                <div class="text-muted small">Search filters visible rows on this page</div>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-striped table-hover table-bordered mb-0">
                 <thead class="table-dark">
                     <tr>
                         <th scope="col" class="col-internal-id">Internal ID</th>
-                        <th scope="col">Bid Received</th>
-                        <th scope="col">Deadline</th>
+                        <th scope="col"><button type="button" class="btn btn-link btn-sm text-white p-0 sort-btn" data-key="received">Bid Received</button></th>
+                        <th scope="col"><button type="button" class="btn btn-link btn-sm text-white p-0 sort-btn" data-key="deadline">Deadline</button></th>
                         <th scope="col">Days to Deadline</th>
-                        <th scope="col">Bid Submitted</th>
+                        <th scope="col"><button type="button" class="btn btn-link btn-sm text-white p-0 sort-btn" data-key="submission">Bid Submitted</button></th>
                         <th scope="col">Status</th>
                         <th scope="col">Comments</th>
                         <th scope="col" class="text-center">Actions</th>
@@ -41,7 +49,7 @@
                 </thead>
                 <tbody>
                     {% for p in active_projects %}
-                    <tr>
+                    <tr data-received="{% if p.date_received %}{{ p.date_received|date:'Y-m-d' }}{% endif %}" data-deadline="{% if p.deadline_date %}{{ p.deadline_date|date:'Y-m-d' }}{% endif %}" data-submission="{% if p.submission_date %}{{ p.submission_date|date:'Y-m-d' }}{% endif %}">
                         <!-- removed text-nowrap so value can wrap if needed and column auto-sizes -->
                         <td class="col-internal-id">
                             <a href="{% url 'market_analysis:project_detail' project_id=p.project_id %}" class="text-decoration-none">
@@ -52,16 +60,21 @@
                         <td class="text-nowrap">{% if p.date_received %}{{ p.date_received|date:"Y-m-d" }}{% else %}-{% endif %}</td>
                         <td class="text-nowrap">{% if p.deadline_date %}{{ p.deadline_date|date:"Y-m-d" }}{% else %}-{% endif %}</td>
                         <td class="text-center">
-                            {% if p.days_to_deadline is not None %}
-                                {% if p.days_to_deadline < 0 %}
-                                    <span class="gh-badge gh-badge-danger">Overdue</span>
-                                {% elif p.days_to_deadline < 10 %}
-                                    <span class="gh-badge gh-badge-danger">{{ p.days_to_deadline }}</span>
-                                {% else %}
-                                    <span class="gh-badge gh-badge-success">{{ p.days_to_deadline }}</span>
-                                {% endif %}
-                            {% else %}
+                            {# If the project has been submitted, don't show days to deadline #}
+                            {% if p.submission_date or p.status == 'Submitted' %}
                                 -
+                            {% else %}
+                                {% if p.days_to_deadline is not None %}
+                                    {% if p.days_to_deadline < 0 %}
+                                        <span class="gh-badge gh-badge-danger">Overdue</span>
+                                    {% elif p.days_to_deadline < 10 %}
+                                        <span class="gh-badge gh-badge-danger">{{ p.days_to_deadline }}</span>
+                                    {% else %}
+                                        <span class="gh-badge gh-badge-success">{{ p.days_to_deadline }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
                             {% endif %}
                         </td>
                         <td class="text-nowrap">{% if p.submission_date %}{{ p.submission_date|date:"Y-m-d" }}{% else %}-{% endif %}</td>
@@ -89,8 +102,16 @@
                             {% endif %}
                         </td>
 
-                        <td class="comments-cell">
-                            <span class="comments-text" title="{{ p.comments|default:'' }}">{{ p.comments|default:"-"|truncatechars:30 }}</span>
+                        <td class="comments-cell text-center">
+                            {% if p.comments %}
+                                <a href="#" class="btn btn-sm btn-success open-comment-modal" data-project-id="{{ p.project_id }}" title="View/Edit comment">
+                                    <i class="bi bi-chat-dots-fill"></i>
+                                </a>
+                            {% else %}
+                                <a href="#" class="btn btn-sm btn-outline-secondary open-comment-modal" data-project-id="{{ p.project_id }}" title="Add comment">
+                                    <i class="bi bi-chat-dots"></i>
+                                </a>
+                            {% endif %}
                         </td>
 
                         <!-- Actions: centered, colored bootstrap buttons, icons only -->
@@ -512,6 +533,101 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.open-comment-modal').forEach(function(btn){
+    btn.addEventListener('click', function(ev){
+      ev.preventDefault();
+      var projectId = this.dataset.projectId;
+      fetch('{% url "market_analysis:update_comment" project_id=0 %}'.replace('/0/', '/' + projectId + '/'))
+        .then(r => r.text())
+        .then(html => {
+          var container = document.getElementById('commentModalContainer');
+          if (!container) {
+            container = document.createElement('div');
+            container.id = 'commentModalContainer';
+            document.body.appendChild(container);
+          }
+          container.innerHTML = '<div class="modal fade" id="commentModal" tabindex="-1">'
+            + '<div class="modal-dialog modal-dialog-centered">'
+            + '<div class="modal-content">' + html + '</div></div></div>';
+          var modalEl = document.getElementById('commentModal');
+          if (window.initCommentModal) window.initCommentModal();
+          var modal = new bootstrap.Modal(modalEl, {backdrop: 'static'});
+          modal.show();
+        })
+        .catch(err => console.error('Error loading comment modal', err));
+    });
+  });
+});
+
+// initialize CKEditor for dashboard modal as well (shares same init function)
+window.initCommentModal = window.initCommentModal || function(){};
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    const container = document.querySelector('.gh-card.mb-4 .gh-card-body');
+    if (!container) return;
+    const table = container.querySelector('table');
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    let rows = Array.from(tbody.querySelectorAll('tr'));
+
+    function parseDateAttr(s) {
+      if (!s) return null;
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function sortRowsBy(key, desc=true) {
+      const attr = key === 'received' ? 'data-received' : key === 'deadline' ? 'data-deadline' : 'data-submission';
+      rows.sort((a,b) => {
+        const da = parseDateAttr(a.getAttribute(attr));
+        const db = parseDateAttr(b.getAttribute(attr));
+        if (!da && !db) return 0;
+        if (!da) return 1;
+        if (!db) return -1;
+        return desc ? (db - da) : (da - db);
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    }
+
+    // initial sort by received desc
+    sortRowsBy('received', true);
+
+    // sort buttons
+    container.querySelectorAll('.sort-btn').forEach(btn => {
+      btn.dataset.desc = 'true';
+      btn.addEventListener('click', function(){
+        const key = this.dataset.key;
+        const desc = this.dataset.desc === 'true';
+        sortRowsBy(key, desc);
+        this.dataset.desc = desc ? 'false' : 'true';
+      });
+    });
+
+    // search input (filters visible rows)
+    const searchInput = document.getElementById('dashboard-table-search');
+    if (searchInput) {
+      let timeout = null;
+      searchInput.addEventListener('input', function(){
+        clearTimeout(timeout);
+        const q = this.value.trim().toLowerCase();
+        timeout = setTimeout(() => {
+          rows.forEach(r => {
+            if (!q) { r.style.display = ''; return; }
+            const text = r.textContent.toLowerCase();
+            r.style.display = text.indexOf(q) !== -1 ? '' : 'none';
+          });
+        }, 150);
+      });
+    }
+  } catch (e) {
+    console.error('table sort/search init error', e);
+  }
 });
 </script>
 {% endblock %}
