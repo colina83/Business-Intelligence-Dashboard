@@ -389,10 +389,15 @@ a:hover .gh-code {
 
 /* Chart container */
 .chart-container {
-    min-height: 300px;
+    height: 350px;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.chart-container canvas {
+    max-height: 100%;
+    max-width: 100%;
 }
 
 /* Responsive adjustments */
@@ -410,7 +415,7 @@ a:hover .gh-code {
     }
     
     .chart-container {
-        min-height: 250px;
+        height: 300px;
     }
 }
 

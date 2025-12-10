@@ -34,7 +34,7 @@ function initWinLostChart(canvasId, winCount, lostCount) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
                     position: 'bottom',
@@ -111,7 +111,7 @@ function initEbitDayChart(canvasId, ebitData) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             indexAxis: 'y',
             plugins: {
                 legend: {
