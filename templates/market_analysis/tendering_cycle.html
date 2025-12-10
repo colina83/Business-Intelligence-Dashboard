@@ -410,7 +410,8 @@ function updateOBNChart(obnData) {
 function updateClientChart(clientData) {
   // Calculate year range for subtitle
   const currentYear = new Date().getFullYear();
-  const startYear = Math.min(...{{ available_years|default:"[]" }});
+  const availableYears = {{ available_years|safe|default:"[]" }};
+  const startYear = availableYears.length > 0 ? Math.min(...availableYears) : null;
   const subtitle = startYear ? `${startYear}-${currentYear}` : '';
   
   const trace = {

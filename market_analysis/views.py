@@ -659,6 +659,9 @@ def tendering_cycle(request):
     from collections import defaultdict
     import statistics
     
+    # Maximum reasonable cycle time in days (for filtering outliers)
+    MAX_CYCLE_DAYS = 365
+    
     # Check if this is a JSON request for chart data
     if request.GET.get('format') == 'json':
         selected_year = request.GET.get('year', 'all')
@@ -716,14 +719,14 @@ def tendering_cycle(request):
             award_to_contract = _days_between(contract_date, award_date)
             contract_to_start = _days_between(start_date, contract_date)
             
-            # Only add non-null, positive values
-            if rec_to_sub and rec_to_sub > 0 and rec_to_sub < 365:  # reasonable limit
+            # Only add non-null, positive values within reasonable limits
+            if rec_to_sub and rec_to_sub > 0 and rec_to_sub < MAX_CYCLE_DAYS:
                 cycle_data['rec_to_sub'].append(rec_to_sub)
-            if sub_to_award and sub_to_award > 0 and sub_to_award < 365:
+            if sub_to_award and sub_to_award > 0 and sub_to_award < MAX_CYCLE_DAYS:
                 cycle_data['sub_to_award'].append(sub_to_award)
-            if award_to_contract and award_to_contract > 0 and award_to_contract < 365:
+            if award_to_contract and award_to_contract > 0 and award_to_contract < MAX_CYCLE_DAYS:
                 cycle_data['award_to_contract'].append(award_to_contract)
-            if contract_to_start and contract_to_start > 0 and contract_to_start < 365:
+            if contract_to_start and contract_to_start > 0 and contract_to_start < MAX_CYCLE_DAYS:
                 cycle_data['contract_to_start'].append(contract_to_start)
             
             # Count OBN tenders by year
@@ -741,8 +744,16 @@ def tendering_cycle(request):
         def remove_outliers(data):
             if len(data) < 4:
                 return data
-            q1 = statistics.quantiles(data, n=4)[0]
-            q3 = statistics.quantiles(data, n=4)[2]
+            # Sort data for quartile calculation
+            sorted_data = sorted(data)
+            n = len(sorted_data)
+            # Calculate Q1 and Q3 manually for Python 3.7+ compatibility
+            q1_pos = n * 0.25
+            q3_pos = n * 0.75
+            q1 = sorted_data[int(q1_pos)] if q1_pos == int(q1_pos) else (
+                sorted_data[int(q1_pos)] + sorted_data[int(q1_pos) + 1]) / 2
+            q3 = sorted_data[int(q3_pos)] if q3_pos == int(q3_pos) else (
+                sorted_data[int(q3_pos)] + sorted_data[int(q3_pos) + 1]) / 2
             iqr = q3 - q1
             lower_bound = q1 - 1.5 * iqr
             upper_bound = q3 + 1.5 * iqr
