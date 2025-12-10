@@ -6,14 +6,216 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'market_analysis/css/dashboard.css' %}">
+<style>
+  .gh-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .gh-page-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 0;
+  }
+  
+  .gh-divider {
+    border: 0;
+    border-top: 1px solid var(--gh-border-default);
+    margin: 1rem 0 1.5rem 0;
+  }
+  
+  .gh-card {
+    background: white;
+    border: 1px solid var(--gh-border-default);
+    border-radius: 6px;
+    margin-bottom: 1rem;
+  }
+  
+  .gh-card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--gh-border-default);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .gh-card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+  }
+  
+  .gh-card-body {
+    padding: 1.25rem;
+  }
+  
+  .gh-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 12px;
+  }
+  
+  .gh-badge-primary {
+    background-color: rgba(9, 105, 218, 0.1);
+    color: var(--gh-accent);
+  }
+  
+  .gh-pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 0.25rem;
+  }
+  
+  .gh-page-link {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    color: var(--gh-accent);
+    text-decoration: none;
+    border: 1px solid var(--gh-border-default);
+    border-radius: 6px;
+    font-size: 0.875rem;
+  }
+  
+  .gh-page-link:hover:not(.disabled) {
+    background-color: var(--gh-sidebar-bg);
+  }
+  
+  .gh-page-link.disabled {
+    color: var(--gh-text-secondary);
+    cursor: not-allowed;
+  }
+  
+  .chart-container {
+    min-height: 400px;
+    position: relative;
+  }
+  
+  .stats-box {
+    background: white;
+    border: 1px solid var(--gh-border-default);
+    border-radius: 6px;
+    padding: 1.25rem;
+  }
+  
+  .stats-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--gh-border-default);
+  }
+  
+  .stats-item:last-child {
+    border-bottom: none;
+  }
+  
+  .stats-label {
+    font-weight: 500;
+    color: var(--gh-text-secondary);
+  }
+  
+  .stats-value {
+    font-weight: 600;
+    color: var(--gh-text-primary);
+  }
+  
+  .filter-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+  
+  .filter-label {
+    font-weight: 500;
+    color: var(--gh-text-primary);
+  }
+  
+  .filter-select {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--gh-border-default);
+    border-radius: 6px;
+    font-size: 0.875rem;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="gh-page-header">
     <h1 class="gh-page-title"><i class="bi bi-clock-history me-2"></i>Tendering Cycle Time</h1>
+    <div class="filter-controls">
+      <label for="yearFilter" class="filter-label">Filter by Year:</label>
+      <select id="yearFilter" class="filter-select">
+        <option value="all">All Years</option>
+        {% for year in available_years %}
+        <option value="{{ year }}">{{ year }}</option>
+        {% endfor %}
+      </select>
+    </div>
 </div>
 <hr class="gh-divider mb-4">
 
+<!-- ROW 1 -->
+<div class="row mb-4">
+  <!-- Column 1: Box & Whisker Chart -->
+  <div class="col-md-6">
+    <div class="gh-card">
+      <div class="gh-card-header">
+        <h3 class="gh-card-title">Milestone Cycle Times</h3>
+      </div>
+      <div class="gh-card-body">
+        <div id="boxWhiskerChart" class="chart-container"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Column 2: OBN Tenders Bar Chart -->
+  <div class="col-md-6">
+    <div class="gh-card">
+      <div class="gh-card-header">
+        <h3 class="gh-card-title">Number of OBN Tenders (Awarded), Projects Start Per Year</h3>
+      </div>
+      <div class="gh-card-body">
+        <div id="obnTendersChart" class="chart-container"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 2 -->
+<div class="row mb-4">
+  <!-- Column 1: Client Bar Chart -->
+  <div class="col-md-6">
+    <div class="gh-card">
+      <div class="gh-card-header">
+        <h3 class="gh-card-title">Number of OBN Tenders (Awarded) per Client</h3>
+      </div>
+      <div class="gh-card-body">
+        <div id="clientChart" class="chart-container"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Column 2: Statistics Box -->
+  <div class="col-md-6">
+    <div class="gh-card">
+      <div class="gh-card-header">
+        <h3 class="gh-card-title">Cycle Time Statistics</h3>
+      </div>
+      <div class="gh-card-body">
+        <div id="statsBox" class="stats-box">
+          <p class="text-muted text-center">Loading statistics...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 3: Data Table -->
 <div class="gh-card">
   <div class="gh-card-header">
     <h3 class="gh-card-title">Won Tenders Cycle Time</h3>
@@ -76,4 +278,219 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script>
+let currentYear = 'all';
+
+// Function to load chart data
+async function loadChartData(year) {
+  try {
+    const response = await fetch(`?format=json&year=${year}`);
+    const data = await response.json();
+    
+    // Update Box & Whisker Chart
+    updateBoxWhiskerChart(data.cycle_data, year);
+    
+    // Update OBN Tenders Chart
+    updateOBNChart(data.obn_by_year);
+    
+    // Update Client Chart
+    updateClientChart(data.client_data);
+    
+    // Update Statistics
+    updateStats(data.stats);
+  } catch (error) {
+    console.error('Error loading chart data:', error);
+  }
+}
+
+// Box & Whisker Chart
+function updateBoxWhiskerChart(cycleData, year) {
+  const traces = [
+    {
+      y: cycleData.rec_to_sub,
+      type: 'box',
+      name: 'ITT Receipt to Submission',
+      marker: { color: '#0969da' }
+    },
+    {
+      y: cycleData.sub_to_award,
+      type: 'box',
+      name: 'Submission to Award',
+      marker: { color: '#1a7f37' }
+    },
+    {
+      y: cycleData.award_to_contract,
+      type: 'box',
+      name: 'Award to Final Contract',
+      marker: { color: '#9a6700' }
+    },
+    {
+      y: cycleData.contract_to_start,
+      type: 'box',
+      name: 'Final Contract to Project Start',
+      marker: { color: '#cf222e' }
+    }
+  ];
+  
+  const layout = {
+    title: {
+      text: year === 'all' ? 'All Years' : year,
+      font: { size: 14 }
+    },
+    yaxis: {
+      title: 'Days',
+      gridcolor: '#e1e4e8'
+    },
+    plot_bgcolor: '#ffffff',
+    paper_bgcolor: '#ffffff',
+    margin: { t: 40, r: 20, b: 80, l: 60 },
+    showlegend: true,
+    legend: {
+      orientation: 'h',
+      yanchor: 'bottom',
+      y: -0.3,
+      xanchor: 'center',
+      x: 0.5,
+      font: { size: 10 }
+    }
+  };
+  
+  Plotly.newPlot('boxWhiskerChart', traces, layout, { responsive: true });
+}
+
+// OBN Tenders Chart
+function updateOBNChart(obnData) {
+  const trace1 = {
+    x: obnData.years,
+    y: obnData.received,
+    name: 'ITT Receipts',
+    type: 'bar',
+    marker: { color: '#0969da' }
+  };
+  
+  const trace2 = {
+    x: obnData.years,
+    y: obnData.started,
+    name: 'Project Starts',
+    type: 'bar',
+    marker: { color: '#1a7f37' }
+  };
+  
+  const layout = {
+    barmode: 'group',
+    xaxis: {
+      title: 'Year',
+      type: 'category'
+    },
+    yaxis: {
+      title: 'Number of Tenders',
+      gridcolor: '#e1e4e8'
+    },
+    plot_bgcolor: '#ffffff',
+    paper_bgcolor: '#ffffff',
+    margin: { t: 20, r: 20, b: 60, l: 60 },
+    showlegend: true,
+    legend: {
+      orientation: 'h',
+      yanchor: 'top',
+      y: -0.2,
+      xanchor: 'center',
+      x: 0.5
+    }
+  };
+  
+  Plotly.newPlot('obnTendersChart', [trace1, trace2], layout, { responsive: true });
+}
+
+// Client Chart
+function updateClientChart(clientData) {
+  // Calculate year range for subtitle
+  const currentYear = new Date().getFullYear();
+  const startYear = Math.min(...{{ available_years|default:"[]" }});
+  const subtitle = startYear ? `${startYear}-${currentYear}` : '';
+  
+  const trace = {
+    x: clientData.names,
+    y: clientData.counts,
+    type: 'bar',
+    marker: { color: '#0969da' }
+  };
+  
+  const layout = {
+    title: {
+      text: subtitle,
+      font: { size: 12 }
+    },
+    xaxis: {
+      title: 'Client',
+      tickangle: -45
+    },
+    yaxis: {
+      title: 'Number of OBN Tenders',
+      gridcolor: '#e1e4e8'
+    },
+    plot_bgcolor: '#ffffff',
+    paper_bgcolor: '#ffffff',
+    margin: { t: 40, r: 20, b: 120, l: 60 }
+  };
+  
+  Plotly.newPlot('clientChart', [trace], layout, { responsive: true });
+}
+
+// Update Statistics Box
+function updateStats(stats) {
+  const statsBox = document.getElementById('statsBox');
+  
+  let html = '<div class="stats-category mb-3">';
+  html += '<h6 class="mb-2" style="color: var(--gh-text-primary); font-weight: 600;">ITT Receipt to Submission</h6>';
+  if (stats.rec_to_sub) {
+    html += `<div class="stats-item"><span class="stats-label">Average:</span><span class="stats-value">${stats.rec_to_sub.mean} days</span></div>`;
+    html += `<div class="stats-item"><span class="stats-label">Median:</span><span class="stats-value">${stats.rec_to_sub.median} days</span></div>`;
+    html += `<div class="stats-item"><span class="stats-label">Range:</span><span class="stats-value">${stats.rec_to_sub.min}-${stats.rec_to_sub.max} days</span></div>`;
+  }
+  html += '</div>';
+  
+  html += '<div class="stats-category mb-3">';
+  html += '<h6 class="mb-2" style="color: var(--gh-text-primary); font-weight: 600;">Submission to Award</h6>';
+  if (stats.sub_to_award) {
+    html += `<div class="stats-item"><span class="stats-label">Average:</span><span class="stats-value">${stats.sub_to_award.mean} days</span></div>`;
+    html += `<div class="stats-item"><span class="stats-label">Median:</span><span class="stats-value">${stats.sub_to_award.median} days</span></div>`;
+    html += `<div class="stats-item"><span class="stats-label">Range:</span><span class="stats-value">${stats.sub_to_award.min}-${stats.sub_to_award.max} days</span></div>`;
+  }
+  html += '</div>';
+  
+  html += '<div class="stats-category mb-3">';
+  html += '<h6 class="mb-2" style="color: var(--gh-text-primary); font-weight: 600;">Award to Final Contract</h6>';
+  if (stats.award_to_contract) {
+    html += `<div class="stats-item"><span class="stats-label">Average:</span><span class="stats-value">${stats.award_to_contract.mean} days</span></div>`;
+    html += `<div class="stats-item"><span class="stats-label">Median:</span><span class="stats-value">${stats.award_to_contract.median} days</span></div>`;
+    html += `<div class="stats-item"><span class="stats-label">Range:</span><span class="stats-value">${stats.award_to_contract.min}-${stats.award_to_contract.max} days</span></div>`;
+  }
+  html += '</div>';
+  
+  html += '<div class="stats-category">';
+  html += '<h6 class="mb-2" style="color: var(--gh-text-primary); font-weight: 600;">Final Contract to Project Start</h6>';
+  if (stats.contract_to_start) {
+    html += `<div class="stats-item"><span class="stats-label">Average:</span><span class="stats-value">${stats.contract_to_start.mean} days</span></div>`;
+    html += `<div class="stats-item"><span class="stats-label">Median:</span><span class="stats-value">${stats.contract_to_start.median} days</span></div>`;
+    html += `<div class="stats-item"><span class="stats-label">Range:</span><span class="stats-value">${stats.contract_to_start.min}-${stats.contract_to_start.max} days</span></div>`;
+  }
+  html += '</div>';
+  
+  statsBox.innerHTML = html;
+}
+
+// Year filter change handler
+document.getElementById('yearFilter').addEventListener('change', function(e) {
+  currentYear = e.target.value;
+  loadChartData(currentYear);
+});
+
+// Load initial data
+loadChartData('all');
+</script>
 {% endblock %}
