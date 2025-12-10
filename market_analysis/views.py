@@ -652,9 +652,153 @@ def project_detail(request, project_id):
 @login_required
 def tendering_cycle(request):
     """
-    Tendering Cycle Time page: show table of tender activity times for Won tenders.
-    Only include projects with status 'Won'.
+    Tendering Cycle Time page: comprehensive dashboard with charts and table.
+    Shows cycle time data for Won tenders with various visualizations.
     """
+    from django.http import JsonResponse
+    from collections import defaultdict
+    import statistics
+    
+    # Maximum reasonable cycle time in days (for filtering outliers)
+    MAX_CYCLE_DAYS = 365
+    
+    # Check if this is a JSON request for chart data
+    if request.GET.get('format') == 'json':
+        selected_year = request.GET.get('year', 'all')
+        
+        # Get all won projects with OBN technology
+        qs = (
+            Project.objects.select_related('client', 'contract')
+            .prefetch_related('technologies')
+            .filter(status='Won')
+        )
+        
+        # Filter by year if specified
+        if selected_year != 'all':
+            try:
+                year = int(selected_year)
+                qs = qs.filter(date_received__year=year)
+            except ValueError:
+                pass
+        
+        # helper to compute days between two dates
+        def _days_between(later, earlier):
+            if not earlier or not later:
+                return None
+            try:
+                return (later - earlier).days
+            except Exception:
+                return None
+        
+        # Collect cycle time data
+        cycle_data = {
+            'rec_to_sub': [],
+            'sub_to_award': [],
+            'award_to_contract': [],
+            'contract_to_start': []
+        }
+        
+        # For OBN tenders count by year
+        obn_by_year = defaultdict(lambda: {'received': 0, 'started': 0})
+        client_counts = defaultdict(int)
+        
+        for p in qs:
+            date_received = getattr(p, 'date_received', None)
+            submission_date = getattr(p, 'submission_date', None)
+            award_date = getattr(p, 'award_date', None)
+            contract = getattr(p, 'contract', None)
+            contract_date = getattr(contract, 'contract_date', None) if contract else None
+            start_date = getattr(contract, 'actual_start', None) if contract else None
+            
+            # Check if project is OBN
+            is_obn = p.technologies.filter(technology='OBN').exists()
+            
+            # Collect cycle times (remove outliers using IQR method)
+            rec_to_sub = _days_between(submission_date, date_received)
+            sub_to_award = _days_between(award_date, submission_date)
+            award_to_contract = _days_between(contract_date, award_date)
+            contract_to_start = _days_between(start_date, contract_date)
+            
+            # Only add non-null, positive values within reasonable limits
+            if rec_to_sub and rec_to_sub > 0 and rec_to_sub < MAX_CYCLE_DAYS:
+                cycle_data['rec_to_sub'].append(rec_to_sub)
+            if sub_to_award and sub_to_award > 0 and sub_to_award < MAX_CYCLE_DAYS:
+                cycle_data['sub_to_award'].append(sub_to_award)
+            if award_to_contract and award_to_contract > 0 and award_to_contract < MAX_CYCLE_DAYS:
+                cycle_data['award_to_contract'].append(award_to_contract)
+            if contract_to_start and contract_to_start > 0 and contract_to_start < MAX_CYCLE_DAYS:
+                cycle_data['contract_to_start'].append(contract_to_start)
+            
+            # Count OBN tenders by year
+            if is_obn:
+                if date_received:
+                    obn_by_year[date_received.year]['received'] += 1
+                if start_date:
+                    obn_by_year[start_date.year]['started'] += 1
+                
+                # Count by client
+                if p.client:
+                    client_counts[p.client.name] += 1
+        
+        # Remove outliers using IQR method for each metric
+        def remove_outliers(data):
+            if len(data) < 4:
+                return data
+            # Sort data for quartile calculation
+            sorted_data = sorted(data)
+            n = len(sorted_data)
+            # Calculate Q1 and Q3 manually for Python 3.7+ compatibility
+            q1_pos = n * 0.25
+            q3_pos = n * 0.75
+            q1 = sorted_data[int(q1_pos)] if q1_pos == int(q1_pos) else (
+                sorted_data[int(q1_pos)] + sorted_data[int(q1_pos) + 1]) / 2
+            q3 = sorted_data[int(q3_pos)] if q3_pos == int(q3_pos) else (
+                sorted_data[int(q3_pos)] + sorted_data[int(q3_pos) + 1]) / 2
+            iqr = q3 - q1
+            lower_bound = q1 - 1.5 * iqr
+            upper_bound = q3 + 1.5 * iqr
+            return [x for x in data if lower_bound <= x <= upper_bound]
+        
+        for key in cycle_data:
+            cycle_data[key] = remove_outliers(cycle_data[key])
+        
+        # Calculate statistics
+        stats = {}
+        for key, values in cycle_data.items():
+            if values:
+                stats[key] = {
+                    'mean': round(statistics.mean(values), 1),
+                    'median': round(statistics.median(values), 1),
+                    'min': min(values),
+                    'max': max(values),
+                    'count': len(values)
+                }
+        
+        # Prepare OBN by year data
+        obn_years = sorted(obn_by_year.keys())
+        obn_received_counts = [obn_by_year[year]['received'] for year in obn_years]
+        obn_started_counts = [obn_by_year[year]['started'] for year in obn_years]
+        
+        # Prepare client data (top 10)
+        client_data = sorted(client_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        client_names = [name for name, _ in client_data]
+        client_values = [count for _, count in client_data]
+        
+        return JsonResponse({
+            'cycle_data': cycle_data,
+            'stats': stats,
+            'obn_by_year': {
+                'years': obn_years,
+                'received': obn_received_counts,
+                'started': obn_started_counts
+            },
+            'client_data': {
+                'names': client_names,
+                'counts': client_values
+            }
+        })
+    
+    # Regular page view
     qs = (
         Project.objects.select_related('client', 'contract')
         .filter(status='Won')
@@ -689,6 +833,11 @@ def tendering_cycle(request):
 
         won_list.append(p)
 
+    # Get available years for filter
+    available_years = sorted(set(
+        p.date_received.year for p in qs if p.date_received
+    ), reverse=True)
+
     # pagination for won list
     from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
     page = request.GET.get('page', 1)
@@ -700,4 +849,8 @@ def tendering_cycle(request):
     except EmptyPage:
         page_obj_won = paginator.page(paginator.num_pages)
 
-    return render(request, 'market_analysis/tendering_cycle.html', {'page_obj_won': page_obj_won})
+    context = {
+        'page_obj_won': page_obj_won,
+        'available_years': available_years,
+    }
+    return render(request, 'market_analysis/tendering_cycle.html', context)
