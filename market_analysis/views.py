@@ -879,13 +879,16 @@ def pricing_graphs(request):
         end_year = request.GET.get('end_year')
         
         # Get all projects with OBN technology and financial data
+        # Only include results that are Won, Lost, Cancelled or No Bid
+        # (exclude Ongoing and Submitted from plots)
         qs = (
             Project.objects.select_related('client', 'financials')
             .prefetch_related('technologies')
             .filter(
                 technologies__technology='OBN',
                 financials__isnull=False,
-                submission_date__isnull=False
+                submission_date__isnull=False,
+                status__in=['Won', 'Lost', 'Cancelled', 'No Bid']
             )
         )
         
@@ -919,9 +922,13 @@ def pricing_graphs(request):
                     color = 'rgba(255, 159, 64, 0.6)'  # Orange
                     status_label = 'Lost'
                 else:
-                    # Ongoing, Submitted, Cancelled, No Bid - all treated as pending/other
-                    color = 'rgba(128, 128, 128, 0.6)'  # Gray
-                    status_label = 'Other'
+                    # Only Cancelled and No Bid should be treated as 'Other' (gray)
+                    if p.status in ('Cancelled', 'No Bid'):
+                        color = 'rgba(128, 128, 128, 0.6)'
+                        status_label = 'Other'
+                    else:
+                        # Any other status (should be excluded by queryset) - skip
+                        continue
                 
                 # EBIT$/Day data point
                 if financial.ebit_day is not None:
