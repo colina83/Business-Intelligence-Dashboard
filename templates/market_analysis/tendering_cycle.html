@@ -97,6 +97,11 @@
     position: relative;
   }
   
+  .chart-container canvas {
+    max-width: 100%;
+    height: auto !important;
+  }
+  
   .stats-box {
     background: white;
     border: 1px solid var(--gh-border-default);
@@ -282,8 +287,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-box-and-violin@3.0.0/dist/chartjs-chart-box-and-violin.min.js"></script>
+<script src="{% static 'market_analysis/js/chart.min.js' %}"></script>
 <script>
 let currentYear = 'all';
 
@@ -305,40 +309,100 @@ async function loadChartData(year) {
 
 function updateBoxWhiskerChart(cycleData, year) {
   const labels = ['Receipt → Submission','Submission → Award','Award → Contract','Contract → Start'];
-  const datasetValues = [cycleData.rec_to_sub || [], cycleData.sub_to_award || [], cycleData.award_to_contract || [], cycleData.contract_to_start || []];
+  const dataKeys = ['rec_to_sub', 'sub_to_award', 'award_to_contract', 'contract_to_start'];
+  
+  // Helper function to calculate statistics
+  function calculateStats(values) {
+    if (values.length === 0) {
+      return { min: 0, median: 0, max: 0 };
+    }
+    const sorted = values.slice().sort((a, b) => a - b);
+    const min = sorted[0];
+    const max = sorted[sorted.length - 1];
+    const mid = Math.floor(sorted.length / 2);
+    const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+    return { min, median, max };
+  }
+  
+  // Calculate min, median, max for each milestone
+  const minData = [];
+  const medianData = [];
+  const maxData = [];
+  
+  dataKeys.forEach(key => {
+    const values = cycleData[key] || [];
+    const stats = calculateStats(values);
+    minData.push(stats.min);
+    medianData.push(stats.median);
+    maxData.push(stats.max);
+  });
 
   const data = {
     labels: labels,
-    datasets: [{
-      label: 'Cycle times',
-      backgroundColor: ['#0969da','#1a7f37','#9a6700','#cf222e'],
-      borderColor: '#222',
-      borderWidth: 1,
-      data: datasetValues
-    }]
+    datasets: [
+      {
+        label: 'Minimum',
+        data: minData,
+        backgroundColor: 'rgba(9, 105, 218, 0.3)',
+        borderColor: '#0969da',
+        borderWidth: 2
+      },
+      {
+        label: 'Median',
+        data: medianData,
+        backgroundColor: 'rgba(26, 127, 55, 0.6)',
+        borderColor: '#1a7f37',
+        borderWidth: 2
+      },
+      {
+        label: 'Maximum',
+        data: maxData,
+        backgroundColor: 'rgba(154, 103, 0, 0.3)',
+        borderColor: '#9a6700',
+        borderWidth: 2
+      }
+    ]
   };
 
   const config = {
-    type: 'boxplot',
+    type: 'bar',
     data: data,
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: true, position: 'top' },
         title: { display: true, text: year === 'all' ? 'All Years' : year }
       },
-      scales: { y: { title: { display: true, text: 'Days' }, grid: { color: '#e1e4e8' } } }
+      scales: { 
+        y: { 
+          title: { display: true, text: 'Days' },
+          grid: { color: '#e1e4e8' },
+          beginAtZero: true
+        },
+        x: {
+          grid: { display: false }
+        }
+      }
     }
   };
 
-  const ctx = document.getElementById('boxWhiskerChart') || document.getElementById('boxWhiskerChart');
-  // ensure canvas element exists inside container
-  if (!ctx.querySelector('canvas')) {
-    ctx.innerHTML = '<canvas></canvas>';
+  const container = document.getElementById('boxWhiskerChart');
+  // Destroy existing chart before manipulating DOM
+  if (boxChart) { 
+    boxChart.destroy(); 
+    boxChart = null;
   }
-  const canvas = ctx.querySelector('canvas');
-  if (boxChart) { boxChart.destroy(); }
+  // Ensure canvas element exists inside container
+  let canvas = container.querySelector('canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    // Clear container and add canvas
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+    container.appendChild(canvas);
+  }
   boxChart = new Chart(canvas.getContext('2d'), config);
 }
 
@@ -363,10 +427,22 @@ function updateOBNChart(obnData) {
     }
   };
 
-  const ctx = document.getElementById('obnTendersChart');
-  if (!ctx.querySelector('canvas')) ctx.innerHTML = '<canvas></canvas>';
-  const canvas = ctx.querySelector('canvas');
-  if (obnChart) { obnChart.destroy(); }
+  const container = document.getElementById('obnTendersChart');
+  // Destroy existing chart before manipulating DOM
+  if (obnChart) { 
+    obnChart.destroy(); 
+    obnChart = null;
+  }
+  // Ensure canvas element exists inside container
+  let canvas = container.querySelector('canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    // Clear container and add canvas
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+    container.appendChild(canvas);
+  }
   obnChart = new Chart(canvas.getContext('2d'), config);
 }
 
@@ -375,10 +451,22 @@ function updateClientChart(clientData) {
   const data = { labels: labels, datasets: [{ label: 'OBN Tenders', data: clientData.counts || [], backgroundColor: '#0969da' }] };
   const config = { type: 'bar', data: data, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'x', scales: { x: { ticks: { autoSkip: false } }, y: { grid: { color: '#e1e4e8' } } } } };
 
-  const ctx = document.getElementById('clientChart');
-  if (!ctx.querySelector('canvas')) ctx.innerHTML = '<canvas></canvas>';
-  const canvas = ctx.querySelector('canvas');
-  if (clientChart) { clientChart.destroy(); }
+  const container = document.getElementById('clientChart');
+  // Destroy existing chart before manipulating DOM
+  if (clientChart) { 
+    clientChart.destroy(); 
+    clientChart = null;
+  }
+  // Ensure canvas element exists inside container
+  let canvas = container.querySelector('canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    // Clear container and add canvas
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+    container.appendChild(canvas);
+  }
   clientChart = new Chart(canvas.getContext('2d'), config);
 }
 
