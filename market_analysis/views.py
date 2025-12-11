@@ -854,3 +854,123 @@ def tendering_cycle(request):
         'available_years': available_years,
     }
     return render(request, 'market_analysis/tendering_cycle.html', context)
+
+
+@login_required
+def pricing_graphs(request):
+    """
+    Pricing Graphs page with bubble charts showing OBN bid results.
+    
+    Features:
+    - Two bubble charts side by side:
+      1. OBN Bid Results - EBIT$/Day
+      2. OBN Bid Results - EBIT%
+    - X-axis: Bid submission date with year scale
+    - Y-axis: EBIT$/Day (left chart) or EBIT% (right chart)
+    - Bubble colors: Gray (Pending/Cancelled/Postpone), Blue (Won), Orange (Lost)
+    - Year range filters (Start Year, End Year)
+    - Download functionality
+    """
+    from django.http import JsonResponse
+    
+    # Check if this is a JSON request for chart data
+    if request.GET.get('format') == 'json':
+        start_year = request.GET.get('start_year')
+        end_year = request.GET.get('end_year')
+        
+        # Get all projects with OBN technology and financial data
+        qs = (
+            Project.objects.select_related('client', 'financials')
+            .prefetch_related('technologies')
+            .filter(
+                technologies__technology='OBN',
+                financials__isnull=False,
+                submission_date__isnull=False
+            )
+        )
+        
+        # Filter by year range if specified
+        if start_year:
+            try:
+                qs = qs.filter(submission_date__year__gte=int(start_year))
+            except ValueError:
+                pass
+        
+        if end_year:
+            try:
+                qs = qs.filter(submission_date__year__lte=int(end_year))
+            except ValueError:
+                pass
+        
+        # Collect bubble data
+        ebit_day_data = []
+        ebit_pct_data = []
+        
+        for p in qs:
+            try:
+                financial = p.financials
+                
+                # Determine bubble color based on status
+                if p.status in ['Cancelled', 'No Bid']:
+                    color = 'rgba(128, 128, 128, 0.6)'  # Gray
+                    status_label = 'Pending/Cancelled'
+                elif p.status == 'Won':
+                    color = 'rgba(54, 162, 235, 0.6)'  # Blue
+                    status_label = 'Won'
+                elif p.status == 'Lost':
+                    color = 'rgba(255, 159, 64, 0.6)'  # Orange
+                    status_label = 'Lost'
+                else:
+                    # Ongoing, Submitted - treat as pending
+                    color = 'rgba(128, 128, 128, 0.6)'  # Gray
+                    status_label = 'Pending'
+                
+                # EBIT$/Day data point
+                if financial.ebit_day is not None:
+                    ebit_day_data.append({
+                        'x': p.submission_date.isoformat(),
+                        'y': float(financial.ebit_day),
+                        'r': 10,  # bubble radius
+                        'label': p.name,
+                        'client': p.client.name if p.client else 'N/A',
+                        'status': status_label,
+                        'color': color,
+                        'ebit_day': float(financial.ebit_day) if financial.ebit_day else 0,
+                        'ebit_pct': float(financial.ebit_pct) if financial.ebit_pct else 0,
+                    })
+                
+                # EBIT% data point
+                if financial.ebit_pct is not None:
+                    ebit_pct_data.append({
+                        'x': p.submission_date.isoformat(),
+                        'y': float(financial.ebit_pct),
+                        'r': 10,  # bubble radius
+                        'label': p.name,
+                        'client': p.client.name if p.client else 'N/A',
+                        'status': status_label,
+                        'color': color,
+                        'ebit_day': float(financial.ebit_day) if financial.ebit_day else 0,
+                        'ebit_pct': float(financial.ebit_pct) if financial.ebit_pct else 0,
+                    })
+                    
+            except (AttributeError, TypeError, ValueError) as e:
+                # Skip projects with missing or invalid data
+                continue
+        
+        return JsonResponse({
+            'ebit_day_data': ebit_day_data,
+            'ebit_pct_data': ebit_pct_data,
+        })
+    
+    # Regular page view - get available years for filter
+    available_years = sorted(set(
+        p.submission_date.year for p in Project.objects.filter(
+            technologies__technology='OBN',
+            submission_date__isnull=False
+        ).distinct() if p.submission_date
+    ))
+    
+    context = {
+        'available_years': available_years,
+    }
+    return render(request, 'market_analysis/pricing_graphs.html', context)

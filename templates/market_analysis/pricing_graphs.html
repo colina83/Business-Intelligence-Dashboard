@@ -1,0 +1,471 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pricing Graphs - TGS Market Analysis{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gh-page-header {
+        margin-bottom: 24px;
+    }
+
+    .gh-page-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: var(--gh-text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .gh-divider {
+        border: 0;
+        border-top: 1px solid var(--gh-border-default);
+        margin: 16px 0;
+    }
+
+    .gh-card {
+        background: var(--gh-content-bg);
+        border: 1px solid var(--gh-border-default);
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(27, 31, 35, 0.12);
+    }
+
+    .gh-card-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--gh-border-default);
+        background-color: #f6f8fa;
+    }
+
+    .gh-card-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0;
+        color: var(--gh-text-primary);
+    }
+
+    .gh-card-body {
+        padding: 24px;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 500px;
+        margin-bottom: 20px;
+    }
+
+    .filters-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 24px;
+        align-items: end;
+    }
+
+    .filter-group {
+        flex: 0 0 200px;
+    }
+
+    .filter-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: var(--gh-text-primary);
+    }
+
+    .filter-select {
+        width: 100%;
+        padding: 5px 12px;
+        border: 1px solid var(--gh-border-default);
+        border-radius: 6px;
+        font-size: 14px;
+        background-color: var(--gh-content-bg);
+        color: var(--gh-text-primary);
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--gh-accent);
+        box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+    }
+
+    .btn-apply {
+        padding: 5px 16px;
+        background-color: var(--gh-accent);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+
+    .btn-apply:hover {
+        background-color: var(--gh-accent-emphasis);
+    }
+
+    .btn-download {
+        padding: 5px 16px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-download:hover {
+        background-color: #218838;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .chart-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--gh-text-primary);
+        margin: 0;
+    }
+
+    @media (max-width: 768px) {
+        .filters-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-group {
+            flex: 1 1 auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="gh-page-header">
+    <h1 class="gh-page-title">
+        <i class="bi bi-bar-chart-line me-2"></i>Pricing Graphs (OBN Bid Results)
+    </h1>
+</div>
+<hr class="gh-divider mb-4">
+
+<!-- Filters Section -->
+<div class="gh-card mb-4">
+    <div class="gh-card-header">
+        <h3 class="gh-card-title">
+            <i class="bi bi-funnel me-2"></i>Filters
+        </h3>
+    </div>
+    <div class="gh-card-body">
+        <div class="filters-row">
+            <div class="filter-group">
+                <label class="filter-label" for="startYear">Start Year</label>
+                <select id="startYear" class="filter-select">
+                    <option value="">All</option>
+                    {% for year in available_years %}
+                    <option value="{{ year }}">{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="endYear">End Year</label>
+                <select id="endYear" class="filter-select">
+                    <option value="">All</option>
+                    {% for year in available_years %}
+                    <option value="{{ year }}">{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <button class="btn-apply" onclick="applyFilters()">
+                    <i class="bi bi-funnel"></i> Apply Filters
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 1: Two Charts Side by Side -->
+<div class="row">
+    <!-- Column 1: EBIT$/Day Chart -->
+    <div class="col-md-6 mb-4">
+        <div class="gh-card">
+            <div class="gh-card-header">
+                <div class="chart-header">
+                    <h3 class="chart-title" id="ebitDayTitle">OBN Bid Results - EBIT$/Day</h3>
+                    <button class="btn-download" onclick="downloadChart('ebitDayChart', 'OBN_Bid_Results_EBIT_Day')">
+                        <i class="bi bi-download"></i> Download
+                    </button>
+                </div>
+            </div>
+            <div class="gh-card-body">
+                <div class="chart-container">
+                    <canvas id="ebitDayChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 2: EBIT% Chart -->
+    <div class="col-md-6 mb-4">
+        <div class="gh-card">
+            <div class="gh-card-header">
+                <div class="chart-header">
+                    <h3 class="chart-title" id="ebitPctTitle">OBN Bid Results - EBIT%</h3>
+                    <button class="btn-download" onclick="downloadChart('ebitPctChart', 'OBN_Bid_Results_EBIT_Pct')">
+                        <i class="bi bi-download"></i> Download
+                    </button>
+                </div>
+            </div>
+            <div class="gh-card-body">
+                <div class="chart-container">
+                    <canvas id="ebitPctChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Legend Explanation -->
+<div class="gh-card mb-4">
+    <div class="gh-card-body">
+        <div class="d-flex justify-content-center gap-4">
+            <div class="d-flex align-items-center gap-2">
+                <div style="width: 20px; height: 20px; background-color: rgba(128, 128, 128, 0.6); border-radius: 50%;"></div>
+                <span>Pending/Cancelled/Postponed</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <div style="width: 20px; height: 20px; background-color: rgba(54, 162, 235, 0.6); border-radius: 50%;"></div>
+                <span>Won</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <div style="width: 20px; height: 20px; background-color: rgba(255, 159, 64, 0.6); border-radius: 50%;"></div>
+                <span>Lost</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'market_analysis/js/chart.min.js' %}"></script>
+<script>
+    let ebitDayChartInstance = null;
+    let ebitPctChartInstance = null;
+
+    /**
+     * Fetch and render charts based on selected filters
+     */
+    function loadCharts() {
+        const startYear = document.getElementById('startYear').value;
+        const endYear = document.getElementById('endYear').value;
+
+        // Build query parameters
+        const params = new URLSearchParams({
+            format: 'json'
+        });
+        if (startYear) params.append('start_year', startYear);
+        if (endYear) params.append('end_year', endYear);
+
+        // Fetch data from server
+        fetch(`?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                renderCharts(data, startYear, endYear);
+            })
+            .catch(error => {
+                console.error('Error loading chart data:', error);
+            });
+    }
+
+    /**
+     * Render both bubble charts with the provided data
+     */
+    function renderCharts(data, startYear, endYear) {
+        // Update chart titles with year range
+        const yearRange = getYearRangeText(startYear, endYear);
+        document.getElementById('ebitDayTitle').textContent = `OBN Bid Results - EBIT$/Day ${yearRange}`;
+        document.getElementById('ebitPctTitle').textContent = `OBN Bid Results - EBIT% ${yearRange}`;
+
+        // Destroy existing chart instances
+        if (ebitDayChartInstance) {
+            ebitDayChartInstance.destroy();
+        }
+        if (ebitPctChartInstance) {
+            ebitPctChartInstance.destroy();
+        }
+
+        // Render EBIT$/Day Chart
+        renderBubbleChart('ebitDayChart', data.ebit_day_data, 'EBIT$/Day', 'ebitDayChartInstance');
+        
+        // Render EBIT% Chart
+        renderBubbleChart('ebitPctChart', data.ebit_pct_data, 'EBIT%', 'ebitPctChartInstance');
+    }
+
+    /**
+     * Render a single bubble chart
+     */
+    function renderBubbleChart(canvasId, data, yAxisLabel, instanceVarName) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+
+        // Group data by status for different datasets
+        const wonData = data.filter(d => d.status === 'Won');
+        const lostData = data.filter(d => d.status === 'Lost');
+        const pendingData = data.filter(d => d.status === 'Pending/Cancelled' || d.status === 'Pending');
+
+        const chartConfig = {
+            type: 'bubble',
+            data: {
+                datasets: [
+                    {
+                        label: 'Pending/Cancelled',
+                        data: pendingData,
+                        backgroundColor: 'rgba(128, 128, 128, 0.6)',
+                        borderColor: 'rgba(128, 128, 128, 0.8)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Won',
+                        data: wonData,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 0.8)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Lost',
+                        data: lostData,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 0.8)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false  // We have custom legend below
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const point = context.raw;
+                                return [
+                                    `Project: ${point.label}`,
+                                    `Client: ${point.client}`,
+                                    `Status: ${point.status}`,
+                                    `EBIT$/Day: $${point.ebit_day.toLocaleString()}`,
+                                    `EBIT%: ${point.ebit_pct.toFixed(2)}%`
+                                ];
+                            }
+                        },
+                        backgroundColor: '#24292f',
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 13 },
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'year',
+                            displayFormats: {
+                                year: 'yyyy'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Bid Submission Date',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: yAxisLabel,
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }
+                }
+            }
+        };
+
+        // Create chart instance
+        if (instanceVarName === 'ebitDayChartInstance') {
+            ebitDayChartInstance = new Chart(ctx, chartConfig);
+        } else if (instanceVarName === 'ebitPctChartInstance') {
+            ebitPctChartInstance = new Chart(ctx, chartConfig);
+        }
+    }
+
+    /**
+     * Get year range text for chart title
+     */
+    function getYearRangeText(startYear, endYear) {
+        if (startYear && endYear) {
+            return `(${startYear} - ${endYear})`;
+        } else if (startYear) {
+            return `(${startYear} - Present)`;
+        } else if (endYear) {
+            return `(Up to ${endYear})`;
+        } else {
+            return '(All Years)';
+        }
+    }
+
+    /**
+     * Apply filters and reload charts
+     */
+    function applyFilters() {
+        loadCharts();
+    }
+
+    /**
+     * Download chart as PNG image
+     */
+    function downloadChart(chartId, filename) {
+        const canvas = document.getElementById(chartId);
+        if (!canvas) return;
+
+        // Create a link element and trigger download
+        const link = document.createElement('a');
+        link.download = `${filename}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+
+    // Load charts on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCharts();
+    });
+</script>
+{% endblock %}

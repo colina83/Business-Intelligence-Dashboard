@@ -14,5 +14,6 @@ urlpatterns = [
     path('projects/<int:project_id>/contract/', views.update_contract, name='project_contract'),  # contract modal endpoint
     path('projects/<int:project_id>/scope/', views.manage_scope, name='project_scope'),  # new scope view
     path('tendering-cycle/', views.tendering_cycle, name='tendering_cycle'),
+    path('pricing-graphs/', views.pricing_graphs, name='pricing_graphs'),
     path('projects/<int:project_id>/comment/', views.update_comment, name='update_comment'),
 ]
