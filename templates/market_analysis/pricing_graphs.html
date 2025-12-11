@@ -477,13 +477,13 @@
                             label: function(context) {
                                 const point = context.raw;
                                 return [
-                                    `Project: ${point.label}`,
-                                    `Client: ${point.client}`,
-                                    `Status: ${point.status}`,
-                                    `EBIT$/Day: $${point.ebit_day.toLocaleString()}`,
-                                    `EBIT%: ${point.ebit_pct.toFixed(2)}%`,
-                                    `Net$/Day: $${point.net_day.toLocaleString()}`,
-                                    `Net%: ${point.net_pct.toFixed(2)}%`
+                                    `Project: ${point.label || 'N/A'}`,
+                                    `Client: ${point.client || 'N/A'}`,
+                                    `Status: ${point.status || 'N/A'}`,
+                                    `EBIT$/Day: $${(point.ebit_day || 0).toLocaleString()}`,
+                                    `EBIT%: ${(point.ebit_pct || 0).toFixed(2)}%`,
+                                    `Net$/Day: $${(point.net_day || 0).toLocaleString()}`,
+                                    `Net%: ${(point.net_pct || 0).toFixed(2)}%`
                                 ];
                             }
                         },
