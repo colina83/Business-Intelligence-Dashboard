@@ -887,7 +887,7 @@ def pricing_graphs(request):
         # (exclude Ongoing and Submitted from plots)
         qs = (
             Project.objects.select_related('client', 'financials')
-            .prefetch_related('technologies', 'competitors')
+            .prefetch_related('technologies')
             .filter(
                 technologies__technology='OBN',
                 financials__isnull=False,
@@ -895,6 +895,10 @@ def pricing_graphs(request):
                 status__in=['Won', 'Lost', 'Cancelled', 'No Bid']
             )
         )
+        
+        # Only prefetch competitors if competitor filter is used
+        if competitor:
+            qs = qs.prefetch_related('competitors')
         
         # Filter by year range if specified
         if start_year:
