@@ -871,7 +871,7 @@ def pricing_graphs(request):
     - Year range filters (Start Year, End Year)
     - Download functionality
     """
-    from django.http import JsonResponse
+    from django.http import JsonResponse  # Used only in this view for JSON response
     
     # Check if this is a JSON request for chart data
     if request.GET.get('format') == 'json':
@@ -911,19 +911,17 @@ def pricing_graphs(request):
                 financial = p.financials
                 
                 # Determine bubble color based on status
-                if p.status in ['Cancelled', 'No Bid']:
-                    color = 'rgba(128, 128, 128, 0.6)'  # Gray
-                    status_label = 'Pending/Cancelled'
-                elif p.status == 'Won':
+                # Won bids are blue, Lost bids are orange, all others (Ongoing, Submitted, Cancelled, No Bid) are gray
+                if p.status == 'Won':
                     color = 'rgba(54, 162, 235, 0.6)'  # Blue
                     status_label = 'Won'
                 elif p.status == 'Lost':
                     color = 'rgba(255, 159, 64, 0.6)'  # Orange
                     status_label = 'Lost'
                 else:
-                    # Ongoing, Submitted - treat as pending
+                    # Ongoing, Submitted, Cancelled, No Bid - all treated as pending/other
                     color = 'rgba(128, 128, 128, 0.6)'  # Gray
-                    status_label = 'Pending'
+                    status_label = 'Other'
                 
                 # EBIT$/Day data point
                 if financial.ebit_day is not None:

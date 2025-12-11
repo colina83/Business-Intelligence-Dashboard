@@ -243,7 +243,7 @@
         <div class="d-flex justify-content-center gap-4">
             <div class="d-flex align-items-center gap-2">
                 <div style="width: 20px; height: 20px; background-color: rgba(128, 128, 128, 0.6); border-radius: 50%;"></div>
-                <span>Pending/Cancelled/Postponed</span>
+                <span>Other (Ongoing/Submitted/Cancelled/No Bid)</span>
             </div>
             <div class="d-flex align-items-center gap-2">
                 <div style="width: 20px; height: 20px; background-color: rgba(54, 162, 235, 0.6); border-radius: 50%;"></div>
@@ -332,15 +332,15 @@
         // Group data by status for different datasets
         const wonData = processedData.filter(d => d.status === 'Won');
         const lostData = processedData.filter(d => d.status === 'Lost');
-        const pendingData = processedData.filter(d => d.status === 'Pending/Cancelled' || d.status === 'Pending');
+        const otherData = processedData.filter(d => d.status === 'Other');
 
         const chartConfig = {
             type: 'bubble',
             data: {
                 datasets: [
                     {
-                        label: 'Pending/Cancelled',
-                        data: pendingData,
+                        label: 'Other',
+                        data: otherData,
                         backgroundColor: 'rgba(128, 128, 128, 0.6)',
                         borderColor: 'rgba(128, 128, 128, 0.8)',
                         borderWidth: 1
