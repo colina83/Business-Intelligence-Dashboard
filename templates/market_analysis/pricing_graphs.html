@@ -55,14 +55,22 @@
     }
 
     .filters-row {
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 16px;
-        margin-bottom: 24px;
-        align-items: end;
+        margin-bottom: 16px;
     }
 
     .filter-group {
-        flex: 0 0 200px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .filter-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+        justify-content: flex-start;
     }
 
     .filter-label {
@@ -140,12 +148,7 @@
 
     @media (max-width: 768px) {
         .filters-row {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .filter-group {
-            flex: 1 1 auto;
+            grid-template-columns: 1fr;
         }
     }
 </style>
@@ -188,15 +191,51 @@
                 </select>
             </div>
             <div class="filter-group">
-                <button class="btn-apply" onclick="applyFilters()">
-                    <i class="bi bi-funnel"></i> Apply Filters
-                </button>
+                <label class="filter-label" for="clientFilter">Client</label>
+                <select id="clientFilter" class="filter-select">
+                    <option value="">All Clients</option>
+                    {% for client in available_clients %}
+                    <option value="{{ client.client_id }}">{{ client.name }}</option>
+                    {% endfor %}
+                </select>
             </div>
+            <div class="filter-group">
+                <label class="filter-label" for="competitorFilter">Competitor (Lost Only)</label>
+                <select id="competitorFilter" class="filter-select">
+                    <option value="">All Competitors</option>
+                    {% for comp_code, comp_name in available_competitors %}
+                    <option value="{{ comp_code }}">{{ comp_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="regionFilter">Region</label>
+                <select id="regionFilter" class="filter-select">
+                    <option value="">All Regions</option>
+                    {% for region_code, region_name in available_regions %}
+                    <option value="{{ region_code }}">{{ region_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" for="countryFilter">Country</label>
+                <select id="countryFilter" class="filter-select">
+                    <option value="">All Countries</option>
+                    {% for country in available_countries %}
+                    <option value="{{ country }}">{{ country }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button class="btn-apply" onclick="applyFilters()">
+                <i class="bi bi-funnel"></i> Apply Filters
+            </button>
         </div>
     </div>
 </div>
 
-<!-- Row 1: Two Charts Side by Side -->
+<!-- Row 1: EBIT Charts Side by Side -->
 <div class="row">
     <!-- Column 1: EBIT$/Day Chart -->
     <div class="col-md-6 mb-4">
@@ -237,6 +276,47 @@
     </div>
 </div>
 
+<!-- Row 2: Net Charts Side by Side -->
+<div class="row">
+    <!-- Column 1: Net$/Day Chart -->
+    <div class="col-md-6 mb-4">
+        <div class="gh-card">
+            <div class="gh-card-header">
+                <div class="chart-header">
+                    <h3 class="chart-title" id="netDayTitle">OBN Bid Results - Net$/Day</h3>
+                    <button class="btn-download" onclick="downloadChart('netDayChart', 'OBN_Bid_Results_Net_Day')">
+                        <i class="bi bi-download"></i> Download
+                    </button>
+                </div>
+            </div>
+            <div class="gh-card-body">
+                <div class="chart-container">
+                    <canvas id="netDayChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 2: Net% Chart -->
+    <div class="col-md-6 mb-4">
+        <div class="gh-card">
+            <div class="gh-card-header">
+                <div class="chart-header">
+                    <h3 class="chart-title" id="netPctTitle">OBN Bid Results - Net%</h3>
+                    <button class="btn-download" onclick="downloadChart('netPctChart', 'OBN_Bid_Results_Net_Pct')">
+                        <i class="bi bi-download"></i> Download
+                    </button>
+                </div>
+            </div>
+            <div class="gh-card-body">
+                <div class="chart-container">
+                    <canvas id="netPctChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Legend Explanation -->
 <div class="gh-card mb-4">
     <div class="gh-card-body">
@@ -263,6 +343,8 @@
 <script>
     let ebitDayChartInstance = null;
     let ebitPctChartInstance = null;
+    let netDayChartInstance = null;
+    let netPctChartInstance = null;
 
     /**
      * Fetch and render charts based on selected filters
@@ -270,6 +352,10 @@
     function loadCharts() {
         const startYear = document.getElementById('startYear').value;
         const endYear = document.getElementById('endYear').value;
+        const client = document.getElementById('clientFilter').value;
+        const competitor = document.getElementById('competitorFilter').value;
+        const region = document.getElementById('regionFilter').value;
+        const country = document.getElementById('countryFilter').value;
 
         // Build query parameters
         const params = new URLSearchParams({
@@ -277,12 +363,16 @@
         });
         if (startYear) params.append('start_year', startYear);
         if (endYear) params.append('end_year', endYear);
+        if (client) params.append('client', client);
+        if (competitor) params.append('competitor', competitor);
+        if (region) params.append('region', region);
+        if (country) params.append('country', country);
 
         // Fetch data from server
         fetch(`?${params.toString()}`)
             .then(response => response.json())
             .then(data => {
-                renderCharts(data, startYear, endYear);
+                renderCharts(data, {startYear, endYear, client, competitor, region, country});
             })
             .catch(error => {
                 console.error('Error loading chart data:', error);
@@ -290,14 +380,16 @@
     }
 
     /**
-     * Render both bubble charts with the provided data
+     * Render all bubble charts with the provided data
      */
-    function renderCharts(data, startYear, endYear) {
-        // Update chart titles with year range
-        const yearRange = getYearRangeText(startYear, endYear);
+    function renderCharts(data, filters) {
+        // Update chart titles with filters info
+        const yearRange = getYearRangeText(filters.startYear, filters.endYear);
         const yearRangeText = yearRange ? ` ${yearRange}` : ' (All Years)';
         document.getElementById('ebitDayTitle').textContent = `OBN Bid Results - EBIT$/Day${yearRangeText}`;
         document.getElementById('ebitPctTitle').textContent = `OBN Bid Results - EBIT%${yearRangeText}`;
+        document.getElementById('netDayTitle').textContent = `OBN Bid Results - Net$/Day${yearRangeText}`;
+        document.getElementById('netPctTitle').textContent = `OBN Bid Results - Net%${yearRangeText}`;
 
         // Destroy existing chart instances
         if (ebitDayChartInstance) {
@@ -306,12 +398,24 @@
         if (ebitPctChartInstance) {
             ebitPctChartInstance.destroy();
         }
+        if (netDayChartInstance) {
+            netDayChartInstance.destroy();
+        }
+        if (netPctChartInstance) {
+            netPctChartInstance.destroy();
+        }
 
         // Render EBIT$/Day Chart
         renderBubbleChart('ebitDayChart', data.ebit_day_data, 'EBIT$/Day', 'ebitDayChartInstance');
         
         // Render EBIT% Chart
         renderBubbleChart('ebitPctChart', data.ebit_pct_data, 'EBIT%', 'ebitPctChartInstance');
+        
+        // Render Net$/Day Chart
+        renderBubbleChart('netDayChart', data.net_day_data, 'Net$/Day', 'netDayChartInstance');
+        
+        // Render Net% Chart
+        renderBubbleChart('netPctChart', data.net_pct_data, 'Net%', 'netPctChartInstance');
     }
 
     /**
@@ -373,11 +477,13 @@
                             label: function(context) {
                                 const point = context.raw;
                                 return [
-                                    `Project: ${point.label}`,
-                                    `Client: ${point.client}`,
-                                    `Status: ${point.status}`,
-                                    `EBIT$/Day: $${point.ebit_day.toLocaleString()}`,
-                                    `EBIT%: ${point.ebit_pct.toFixed(2)}%`
+                                    `Project: ${point.label || 'N/A'}`,
+                                    `Client: ${point.client || 'N/A'}`,
+                                    `Status: ${point.status || 'N/A'}`,
+                                    `EBIT$/Day: $${(point.ebit_day || 0).toLocaleString()}`,
+                                    `EBIT%: ${(point.ebit_pct || 0).toFixed(2)}%`,
+                                    `Net$/Day: $${(point.net_day || 0).toLocaleString()}`,
+                                    `Net%: ${(point.net_pct || 0).toFixed(2)}%`
                                 ];
                             }
                         },
@@ -432,6 +538,10 @@
             ebitDayChartInstance = new Chart(ctx, chartConfig);
         } else if (instanceVarName === 'ebitPctChartInstance') {
             ebitPctChartInstance = new Chart(ctx, chartConfig);
+        } else if (instanceVarName === 'netDayChartInstance') {
+            netDayChartInstance = new Chart(ctx, chartConfig);
+        } else if (instanceVarName === 'netPctChartInstance') {
+            netPctChartInstance = new Chart(ctx, chartConfig);
         }
     }
 
