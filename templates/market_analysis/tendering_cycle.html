@@ -93,9 +93,8 @@
   
   .chart-container {
     width: 100%;
-    height: 400px;
-    position: relative;
     min-height: 400px;
+    position: relative;
   }
   
   .stats-box {
@@ -287,6 +286,9 @@
 <script>
 let currentYear = 'all';
 
+// Plotly configuration for all charts
+const plotlyConfig = { responsive: true, displayModeBar: false };
+
 // Function to load chart data
 async function loadChartData(year) {
   try {
@@ -365,8 +367,7 @@ function updateBoxWhiskerChart(cycleData, year) {
     }
   };
   
-  const config = { responsive: true, displayModeBar: false };
-  Plotly.newPlot('boxWhiskerChart', traces, layout, config);
+  Plotly.newPlot('boxWhiskerChart', traces, layout, plotlyConfig);
 }
 
 // OBN Tenders Chart
@@ -411,8 +412,7 @@ function updateOBNChart(obnData) {
     }
   };
   
-  const config = { responsive: true, displayModeBar: false };
-  Plotly.newPlot('obnTendersChart', [trace1, trace2], layout, config);
+  Plotly.newPlot('obnTendersChart', [trace1, trace2], layout, plotlyConfig);
 }
 
 // Client Chart
@@ -449,8 +449,7 @@ function updateClientChart(clientData) {
     autosize: true
   };
   
-  const config = { responsive: true, displayModeBar: false };
-  Plotly.newPlot('clientChart', [trace], layout, config);
+  Plotly.newPlot('clientChart', [trace], layout, plotlyConfig);
 }
 
 // Update Statistics Box
