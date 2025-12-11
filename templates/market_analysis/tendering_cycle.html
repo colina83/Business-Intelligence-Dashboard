@@ -288,6 +288,7 @@
 
 {% block extra_js %}
 <script src="{% static 'market_analysis/js/chart.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot@4"></script>
 <script>
 let currentYear = 'all';
 
@@ -311,68 +312,52 @@ function updateBoxWhiskerChart(cycleData, year) {
   const labels = ['Receipt → Submission','Submission → Award','Award → Contract','Contract → Start'];
   const dataKeys = ['rec_to_sub', 'sub_to_award', 'award_to_contract', 'contract_to_start'];
   
-  // Helper function to calculate statistics
-  function calculateStats(values) {
-    if (values.length === 0) {
-      return { min: 0, median: 0, max: 0 };
-    }
-    const sorted = values.slice().sort((a, b) => a - b);
-    const min = sorted[0];
-    const max = sorted[sorted.length - 1];
-    const mid = Math.floor(sorted.length / 2);
-    const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
-    return { min, median, max };
-  }
-  
-  // Calculate min, median, max for each milestone
-  const minData = [];
-  const medianData = [];
-  const maxData = [];
-  
-  dataKeys.forEach(key => {
-    const values = cycleData[key] || [];
-    const stats = calculateStats(values);
-    minData.push(stats.min);
-    medianData.push(stats.median);
-    maxData.push(stats.max);
-  });
+  // Prepare data for box plot - pass the raw arrays
+  const boxplotData = dataKeys.map(key => cycleData[key] || []);
 
   const data = {
     labels: labels,
     datasets: [
       {
-        label: 'Minimum',
-        data: minData,
-        backgroundColor: 'rgba(9, 105, 218, 0.3)',
+        label: 'Cycle Time Distribution',
+        data: boxplotData,
+        backgroundColor: 'rgba(9, 105, 218, 0.5)',
         borderColor: '#0969da',
-        borderWidth: 2
-      },
-      {
-        label: 'Median',
-        data: medianData,
-        backgroundColor: 'rgba(26, 127, 55, 0.6)',
-        borderColor: '#1a7f37',
-        borderWidth: 2
-      },
-      {
-        label: 'Maximum',
-        data: maxData,
-        backgroundColor: 'rgba(154, 103, 0, 0.3)',
-        borderColor: '#9a6700',
-        borderWidth: 2
+        borderWidth: 2,
+        outlierColor: '#999999',
+        padding: 10,
+        itemRadius: 0,
+        outlierRadius: 3
       }
     ]
   };
 
   const config = {
-    type: 'bar',
+    type: 'boxplot',
     data: data,
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
         legend: { display: true, position: 'top' },
-        title: { display: true, text: year === 'all' ? 'All Years' : year }
+        title: { display: true, text: year === 'all' ? 'All Years' : year },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const dataPoint = context.parsed;
+              if (dataPoint) {
+                return [
+                  `Min: ${Math.round(dataPoint.min)} days`,
+                  `Q1: ${Math.round(dataPoint.q1)} days`,
+                  `Median: ${Math.round(dataPoint.median)} days`,
+                  `Q3: ${Math.round(dataPoint.q3)} days`,
+                  `Max: ${Math.round(dataPoint.max)} days`
+                ];
+              }
+              return '';
+            }
+          }
+        }
       },
       scales: { 
         y: { 
