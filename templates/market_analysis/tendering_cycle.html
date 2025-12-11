@@ -312,24 +312,37 @@ function updateBoxWhiskerChart(cycleData, year) {
   const labels = ['Receipt → Submission','Submission → Award','Award → Contract','Contract → Start'];
   const dataKeys = ['rec_to_sub', 'sub_to_award', 'award_to_contract', 'contract_to_start'];
   
-  // Prepare data for box plot - pass the raw arrays
-  const boxplotData = dataKeys.map(key => cycleData[key] || []);
+  // Define colors for each cycle time type
+  const colors = [
+    { bg: 'rgba(9, 105, 218, 0.5)', border: '#0969da' },      // Blue for Receipt → Submission
+    { bg: 'rgba(26, 127, 55, 0.5)', border: '#1a7f37' },      // Green for Submission → Award
+    { bg: 'rgba(230, 119, 0, 0.5)', border: '#e67700' },      // Orange for Award → Contract
+    { bg: 'rgba(130, 80, 223, 0.5)', border: '#8250df' }      // Purple for Contract → Start
+  ];
+  
+  // Create separate datasets for each cycle time type
+  // Each dataset has one data point positioned at the corresponding label
+  const datasets = dataKeys.map((key, index) => {
+    // Create array with nulls except at the correct index
+    const dataArray = new Array(labels.length).fill(null);
+    dataArray[index] = cycleData[key] || [];
+    
+    return {
+      label: labels[index],
+      data: dataArray,
+      backgroundColor: colors[index].bg,
+      borderColor: colors[index].border,
+      borderWidth: 2,
+      outlierColor: '#999999',
+      padding: 10,
+      itemRadius: 0,
+      outlierRadius: 3
+    };
+  });
 
   const data = {
     labels: labels,
-    datasets: [
-      {
-        label: 'Cycle Time Distribution',
-        data: boxplotData,
-        backgroundColor: 'rgba(9, 105, 218, 0.5)',
-        borderColor: '#0969da',
-        borderWidth: 2,
-        outlierColor: '#999999',
-        padding: 10,
-        itemRadius: 0,
-        outlierRadius: 3
-      }
-    ]
+    datasets: datasets
   };
 
   const config = {
