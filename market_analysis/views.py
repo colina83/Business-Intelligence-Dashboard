@@ -862,13 +862,13 @@ def pricing_graphs(request):
     Pricing Graphs page with bubble charts showing OBN bid results.
     
     Features:
-    - Two bubble charts side by side:
-      1. OBN Bid Results - EBIT$/Day
-      2. OBN Bid Results - EBIT%
+    - Four bubble charts in two rows:
+      Row 1: EBIT$/Day and EBIT%
+      Row 2: Net$/Day and Net%
     - X-axis: Bid submission date with year scale
-    - Y-axis: EBIT$/Day (left chart) or EBIT% (right chart)
+    - Y-axis: EBIT$/Day, EBIT%, Net$/Day, or Net%
     - Bubble colors: Gray (Pending/Cancelled/Postpone), Blue (Won), Orange (Lost)
-    - Year range filters (Start Year, End Year)
+    - Filters: Start Year, End Year, Client, Competitor (for Lost), Region, Country
     - Download functionality
     """
     from django.http import JsonResponse  # Used only in this view for JSON response
@@ -877,13 +877,17 @@ def pricing_graphs(request):
     if request.GET.get('format') == 'json':
         start_year = request.GET.get('start_year')
         end_year = request.GET.get('end_year')
+        client_id = request.GET.get('client')
+        competitor = request.GET.get('competitor')
+        region = request.GET.get('region')
+        country = request.GET.get('country')
         
         # Get all projects with OBN technology and financial data
         # Only include results that are Won, Lost, Cancelled or No Bid
         # (exclude Ongoing and Submitted from plots)
         qs = (
             Project.objects.select_related('client', 'financials')
-            .prefetch_related('technologies')
+            .prefetch_related('technologies', 'competitors')
             .filter(
                 technologies__technology='OBN',
                 financials__isnull=False,
@@ -905,9 +909,30 @@ def pricing_graphs(request):
             except ValueError:
                 pass
         
+        # Filter by client if specified
+        if client_id:
+            try:
+                qs = qs.filter(client_id=int(client_id))
+            except ValueError:
+                pass
+        
+        # Filter by competitor if specified (for Lost projects)
+        if competitor:
+            qs = qs.filter(competitors__name=competitor).distinct()
+        
+        # Filter by region if specified
+        if region:
+            qs = qs.filter(region=region)
+        
+        # Filter by country if specified
+        if country:
+            qs = qs.filter(country=country)
+        
         # Collect bubble data
         ebit_day_data = []
         ebit_pct_data = []
+        net_day_data = []
+        net_pct_data = []
         
         for p in qs:
             try:
@@ -942,6 +967,8 @@ def pricing_graphs(request):
                         'color': color,
                         'ebit_day': float(financial.ebit_day) if financial.ebit_day else 0,
                         'ebit_pct': float(financial.ebit_pct) if financial.ebit_pct else 0,
+                        'net_day': float(financial.net_day) if financial.net_day else 0,
+                        'net_pct': float(financial.net_pct) if financial.net_pct else 0,
                     })
                 
                 # EBIT% data point
@@ -956,6 +983,40 @@ def pricing_graphs(request):
                         'color': color,
                         'ebit_day': float(financial.ebit_day) if financial.ebit_day else 0,
                         'ebit_pct': float(financial.ebit_pct) if financial.ebit_pct else 0,
+                        'net_day': float(financial.net_day) if financial.net_day else 0,
+                        'net_pct': float(financial.net_pct) if financial.net_pct else 0,
+                    })
+                
+                # Net$/Day data point
+                if financial.net_day is not None:
+                    net_day_data.append({
+                        'x': p.submission_date.isoformat(),
+                        'y': float(financial.net_day),
+                        'r': 15,  # bubble radius - increased for visibility
+                        'label': p.name,
+                        'client': p.client.name if p.client else 'N/A',
+                        'status': status_label,
+                        'color': color,
+                        'ebit_day': float(financial.ebit_day) if financial.ebit_day else 0,
+                        'ebit_pct': float(financial.ebit_pct) if financial.ebit_pct else 0,
+                        'net_day': float(financial.net_day) if financial.net_day else 0,
+                        'net_pct': float(financial.net_pct) if financial.net_pct else 0,
+                    })
+                
+                # Net% data point
+                if financial.net_pct is not None:
+                    net_pct_data.append({
+                        'x': p.submission_date.isoformat(),
+                        'y': float(financial.net_pct),
+                        'r': 15,  # bubble radius - increased for visibility
+                        'label': p.name,
+                        'client': p.client.name if p.client else 'N/A',
+                        'status': status_label,
+                        'color': color,
+                        'ebit_day': float(financial.ebit_day) if financial.ebit_day else 0,
+                        'ebit_pct': float(financial.ebit_pct) if financial.ebit_pct else 0,
+                        'net_day': float(financial.net_day) if financial.net_day else 0,
+                        'net_pct': float(financial.net_pct) if financial.net_pct else 0,
                     })
                     
             except (AttributeError, TypeError, ValueError) as e:
@@ -965,17 +1026,42 @@ def pricing_graphs(request):
         return JsonResponse({
             'ebit_day_data': ebit_day_data,
             'ebit_pct_data': ebit_pct_data,
+            'net_day_data': net_day_data,
+            'net_pct_data': net_pct_data,
         })
     
-    # Regular page view - get available years for filter
+    # Regular page view - get available filter options
+    obn_projects = Project.objects.filter(
+        technologies__technology='OBN',
+        submission_date__isnull=False
+    ).distinct()
+    
     available_years = sorted(set(
-        p.submission_date.year for p in Project.objects.filter(
-            technologies__technology='OBN',
-            submission_date__isnull=False
-        ).distinct() if p.submission_date
+        p.submission_date.year for p in obn_projects if p.submission_date
     ))
+    
+    # Get unique clients from OBN projects
+    available_clients = Client.objects.filter(
+        projects__technologies__technology='OBN',
+        projects__submission_date__isnull=False
+    ).distinct().order_by('name')
+    
+    # Get unique regions
+    available_regions = Project.REGIONS
+    
+    # Get unique countries from OBN projects
+    available_countries = sorted(set(
+        str(p.country) for p in obn_projects if p.country
+    ))
+    
+    # Get competitor choices
+    available_competitors = Competitor.COMPETITOR_CHOICES
     
     context = {
         'available_years': available_years,
+        'available_clients': available_clients,
+        'available_regions': available_regions,
+        'available_countries': available_countries,
+        'available_competitors': available_competitors,
     }
     return render(request, 'market_analysis/pricing_graphs.html', context)
