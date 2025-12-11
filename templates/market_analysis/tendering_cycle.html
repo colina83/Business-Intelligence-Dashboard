@@ -311,6 +311,19 @@ function updateBoxWhiskerChart(cycleData, year) {
   const labels = ['Receipt → Submission','Submission → Award','Award → Contract','Contract → Start'];
   const dataKeys = ['rec_to_sub', 'sub_to_award', 'award_to_contract', 'contract_to_start'];
   
+  // Helper function to calculate statistics
+  function calculateStats(values) {
+    if (values.length === 0) {
+      return { min: 0, median: 0, max: 0 };
+    }
+    const sorted = values.slice().sort((a, b) => a - b);
+    const min = sorted[0];
+    const max = sorted[sorted.length - 1];
+    const mid = Math.floor(sorted.length / 2);
+    const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+    return { min, median, max };
+  }
+  
   // Calculate min, median, max for each milestone
   const minData = [];
   const medianData = [];
@@ -318,19 +331,10 @@ function updateBoxWhiskerChart(cycleData, year) {
   
   dataKeys.forEach(key => {
     const values = cycleData[key] || [];
-    if (values.length > 0) {
-      minData.push(Math.min(...values));
-      maxData.push(Math.max(...values));
-      // Calculate median
-      const sorted = values.slice().sort((a, b) => a - b);
-      const mid = Math.floor(sorted.length / 2);
-      const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
-      medianData.push(median);
-    } else {
-      minData.push(0);
-      medianData.push(0);
-      maxData.push(0);
-    }
+    const stats = calculateStats(values);
+    minData.push(stats.min);
+    medianData.push(stats.median);
+    maxData.push(stats.max);
   });
 
   const data = {
@@ -384,14 +388,21 @@ function updateBoxWhiskerChart(cycleData, year) {
   };
 
   const container = document.getElementById('boxWhiskerChart');
-  // ensure canvas element exists inside container
+  // Destroy existing chart before manipulating DOM
+  if (boxChart) { 
+    boxChart.destroy(); 
+    boxChart = null;
+  }
+  // Ensure canvas element exists inside container
   let canvas = container.querySelector('canvas');
   if (!canvas) {
     canvas = document.createElement('canvas');
-    container.innerHTML = '';
+    // Clear container and add canvas
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
     container.appendChild(canvas);
   }
-  if (boxChart) { boxChart.destroy(); }
   boxChart = new Chart(canvas.getContext('2d'), config);
 }
 
@@ -417,13 +428,21 @@ function updateOBNChart(obnData) {
   };
 
   const container = document.getElementById('obnTendersChart');
+  // Destroy existing chart before manipulating DOM
+  if (obnChart) { 
+    obnChart.destroy(); 
+    obnChart = null;
+  }
+  // Ensure canvas element exists inside container
   let canvas = container.querySelector('canvas');
   if (!canvas) {
     canvas = document.createElement('canvas');
-    container.innerHTML = '';
+    // Clear container and add canvas
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
     container.appendChild(canvas);
   }
-  if (obnChart) { obnChart.destroy(); }
   obnChart = new Chart(canvas.getContext('2d'), config);
 }
 
@@ -433,13 +452,21 @@ function updateClientChart(clientData) {
   const config = { type: 'bar', data: data, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'x', scales: { x: { ticks: { autoSkip: false } }, y: { grid: { color: '#e1e4e8' } } } } };
 
   const container = document.getElementById('clientChart');
+  // Destroy existing chart before manipulating DOM
+  if (clientChart) { 
+    clientChart.destroy(); 
+    clientChart = null;
+  }
+  // Ensure canvas element exists inside container
   let canvas = container.querySelector('canvas');
   if (!canvas) {
     canvas = document.createElement('canvas');
-    container.innerHTML = '';
+    // Clear container and add canvas
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
     container.appendChild(canvas);
   }
-  if (clientChart) { clientChart.destroy(); }
   clientChart = new Chart(canvas.getContext('2d'), config);
 }
 
