@@ -260,7 +260,6 @@
 
 {% block extra_js %}
 <script src="{% static 'market_analysis/js/chart.min.js' %}"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script>
     let ebitDayChartInstance = null;
     let ebitPctChartInstance = null;
@@ -296,8 +295,9 @@
     function renderCharts(data, startYear, endYear) {
         // Update chart titles with year range
         const yearRange = getYearRangeText(startYear, endYear);
-        document.getElementById('ebitDayTitle').textContent = `OBN Bid Results - EBIT$/Day ${yearRange}`;
-        document.getElementById('ebitPctTitle').textContent = `OBN Bid Results - EBIT% ${yearRange}`;
+        const yearRangeText = yearRange ? ` ${yearRange}` : ' (All Years)';
+        document.getElementById('ebitDayTitle').textContent = `OBN Bid Results - EBIT$/Day${yearRangeText}`;
+        document.getElementById('ebitPctTitle').textContent = `OBN Bid Results - EBIT%${yearRangeText}`;
 
         // Destroy existing chart instances
         if (ebitDayChartInstance) {
@@ -323,10 +323,16 @@
         
         const ctx = canvas.getContext('2d');
 
+        // Convert date strings to timestamps for x-axis
+        const processedData = data.map(d => ({
+            ...d,
+            x: new Date(d.x).getTime()
+        }));
+
         // Group data by status for different datasets
-        const wonData = data.filter(d => d.status === 'Won');
-        const lostData = data.filter(d => d.status === 'Lost');
-        const pendingData = data.filter(d => d.status === 'Pending/Cancelled' || d.status === 'Pending');
+        const wonData = processedData.filter(d => d.status === 'Won');
+        const lostData = processedData.filter(d => d.status === 'Lost');
+        const pendingData = processedData.filter(d => d.status === 'Pending/Cancelled' || d.status === 'Pending');
 
         const chartConfig = {
             type: 'bubble',
@@ -384,13 +390,7 @@
                 },
                 scales: {
                     x: {
-                        type: 'time',
-                        time: {
-                            unit: 'year',
-                            displayFormats: {
-                                year: 'yyyy'
-                            }
-                        },
+                        type: 'linear',
                         title: {
                             display: true,
                             text: 'Bid Submission Date',
@@ -401,6 +401,13 @@
                         },
                         grid: {
                             color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                // Convert timestamp to year
+                                const date = new Date(value);
+                                return date.getFullYear();
+                            }
                         }
                     },
                     y: {
@@ -435,11 +442,12 @@
         if (startYear && endYear) {
             return `(${startYear} - ${endYear})`;
         } else if (startYear) {
-            return `(${startYear} - Present)`;
+            return `(${startYear} onwards)`;
         } else if (endYear) {
-            return `(Up to ${endYear})`;
+            return `(up to ${endYear})`;
         } else {
-            return '(All Years)';
+            // Return empty string for "All Years" as it's shown in the base title
+            return '';
         }
     }
 

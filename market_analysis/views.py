@@ -930,7 +930,7 @@ def pricing_graphs(request):
                     ebit_day_data.append({
                         'x': p.submission_date.isoformat(),
                         'y': float(financial.ebit_day),
-                        'r': 10,  # bubble radius
+                        'r': 15,  # bubble radius - increased for visibility
                         'label': p.name,
                         'client': p.client.name if p.client else 'N/A',
                         'status': status_label,
@@ -944,7 +944,7 @@ def pricing_graphs(request):
                     ebit_pct_data.append({
                         'x': p.submission_date.isoformat(),
                         'y': float(financial.ebit_pct),
-                        'r': 10,  # bubble radius
+                        'r': 15,  # bubble radius - increased for visibility
                         'label': p.name,
                         'client': p.client.name if p.client else 'N/A',
                         'status': status_label,
