@@ -92,7 +92,8 @@
   }
   
   .chart-container {
-    height: 400px;
+    width: 100%;
+    min-height: 400px;
     position: relative;
   }
   
@@ -285,6 +286,9 @@
 <script>
 let currentYear = 'all';
 
+// Plotly configuration for all charts
+const plotlyConfig = { responsive: true, displayModeBar: false };
+
 // Function to load chart data
 async function loadChartData(year) {
   try {
@@ -347,19 +351,20 @@ function updateBoxWhiskerChart(cycleData, year) {
     },
     plot_bgcolor: '#ffffff',
     paper_bgcolor: '#ffffff',
-    margin: { t: 40, r: 20, b: 80, l: 60 },
+    margin: { t: 50, r: 30, b: 100, l: 70 },
+    autosize: true,
     showlegend: true,
     legend: {
       orientation: 'h',
       yanchor: 'bottom',
-      y: -0.3,
+      y: -0.35,
       xanchor: 'center',
       x: 0.5,
       font: { size: 10 }
     }
   };
   
-  Plotly.newPlot('boxWhiskerChart', traces, layout, { responsive: true });
+  Plotly.newPlot('boxWhiskerChart', traces, layout, plotlyConfig);
 }
 
 // OBN Tenders Chart
@@ -392,7 +397,8 @@ function updateOBNChart(obnData) {
     },
     plot_bgcolor: '#ffffff',
     paper_bgcolor: '#ffffff',
-    margin: { t: 20, r: 20, b: 60, l: 60 },
+    margin: { t: 30, r: 30, b: 70, l: 70 },
+    autosize: true,
     showlegend: true,
     legend: {
       orientation: 'h',
@@ -403,7 +409,7 @@ function updateOBNChart(obnData) {
     }
   };
   
-  Plotly.newPlot('obnTendersChart', [trace1, trace2], layout, { responsive: true });
+  Plotly.newPlot('obnTendersChart', [trace1, trace2], layout, plotlyConfig);
 }
 
 // Client Chart
@@ -436,10 +442,11 @@ function updateClientChart(clientData) {
     },
     plot_bgcolor: '#ffffff',
     paper_bgcolor: '#ffffff',
-    margin: { t: 40, r: 20, b: 120, l: 60 }
+    margin: { t: 50, r: 30, b: 130, l: 70 },
+    autosize: true
   };
   
-  Plotly.newPlot('clientChart', [trace], layout, { responsive: true });
+  Plotly.newPlot('clientChart', [trace], layout, plotlyConfig);
 }
 
 // Update Statistics Box
